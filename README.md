@@ -42,3 +42,7 @@ I'm unlikely to work on this in the short term, but.. someone, someday could:
 * Using travis.ci we can definite test ubuntu, centos and alpine/busybox using docker
 * Can we test macOS on travis?  They support something here but unclear how it works.
 
+## Documentation
+
+I've start to write doco in Markdown as shell comments.  The plan would be to extract it to standalone markdown so it would display on GitHub.
+

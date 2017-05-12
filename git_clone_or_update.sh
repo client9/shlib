@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# git_clone_or_update
+# git_clone_or_update: clone a repo, or update it if it exists locally
 #
 # Given $1 a Git repostory, this with either clone
 # or update depending if it exists or not locally.

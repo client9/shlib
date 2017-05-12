@@ -1,6 +1,8 @@
 #!/bin/sh
 
-# hash_md5
+# hash_md5: produce md5 hash in hex digits for file or stding
+#
+# TODO: fall back to openssl (see hash_sha256)
 #
 hash_md5 {
   target=${@:-$(</dev/stdin)};

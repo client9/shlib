@@ -8,10 +8,6 @@
 # $ hash_sha256 foobar.tar.gz
 # 237982738471928379137
 # ```
-#
-# See latest at:
-# https://github.com/client9/posixshell
-#
 hash_sha256() {
   TARGET=${1:-$(</dev/stdin)};
   if is_command gsha256sum; then

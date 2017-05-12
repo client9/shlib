@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# untar
+# untar: untar or unzip $1
 #
 # if you need to unpack in specific directory use a
 # subshell and cd
@@ -8,13 +8,13 @@
 # (cd /foo && untar mytarball.gz)
 #
 untar() {
-  TARBALL=$1
-  case ${TARBALL} in
-  *.tar.gz|*.tgz) tar -xzf ${TARBALL} ;;
-  *.tar) tar -xf ${TARBALL} ;;
-  *.zip) unzip ${TARBALL} ;;
+  tarball=$1
+  case ${tarball} in
+  *.tar.gz|*.tgz) tar -xzf ${tarball} ;;
+  *.tar) tar -xf ${tarball} ;;
+  *.zip) unzip ${tarball} ;;
   *)
-    echo "Unknown archive format for ${TARBALL}"
+    echo "Unknown archive format for ${tarball}"
     return 1
   esac
 }
