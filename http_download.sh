@@ -9,13 +9,13 @@ http_download() {
   SOURCE=$2
   HEADER=$3
 
-  if type curl &> /dev/null; then
+  if is_command curl; then
     WGET="curl --fail -sSL"
     test -z "${HEADER}" || WGET="${WGET} -H \"${HEADER}\""
     if [ "${DEST}" != "-" ]; then
       WGET="$WGET -o $DEST"
     fi
-  elif type wget &> /dev/null; then
+  elif is_command wget &> /dev/null; then
     WGET="wget -q -O $DEST"
     test -z "${HEADER}" || WGET="${WGET} --header \"${HEADER}\""
   else

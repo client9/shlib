@@ -14,16 +14,16 @@
 #
 hash_sha256() {
   TARGET=${1:-$(</dev/stdin)};
-  if type gsha256sum &> /dev/null; then
+  if is_command gsha256sum; then
     # mac homebrew, others
     gsha256sum $TARGET | cut -d ' ' -f 1
-  elif type sha256sum &> /dev/null; then
+  elif is_command sha256sum; then
     # gnu, busybox
     sha256sum $TARGET | cut -d ' ' -f 1
-  elif type shasum &> /dev/null; then
+  elif is_command shasum; then
     # darwin, freebsd?
     shasum -a 256 $TARGET | cut -d ' ' -f 1
-  elif type openssl &> /dev/null; then
+  elif is_command openssl; then
     openssl -dst openssl dgst -sha256 $TARGET | cut -d ' ' -f a
   else
     echo "Unable to compute hash. exiting"
