@@ -7,5 +7,8 @@ completely alien environments.
 Really shell or bash should only be used for boot-strapping to something
 sane.  Until then you might need some truly portable functions.
 
-I present these in hope you never need to use them.
+I hope you never need to use them, but if you do they are [public domain](http://unlicense.org).  Do whatever you'd like with them.
+
+However acknowledgement (and pull requests) are appreciated.  You can optionally include [license.sh](blob/master/license.sh) so the next person knows where to find them.
+
 
