@@ -1,6 +1,6 @@
 #
 # Trick!
 # `which` is not portable.
-# use `type` instead
+# use `type FILE &> /dev/nul` instead
 #
 #
