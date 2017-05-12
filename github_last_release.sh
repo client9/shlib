@@ -12,4 +12,4 @@ github_last_release() {
     return 1
   fi
   echo ${VERSION}
-fi
+}
