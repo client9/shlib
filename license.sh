@@ -2,13 +2,11 @@
 
 cat /dev/null << EOF
 ------------------------------------------------------------------------
-client9/posixshell - portable posix shell functions
-
-See https://github.com/client9/posixshell for the latest.
+https://github.com/client9/posixshell - portable posix shell functions
 
 Public domain - http://unlicense.org
 https://github.com/client9/posixshell/blob/master/LICENSE.md
 
-but creditis (and pull requests) appreciated.
+but credits (and pull requests) appreciated.
 ------------------------------------------------------------------------
 EOF
