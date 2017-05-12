@@ -1,25 +1,48 @@
 #!/bin/sh
 
-# uname_arch converts `uname -m` back into golang
-# OS types
+# uname_arch converts `uname -m` back into standardized golang
+# OS types.
 #
-# TODO: ARM types
+# TODO: list the types
+#
+# ## NOTES
+#
+# * uses non-POSIX `local` however any semi-modern (uh last 15 years)
+#   should support it.
+# * ARM CPUs are not added here but should be
+#
+# ## EXAMPLE
 # 
+# ```bash
+# ARCH=$(uname_arch)
+# ```
+#
+# See latest at:
+# https://github.com/client9/posixshell
+#
 uname_arch() {
-  ARCH=$(uname -m)
-  case $ARCH in
-    x86_64) ARCH="amd64" ;;
-    x86)    ARCH="386" ;;
-    i686)   ARCH="386" ;;
-    i386)   ARCH="386" ;;
+  local arch=$(uname -m)
+  case $arch in
+    x86_64) arch="amd64" ;;
+    x86)    arch="386" ;;
+    i686)   arch="386" ;;
+    i386)   arch="386" ;;
   esac
-  echo ${ARCH}
+  echo ${arch}
 }
 
 # uname_os converts `uname -s` into standard golang OS types
 #
+# TODO: list the types, provide reference
+#
+# ## EXAMPLE
+#
+# ```bash
+# OS=$(uname_os)
+# ```
+#
 uname_os() {
-  OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+  local os=$(uname -s | tr '[:upper:]' '[:lower:]')
   # other fixups here
-  echo ${OS}
+  echo ${os}
 }

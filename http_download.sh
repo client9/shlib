@@ -1,10 +1,10 @@
 #
-# httpclient [local-file] [url] [optional extra header]
+# http_download [local-file] [url] [optional extra header]
 #
 # if arg3 is not empty it will add it as an extra HTTP header
 # must be in the form "foo: bar"
 #
-httpclient() {
+http_download() {
   DEST=$1
   SOURCE=$2
   HEADER=$3

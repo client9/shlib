@@ -1,9 +1,19 @@
-#
-# portable posix shell sha256 routines
-#
+#!/bin/sh
 
+# hash_sha256: compute SHA256 of $1 or stdin
+#
+# ## Example
+#
+# ```bash
+# $ hash_sha256 foobar.tar.gz
+# 237982738471928379137
+# ```
+#
+# See latest at:
+# https://github.com/client9/posixshell
+#
 hash_sha256() {
-  TARGET=$1
+  TARGET=${1:-$(</dev/stdin)};
   if type gsha256sum &> /dev/null; then
     # mac homebrew, others
     gsha256sum $TARGET | cut -d ' ' -f 1
@@ -22,6 +32,9 @@ hash_sha256() {
 }
 
 # hash_sha256_verify validates a binary against a checksum.txt file
+#
+# TODO: clean up error handling
+#
 hash_sha256_verify() {
   TARGET=$1
   SUMS=$2
