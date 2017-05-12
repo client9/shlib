@@ -7,8 +7,6 @@
 #
 # ## NOTES
 #
-# * uses non-POSIX `local` however any semi-modern (uh last 15 years)
-#   should support it.
 # * ARM CPUs are not added here but should be
 #
 # ## EXAMPLE
@@ -21,7 +19,7 @@
 # https://github.com/client9/posixshell
 #
 uname_arch() {
-  local arch=$(uname -m)
+  arch=$(uname -m)
   case $arch in
     x86_64) arch="amd64" ;;
     x86)    arch="386" ;;
@@ -42,7 +40,7 @@ uname_arch() {
 # ```
 #
 uname_os() {
-  local os=$(uname -s | tr '[:upper:]' '[:lower:]')
+  os=$(uname -s | tr '[:upper:]' '[:lower:]')
   # other fixups here
   echo ${os}
 }
