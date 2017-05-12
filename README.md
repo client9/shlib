@@ -9,6 +9,6 @@ sane.  Until then you might need some truly portable functions.
 
 I hope you never need to use them, but if you do they are [public domain](http://unlicense.org).  Do whatever you'd like with them.
 
-However acknowledgement (and pull requests) are appreciated.  You can optionally include [license.sh](blob/master/license.sh) so the next person knows where to find them.
+However acknowledgement (and pull requests) are appreciated.  You can optionally include [license.sh](license.sh) so the next person knows where to find them.
 
 
