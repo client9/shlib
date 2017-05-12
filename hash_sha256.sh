@@ -44,7 +44,7 @@ hash_sha256_verify() {
 
   # remove tabs:  old version of goreleaser used them
   WANT=$(grep ${BASENAME} ${SUMS} | tr '\t' ' ' | cut -d ' ' -f 1)
-  GOT=$(sha256 $TARGET)
+  GOT=$(hash_sha256 $TARGET)
   if [ "$GOT" != "$WANT" ]; then
      echo "Checksum for $TARGET did not verify"
      echo "WANT: ${WANT}"
