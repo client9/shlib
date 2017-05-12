@@ -5,4 +5,5 @@
 mktmpdir() {
    test -z "$TMPDIR" && TMPDIR="$(mktemp -d)"
    mkdir -p ${TMPDIR}
+   echo ${TMPDIR}
 }
