@@ -4,8 +4,8 @@
 # if arg3 is not empty it will add it as an extra HTTP header
 # must be in the form "foo: bar"
 http_download() {
-  DEST=$1
-  SOURCE=$2
+  local_file=$1
+  source_url=$2
   header=$3
   headerflag=''
   destflag=''
@@ -22,11 +22,11 @@ http_download() {
     return 1
   fi
   if [ -z "$HEADER" ]; then
-    $cmd $destflag ${DEST} ${SOURCE}
+    $cmd $destflag "$local_file" "$source_url"
   else
     # this very explicit "$headerflag "$header"
     # is needed when $header has spaces.
     # cmd="$cmd -H $header" doesn't work
-    $cmd $headerflag "$header" $destflag "${DEST}" ${SOURCE}
+    $cmd $headerflag "$header" $destflag "$local_file" "$source_url"
   fi
 }

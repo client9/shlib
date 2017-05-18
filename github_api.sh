@@ -5,13 +5,13 @@
 # Requires `http_download`
 #
 github_api() {
-  DEST=$1
-  SOURCE=$2
+  local_file=$1
+  source_url=$2
   header=""
-  case "$SOURCE" in
+  case "$source_url" in
   https://api.github.com*)
      test -z "$GITHUB_TOKEN" || header="Authorization: token $GITHUB_TOKEN"
      ;;
   esac
-  http_download "$DEST" "$SOURCE" "$HEADER"
+  http_download "$local_file" "$source_url" "$header"
 }
