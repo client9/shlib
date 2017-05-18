@@ -21,7 +21,7 @@ http_download() {
     echo "http_download: unable to find wget or curl"
     return 1
   fi
-  if [ -z "$HEADER" ]; then
+  if [ -z "$header" ]; then
     $cmd $destflag "$local_file" "$source_url"
   else
     # this very explicit "$headerflag "$header"
