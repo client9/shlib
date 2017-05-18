@@ -1,9 +1,7 @@
-#!/bin/sh
-
 # uname_arch converts `uname -m` back into standardized golang
-# OS types.
+# OS types. 
 #
-# TODO: list the types
+# See also `uname_arch_check` for a self-check
 #
 # ## NOTES
 #
@@ -15,8 +13,6 @@
 # ARCH=$(uname_arch)
 # ```
 #
-# See latest at:
-# https://github.com/client9/posixshell
 #
 uname_arch() {
   arch=$(uname -m)
@@ -27,20 +23,4 @@ uname_arch() {
     i386)   arch="386" ;;
   esac
   echo ${arch}
-}
-
-# uname_os converts `uname -s` into standard golang OS types
-#
-# TODO: list the types, provide reference
-#
-# ## EXAMPLE
-#
-# ```bash
-# OS=$(uname_os)
-# ```
-#
-uname_os() {
-  os=$(uname -s | tr '[:upper:]' '[:lower:]')
-  # other fixups here
-  echo ${os}
 }
