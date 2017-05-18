@@ -7,12 +7,11 @@
 github_api() {
   DEST=$1
   SOURCE=$2
-
-  HEADER=""
-  case $SOURCE in
+  header=""
+  case "$SOURCE" in
   https://api.github.com*)
-     test -z "$GITHUB_TOKEN" || HEADER="Authorization: token $GITHUB_TOKEN"
+     test -z "$GITHUB_TOKEN" || header="Authorization: token $GITHUB_TOKEN"
      ;;
   esac
-  http_download $DEST $SOURCE $HEADER
+  http_download "$DEST" "$SOURCE" "$HEADER"
 }
