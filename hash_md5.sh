@@ -4,14 +4,17 @@
 #
 # TODO: fall back to openssl (see hash_sha256)
 #
-hash_md5 {
-  target=${@:-$(</dev/stdin)};
-  if is_command; then
+# DEPENDS:
+#   is_command
+#
+hash_md5() {
+  target=${@:-/dev/stdin};
+  if is_command md5sum; then
     md5sum $target
   elif is_command md5; then
     md5 -q $target
   else
-    echo "md5 not available"
+    echo "hash_md5: unable to find command to compute md5 hash"
     return 1
   fi
 }
