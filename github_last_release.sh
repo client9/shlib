@@ -12,5 +12,5 @@ github_last_release() {
   html=$(github_api - https://api.github.com/repos/${owner_repo}/releases/latest)
   version=$(echo "$html" | grep -m 1 "\"name\":" | cut -d ":" -f 2 | tr -d ' ",')
   test -z "$version" && return 1
-  echo "$version
+  echo "$version"
 }
