@@ -3,31 +3,30 @@
 #
 # if arg3 is not empty it will add it as an extra HTTP header
 # must be in the form "foo: bar"
-#
 http_download() {
   DEST=$1
   SOURCE=$2
-  HEADER=$3
-
+  header=$3
+  headerflag=''
+  destflag=''
   if is_command curl; then
-    WGET="curl --fail -sSL"
-    test -z "${HEADER}" || WGET="${WGET} -H \"${HEADER}\""
-    if [ "${DEST}" != "-" ]; then
-      WGET="$WGET -o $DEST"
-    fi
-  elif is_command wget &> /dev/null; then
-    WGET="wget -q -O $DEST"
-    test -z "${HEADER}" || WGET="${WGET} --header \"${HEADER}\""
+    cmd='curl --fail -sSL'
+    destflag='-o'
+    headerflag='-H'
+  elif is_command wget; then
+    cmd='wget -q'
+    destflag='-O'
+    headerflag='--header'
   else
-    echo "Unable to find wget or curl.  Exit"
-    exit 1
+    echo "http_download: unable to find wget or curl"
+    return 1
   fi
-
-  # remove destination if not stdout
-  if [ "${DEST}" != "-" ]; then
-    rm -f "${DEST}"
+  if [ -z "$HEADER" ]; then
+    $cmd $destflag ${DEST} ${SOURCE}
+  else
+    # this very explicit "$headerflag "$header"
+    # is needed when $header has spaces.
+    # cmd="$cmd -H $header" doesn't work
+    $cmd $headerflag "$header" $destflag "${DEST}" ${SOURCE}
   fi
-
-  # run
-  ${WGET} ${SOURCE}
 }
