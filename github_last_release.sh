@@ -5,11 +5,14 @@
 # Requires: github_api
 #
 github_last_release() {
-  OWNER_REPO=$1
-  VERSION=$(github_api - https://api.github.com/repos/${OWNER_REPO}/releases/latest | grep -m 1 "\"name\":" | cut -d ":" -f 2 | tr -d ' ",')
-  if [ -z "${VERSION}" ]; then
-    echo "Unable to determine latest release for ${OWNER_REPO}"
+  owner_repo=$1
+  # we capture the entire output, then grep -m 1 (only take first result)
+  # this prevents curl from issuing "(23) failed to write body" errors
+  # when grep closes the pipe
+  html=$(github_api - https://api.github.com/repos/${owner_repo}/releases/latest)
+  version=$(echo $html | grep -m 1 "\"name\":" | cut -d ":" -f 2 | tr -d ' ",')
+  if [ -z "$version" ]; then
     return 1
   fi
-  echo ${VERSION}
+  echo "$version"
 }
