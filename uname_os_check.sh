@@ -19,6 +19,6 @@ uname_os_check() {
    solaris)   return 0 ;;
    windows)   return 0 ;;
   esac
-  echo "$0: uname_os_check: internal error '$(uname -s)' got coverted to '$os' which is not a GOOS value. Please file bug at https://github.com/client9/posixshell"
+  echo "$0: uname_os_check: internal error '$(uname -s)' got converted to '$os' which is not a GOOS value. Please file bug at https://github.com/client9/posixshell"
   return 1
 }

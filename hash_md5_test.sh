@@ -17,7 +17,7 @@ test2() {
 }
 
 test3() {
-  assertFalse "hash_md5 NONEXISTANT"  "test3: non-existant file returns not 0"
+  assertFalse "hash_md5 NONEXISTANT"  "test3: non-existent file returns not 0"
 }
 
 
