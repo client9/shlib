@@ -52,14 +52,14 @@ hash_sha256_verify() {
   BASENAME=${TARGET##*/}
 
   # remove tabs:  old version of goreleaser used them
-  want=$(grep ${BASENAME} "${checksums}" 2> /dev/null | tr '\t' ' ' | cut -d ' ' -f 1)
+  want=$(grep "${BASENAME}" "${checksums}" 2> /dev/null | tr '\t' ' ' | cut -d ' ' -f 1)
 
   # if file does not exist $want will be empty
   if [ -z "$want" ]; then
      echo "hash_sha256_verify: unable to find checksum for '${TARGET}' in '${checksums}'"
      return 1
   fi
-  got=$(hash_sha256 $TARGET)
+  got=$(hash_sha256 "$TARGET")
   if [ "$want" != "$got" ]; then
      echo "hash_sha256_verify: checksum for '$TARGET' did not verify ${want} vs $got"
      return 1
