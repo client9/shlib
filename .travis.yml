@@ -8,4 +8,4 @@ addons:
 
 script:
   - /bin/sh *_test.sh
-  - shellcheck -f gcc -s sh -x *.sh
+  - shellcheck -f gcc -s sh *.sh
