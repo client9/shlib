@@ -1,4 +1,3 @@
-#/bin/sh
 #
 # is_command: returns true if command exists
 # 
@@ -8,6 +7,6 @@
 # `type` is portable, but spews junk to both stdout and stderr
 #
 is_command() {
-  type $1 > /dev/null 2> /dev/null
+  type "$1" > /dev/null 2> /dev/null
 }
 

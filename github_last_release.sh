@@ -9,7 +9,8 @@ github_last_release() {
   # we capture the entire output, then grep -m 1 (only take first result)
   # this prevents curl from issuing "(23) failed to write body" errors
   # when grep closes the pipe
-  html=$(github_api - https://api.github.com/repos/${owner_repo}/releases/latest)
+  giturl="https://api.github.com/repos/${owner_repo}/releases/latest"`
+  html=$(github_api - "$giturl")
   version=$(echo "$html" | grep -m 1 "\"name\":" | cut -d ":" -f 2 | tr -d ' ",')
   test -z "$version" && return 1
   echo "$version"
