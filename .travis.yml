@@ -7,5 +7,5 @@ addons:
     - shellcheck
 
 script:
-  - /bin/sh *_test.sh
-  - shellcheck -f gcc -s sh *.sh
+  - shellcheck -V
+  - make test lint

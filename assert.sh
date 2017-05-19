@@ -1,15 +1,13 @@
 
 assertTrue() {
-  eval "$1"
-  if [ $? -ne 0 ]; then
+  if eval "$1"; then
     echo "assertTrue failed: $2"
     exit 2
   fi
 }
 
 assertFalse() {
-  eval "$1"
-  if [ $? -eq 0 ]; then
+  if eval "$1"; then
     echo "assertFalse failed: $2"
     exit 2
   fi
