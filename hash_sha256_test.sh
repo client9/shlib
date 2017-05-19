@@ -5,13 +5,13 @@
 
 test1() {
   want="aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"
-  got=`echo foobar | hash_sha256`
+  got=$(echo foobar | hash_sha256)
   assertEquals "$want" "$got" "test1: sha256 via stdin"
 }
 
 test2() {
   want="7fd1e028e43640e9762bb51b5d8c80e0a3fe9beb2481c7cfcccc175b3b051b69"
-  got=`hash_sha256 ./fixtures/sample2.txt`
+  got=$(hash_sha256 ./fixtures/sample2.txt)
   assertEquals "$want" "$got" "test2: sha256 via file"
 }
 

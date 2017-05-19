@@ -1,5 +1,4 @@
-#!/bin/sh
-
+#
 # untar: untar or unzip $1
 #
 # if you need to unpack in specific directory use a
@@ -9,10 +8,10 @@
 #
 untar() {
   tarball=$1
-  case ${tarball} in
-  *.tar.gz|*.tgz) tar -xzf ${tarball} ;;
-  *.tar) tar -xf ${tarball} ;;
-  *.zip) unzip ${tarball} ;;
+  case "${tarball}" in
+  *.tar.gz|*.tgz) tar -xzf "${tarball}" ;;
+  *.tar) tar -xf "${tarball}" ;;
+  *.zip) unzip "${tarball}" ;;
   *)
     echo "Unknown archive format for ${tarball}"
     return 1

@@ -15,5 +15,5 @@
 uname_os() {
   os=$(uname -s | tr '[:upper:]' '[:lower:]')
   # other fixups here
-  echo ${os}
+  echo "$os"
 }
