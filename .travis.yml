@@ -1,0 +1,14 @@
+language: bash
+addons:
+  apt:
+    sources:
+    - debian-sid
+    packages:
+    - shellcheck
+
+lint:
+  - shellcheck -f gcc -s sh -x *.sh
+
+script:
+  - /bin/sh *_test.sh
+
