@@ -1,5 +1,5 @@
-. is_command.sh
-. assert.sh
+. ./is_command.sh
+. ./assert.sh
 
 test1() {
   assertTrue "is_command ls" "test1 'ls' exists"
