@@ -1,7 +1,7 @@
 
-source assert.sh
-source is_command.sh
-source hash_sha256.sh
+. assert.sh
+. is_command.sh
+. hash_sha256.sh
 
 test1() {
   want="aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f"

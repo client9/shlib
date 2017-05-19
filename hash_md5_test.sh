@@ -1,7 +1,7 @@
 
-source assert.sh
-source is_command.sh
-source hash_md5.sh
+. assert.sh
+. is_command.sh
+. hash_md5.sh
 
 test1() {
   want="14758f1afd44c09b7992073ccf00b43d"
