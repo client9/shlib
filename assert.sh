@@ -18,7 +18,7 @@ assertEquals() {
   got=$2
   msg=$3
   if [ "$want" != "$got" ]; then
-    echo "assertEquals failed: want=$want got=$got $msg"
+    echo "assertEquals failed: want='$want' got='$got' $msg"
     exit 2
   fi
 }
