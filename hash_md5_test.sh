@@ -1,5 +1,5 @@
 
-. assert.sh
+. ./assert.sh
 . is_command.sh
 . hash_md5.sh
 
