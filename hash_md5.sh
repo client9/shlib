@@ -9,9 +9,9 @@
 hash_md5() {
   target=${1:-/dev/stdin};
   if is_command md5sum; then
-    md5sum "$target"
+    md5sum "$target" 
   elif is_command md5; then
-    md5 -q "$target"
+    md5 -q "$target" 2> /dev/null
   else
     echo "hash_md5: unable to find command to compute md5 hash"
     return 1
