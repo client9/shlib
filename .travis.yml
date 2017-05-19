@@ -6,9 +6,6 @@ addons:
     packages:
     - shellcheck
 
-lint:
-  - shellcheck -f gcc -s sh -x *.sh
-
 script:
   - /bin/sh *_test.sh
-
+  - shellcheck -f gcc -s sh -x *.sh
