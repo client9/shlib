@@ -1,12 +1,16 @@
 #
 # is_command: returns true if command exists
 # 
-# Oddly `which` is not portable, in particular is often
+# `which` is not portable, in particular is often
 # not available on RedHat/CentOS systems.
 # 
-# `type` is portable, but spews junk to both stdout and stderr
+# `type` is implemented in many shells but technically not
+# part of the posix spec.
+#
+# `command -v`
 #
 is_command() {
-  type "$1" > /dev/null 2> /dev/null
+  command -v "$1" > /dev/null
+  #type "$1" > /dev/null 2> /dev/null
 }
 
