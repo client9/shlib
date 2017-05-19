@@ -9,7 +9,7 @@
 hash_md5() {
   target=${1:-/dev/stdin};
   if is_command md5sum; then
-    md5sum "$target" 
+    md5sum "$target" | cut -d ' ' -f 1
   elif is_command md5; then
     md5 -q "$target" 2> /dev/null
   else
