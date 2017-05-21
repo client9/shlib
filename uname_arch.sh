@@ -5,7 +5,15 @@
 #
 # ## NOTES
 #
-# * ARM CPUs are not added here but should be
+# Notes on ARM:
+# arm 5,6,7: uname is of form `armv6l`, ` armv7l` where a letter
+# or something else is after the number. Has examples:
+# https://github.com/golang/go/wiki/GoArm
+# https://en.wikipedia.org/wiki/List_of_ARM_microarchitectures
+#
+# arm 8 is know as arm64, and aarch64
+#
+# more notes: https://github.com/golang/go/issues/13669
 #
 # ## EXAMPLE
 # 
@@ -21,6 +29,11 @@ uname_arch() {
     x86)    arch="386" ;;
     i686)   arch="386" ;;
     i386)   arch="386" ;;
+    aarch64) arch="arm64" ;;
+    armv5*)  arch="arm5" ;;
+    armv6*)  arch="arm6" ;;
+    armv7*)  arch="arm7" ;;
   esac
   echo ${arch}
 }
+
