@@ -51,8 +51,7 @@ hash_sha256_verify() {
   # http://stackoverflow.com/questions/2664740/extract-file-basename-without-path-and-extension-in-bash
   BASENAME=${TARGET##*/}
 
-  # remove tabs:  old version of goreleaser used them
-  want=$(grep "${BASENAME}" "${checksums}" 2> /dev/null | tr '\t' ' ' | cut -d ' ' -f 1)
+  want=$(grep "${BASENAME}" "${checksums}" 2> /dev/null | cut -d ' ' -f 1)
 
   # if file does not exist $want will be empty
   if [ -z "$want" ]; then
