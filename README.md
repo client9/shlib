@@ -1,4 +1,4 @@
-# posixshell
+# shlib
 portable functions for posix shell environments
 
 I've sadly written a lot of shell scripts.   Mostly for installers on

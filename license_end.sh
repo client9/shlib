@@ -1,7 +1,6 @@
 #!/bin/sh
-
 cat /dev/null <<EOF
 ------------------------------------------------------------------------
-End of functions from https://github.com/client9/posixshell 
+End of functions from https://github.com/client9/shlib
 ------------------------------------------------------------------------
 EOF
