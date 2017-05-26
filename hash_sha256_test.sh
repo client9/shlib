@@ -1,4 +1,3 @@
-
 . ./assert.sh
 . ./is_command.sh
 . ./hash_sha256.sh
@@ -16,7 +15,7 @@ test2() {
 }
 
 test3() {
-  assertFalse "hash_sha256 NONEXISTANT"  "test3: non-existent file returns not 0"
+  assertFalse "hash_sha256 NONEXISTANT" "test3: non-existent file returns not 0"
 }
 
 test4() {
@@ -46,4 +45,3 @@ test5
 test6
 test7
 test8
-

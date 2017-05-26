@@ -3,11 +3,12 @@ test:
 	/bin/sh *_test.sh
 
 lint:
-	shellcheck -f gcc -s sh *.sh
-	shellcheck -f gcc -s bash *.sh
-	shellcheck -f gcc -s dash *.sh
-	shellcheck -f gcc -s ksh *.sh
+	./scripts/lint.sh
+
+fmt:
+	./bin/shfmt -p -i 2 -w *.sh
 
 clean:
+	rm -rf ./bin
 	git gc --aggressive
 

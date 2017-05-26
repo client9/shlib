@@ -10,7 +10,6 @@
 # `command -v`
 #
 is_command() {
-  command -v "$1" > /dev/null
+  command -v "$1" >/dev/null
   #type "$1" > /dev/null 2> /dev/null
 }
-

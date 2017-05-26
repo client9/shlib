@@ -9,11 +9,12 @@
 untar() {
   tarball=$1
   case "${tarball}" in
-  *.tar.gz|*.tgz) tar -xzf "${tarball}" ;;
-  *.tar) tar -xf "${tarball}" ;;
-  *.zip) unzip "${tarball}" ;;
-  *)
-    echo "Unknown archive format for ${tarball}"
-    return 1
+    *.tar.gz | *.tgz) tar -xzf "${tarball}" ;;
+    *.tar) tar -xf "${tarball}" ;;
+    *.zip) unzip "${tarball}" ;;
+    *)
+      echo "Unknown archive format for ${tarball}"
+      return 1
+      ;;
   esac
 }

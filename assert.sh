@@ -1,4 +1,3 @@
-
 assertTrue() {
   if eval "$1"; then
     echo "assertTrue failed: $2"

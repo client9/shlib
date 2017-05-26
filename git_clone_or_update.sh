@@ -11,6 +11,6 @@ git_clone_or_update() {
   if [ ! -d "$gitrepo" ]; then
     git clone "$giturl"
   else
-    (cd "$gitrepo" && git pull > /dev/null)
+    (cd "$gitrepo" && git pull >/dev/null)
   fi
 }

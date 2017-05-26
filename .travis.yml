@@ -7,5 +7,6 @@ addons:
     - shellcheck
 
 script:
+  - ./scripts/godownloader-shfmt.sh
   - shellcheck -V
   - make lint test

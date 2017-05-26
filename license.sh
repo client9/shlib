@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cat /dev/null << EOF
+cat /dev/null <<EOF
 ------------------------------------------------------------------------
 https://github.com/client9/posixshell - portable posix shell functions
 

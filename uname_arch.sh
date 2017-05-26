@@ -26,14 +26,13 @@ uname_arch() {
   arch=$(uname -m)
   case $arch in
     x86_64) arch="amd64" ;;
-    x86)    arch="386" ;;
-    i686)   arch="386" ;;
-    i386)   arch="386" ;;
+    x86) arch="386" ;;
+    i686) arch="386" ;;
+    i386) arch="386" ;;
     aarch64) arch="arm64" ;;
-    armv5*)  arch="arm5" ;;
-    armv6*)  arch="arm6" ;;
-    armv7*)  arch="arm7" ;;
+    armv5*) arch="arm5" ;;
+    armv6*) arch="arm6" ;;
+    armv7*) arch="arm7" ;;
   esac
   echo ${arch}
 }
-

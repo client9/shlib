@@ -1,4 +1,4 @@
-
+#/bin/sh
 # hash_sha256: compute SHA256 of $1 or stdin
 #
 # ## Example
@@ -14,7 +14,7 @@
 # won't fail unless setpipefail is on
 #
 hash_sha256() {
-  TARGET=${1:-/dev/stdin};
+  TARGET=${1:-/dev/stdin}
   if is_command gsha256sum; then
     # mac homebrew, others
     hash=$(gsha256sum "$TARGET") || return 1
@@ -44,23 +44,23 @@ hash_sha256_verify() {
   checksums=$2
 
   if [ -z "$checksums" ]; then
-     echo "hash_sha256_verify: checksum file not specified in arg2"
-     return 1
+    echo "hash_sha256_verify: checksum file not specified in arg2"
+    return 1
   fi
 
   # http://stackoverflow.com/questions/2664740/extract-file-basename-without-path-and-extension-in-bash
   BASENAME=${TARGET##*/}
 
-  want=$(grep "${BASENAME}" "${checksums}" 2> /dev/null | tr '\t' ' ' | cut -d ' ' -f 1)
+  want=$(grep "${BASENAME}" "${checksums}" 2>/dev/null | tr '\t' ' ' | cut -d ' ' -f 1)
 
   # if file does not exist $want will be empty
   if [ -z "$want" ]; then
-     echo "hash_sha256_verify: unable to find checksum for '${TARGET}' in '${checksums}'"
-     return 1
+    echo "hash_sha256_verify: unable to find checksum for '${TARGET}' in '${checksums}'"
+    return 1
   fi
   got=$(hash_sha256 "$TARGET")
   if [ "$want" != "$got" ]; then
-     echo "hash_sha256_verify: checksum for '$TARGET' did not verify ${want} vs $got"
-     return 1
+    echo "hash_sha256_verify: checksum for '$TARGET' did not verify ${want} vs $got"
+    return 1
   fi
 }
