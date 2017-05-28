@@ -30,7 +30,7 @@ cat \
 Some of these are new, some are these are pulled from old code I wrote.   All can definitely be
 improved.  Pull requests very welcome:
 
-* Simplfy
+* Simplify
 * Clean up local variable use
 * Remove any "exit 1" I may have left behind
 
