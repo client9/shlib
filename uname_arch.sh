@@ -1,5 +1,5 @@
 # uname_arch converts `uname -m` back into standardized golang
-# OS types. 
+# OS types.
 #
 # See also `uname_arch_check` for a self-check
 #
@@ -16,7 +16,7 @@
 # more notes: https://github.com/golang/go/issues/13669
 #
 # ## EXAMPLE
-# 
+#
 # ```bash
 # ARCH=$(uname_arch)
 # ```

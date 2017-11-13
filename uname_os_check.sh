@@ -1,9 +1,9 @@
 # uname_os_check: self-check `uname_os`
-# 
+#
 # This checks that uname_os is working correctly.  If
 # the conversion from `uname -s` to golang GOOS isn't
 # done correctly it will error.
-# 
+#
 uname_os_check() {
   os=$(uname_os)
   case "$os" in

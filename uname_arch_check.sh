@@ -1,4 +1,4 @@
-# 
+#
 # supported names can be found
 # around here: https://github.com/golang/go/blob/master/src/cmd/dist/build.go#L1094
 # or by running `go tool dist list`

@@ -16,7 +16,7 @@ test3() {
 test1
 test2
 
-# define missing function 
+# define missing function
 junk() {
   return 0
 }
