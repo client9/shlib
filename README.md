@@ -1,6 +1,8 @@
 # shlib
 portable functions for posix shell environments
 
+[![Build Status](https://travis-ci.org/client9/shlib.svg?branch=master)](https://travis-ci.org/client9/shlib)
+
 I've sadly written a lot of shell scripts.   Mostly for installers on
 completely alien environments.
 
