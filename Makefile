@@ -2,15 +2,18 @@
 test: ## run tests
 	/bin/sh *_test.sh
 
-lint: ## run shellcheck and other lints
+lint: ./bin/shfmt ## run shellcheck and other lints
 	./scripts/lint.sh
 
-fmt: ## reformat shell scripts
-	./bin/shfmt -p -i 2 -w *.sh
+fmt: ./bin/shfmt  ## reformat shell scripts
+	./bin/shfmt -ci -p -i 2 -w *.sh
 
 clean:  ## clean up
 	rm -rf ./bin
 	git gc --aggressive
+
+./bin/shfmt: ./scripts/godownloader-shfmt.sh
+	./scripts/godownloader-shfmt.sh
 
 # https://www.client9.com/self-documenting-makefiles/
 help:
