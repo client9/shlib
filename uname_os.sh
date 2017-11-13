@@ -14,6 +14,12 @@
 #
 uname_os() {
   os=$(uname -s | tr '[:upper:]' '[:lower:]')
+
+  # fixed up for https://github.com/client9/shlib/issues/3
+  case "$os" in
+    msys_nt) os="windows";;
+  esac
+
   # other fixups here
   echo "$os"
 }
