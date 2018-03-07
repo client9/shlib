@@ -2,16 +2,16 @@
 
 # github_last_release: returns the last release version or error
 #
-# Requires: github_api
+# Requires: http_download, is_command
 #
 github_last_release() {
   owner_repo=$1
-  # we capture the entire output, then grep -m 1 (only take first result)
-  # this prevents curl from issuing "(23) failed to write body" errors
-  # when grep closes the pipe
-  giturl="https://api.github.com/repos/${owner_repo}/releases/latest"
-  html=$(github_api - "$giturl")
-  version=$(echo "$html" | grep -m 1 "\"tag_name\":" | cut -f4 -d'"')
+  version=$2
+  test -z "$version" && version="latest"
+  giturl="https://github.com/${owner_repo}/releases/${version}"
+  html=$(http_download "-" "$giturl" "Accept:application/json")
+  # remove everything before tag_name:", and then everything after the next "
+  version=$(echo "$html" | sed 's/.*"tag_name":"//' | sed 's/".*//')
   test -z "$version" && return 1
   echo "$version"
 }
