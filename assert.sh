@@ -26,7 +26,7 @@ assertNotEquals() {
   want=$1
   got=$2
   msg=$3
-  if [ "$want" == "$got" ]; then
+  if [ "$want" = "$got" ]; then
     echo "assertNotEquals failed: want='$want' got='$got' $msg"
     exit 2
   fi
