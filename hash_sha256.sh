@@ -1,4 +1,3 @@
-#/bin/sh
 # hash_sha256: compute SHA256 of $1 or stdin
 #
 # ## Example

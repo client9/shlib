@@ -1,4 +1,3 @@
-#/bin/sh
 #
 # hash_md5: produce md5 hash in hex digits for file or stding
 #
