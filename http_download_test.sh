@@ -10,10 +10,9 @@ test1() {
 
 # test 404, missing
 test2() {
-  http_download /dev/null https://raw.githubusercontent.com/client9/shlib/master/does_not_exist 
+  http_download /dev/null https://raw.githubusercontent.com/client9/shlib/master/does_not_exist
   assertNotEquals "$?" "0" "expected return to be non-zero on 404"
 }
 
 test1
 test2
-

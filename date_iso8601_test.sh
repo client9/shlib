@@ -9,6 +9,4 @@ test1() {
   assertEquals "$want" "$got" "test1: iso8601 date is not 24 characters"
 }
 
-
 test1
-

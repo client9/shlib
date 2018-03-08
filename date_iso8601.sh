@@ -3,5 +3,5 @@
 # https://en.wikipedia.org/wiki/ISO_8601
 #
 date_iso8601() {
-	date -u +%Y-%m-%dT%H:%M:%S+0000
+  date -u +%Y-%m-%dT%H:%M:%S+0000
 }
