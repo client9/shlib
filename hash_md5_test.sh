@@ -1,5 +1,7 @@
 . ./assert.sh
 . ./is_command.sh
+. ./echoerr.sh
+. ./log.sh
 . ./hash_md5.sh
 
 test1() {

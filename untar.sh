@@ -13,7 +13,7 @@ untar() {
     *.tar) tar -xf "${tarball}" ;;
     *.zip) unzip "${tarball}" ;;
     *)
-      echo "Unknown archive format for ${tarball}"
+      log_err "untar unknown archive format for ${tarball}"
       return 1
       ;;
   esac

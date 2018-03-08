@@ -1,4 +1,6 @@
 . ./assert.sh
+. ./echoerr.sh
+. ./log.sh
 . ./uname_arch.sh
 . ./uname_arch_check.sh
 

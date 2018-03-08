@@ -3,6 +3,7 @@
 #
 # if arg3 is not empty it will add it as an extra HTTP header
 # must be in the form "foo: bar"
+#
 http_download() {
   local_file=$1
   source_url=$2
@@ -18,7 +19,7 @@ http_download() {
     destflag='-O'
     headerflag='--header'
   else
-    echo "http_download: unable to find wget or curl"
+    log_crit "http_download unable to find wget or curl"
     return 1
   fi
   if [ -z "$header" ]; then

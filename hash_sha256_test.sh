@@ -1,5 +1,7 @@
 . ./assert.sh
 . ./is_command.sh
+. ./echoerr.sh
+. ./log.sh
 . ./hash_sha256.sh
 
 test1() {

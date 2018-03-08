@@ -1,4 +1,6 @@
 . ./is_command.sh
+. ./echoerr.sh
+. ./log.sh
 . ./http_download.sh
 . ./assert.sh
 

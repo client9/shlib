@@ -30,7 +30,7 @@ hash_sha256() {
     hash=$(openssl -dst openssl dgst -sha256 "$TARGET") || return 1
     echo "$hash" | cut -d ' ' -f a
   else
-    echo "hash_sha256: unable to find command to compute sha-256 hash"
+    log_crit "hash_sha256 unable to find command to compute sha-256 hash"
     return 1
   fi
 }
@@ -43,7 +43,7 @@ hash_sha256_verify() {
   checksums=$2
 
   if [ -z "$checksums" ]; then
-    echo "hash_sha256_verify: checksum file not specified in arg2"
+    log_err "hash_sha256_verify checksum file not specified in arg2"
     return 1
   fi
 
@@ -54,12 +54,12 @@ hash_sha256_verify() {
 
   # if file does not exist $want will be empty
   if [ -z "$want" ]; then
-    echo "hash_sha256_verify: unable to find checksum for '${TARGET}' in '${checksums}'"
+    log_err "hash_sha256_verify unable to find checksum for '${TARGET}' in '${checksums}'"
     return 1
   fi
   got=$(hash_sha256 "$TARGET")
   if [ "$want" != "$got" ]; then
-    echo "hash_sha256_verify: checksum for '$TARGET' did not verify ${want} vs $got"
+    log_err "hash_sha256_verify checksum for '$TARGET' did not verify ${want} vs $got"
     return 1
   fi
 }
