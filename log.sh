@@ -3,7 +3,7 @@
 #
 # by default prints the script name ($0)
 log_prefix() {
-  echo $0
+  echo "$0"
 }
 
 # default priority
@@ -26,18 +26,18 @@ log_priority() {
 }
 
 log_debug() {
-  log_priority 7 && echoerr $(log_prefix) "DEBUG" $@
+  log_priority 7 && echoerr "$(log_prefix)" "DEBUG" "$@"
 }
 
 log_info() {
-  log_priority 6 && echoerr $(log_prefix) "INFO" $@
+  log_priority 6 && echoerr "$(log_prefix)" "INFO" "$@"
 }
 
 log_err() {
-  log_priority 3 && echoerr $(log_prefix) "ERR" $@
+  log_priority 3 && echoerr "$(log_prefix)" "ERR" "$@"
 }
 
 # log_crit is for platform problems
 log_crit() {
-  log_priority 2 && echoerr $(log_prefix) "CRIT" $@
+  log_priority 2 && echoerr "$(log_prefix)" "CRIT" "$@"
 }
