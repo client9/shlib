@@ -1,18 +1,17 @@
-
 http_download_curl() {
-	local_file=$1
-	source_url=$2
-	header=$3
-	if [ -z "$header" ]; then
-		code=$(curl -w '%{http_code}' -sL -o "$local_file" "$source_url")
-	else
-		code=$(curl -w '%{http_code}' -sL -H "$header" -o "$local_file" "$source_url")
-	fi
-	if [ "$code" != "200" ]; then
-		log_debug "http_download_curl received HTTP status $code"
-		return 1
-	fi
-	return 0
+  local_file=$1
+  source_url=$2
+  header=$3
+  if [ -z "$header" ]; then
+    code=$(curl -w '%{http_code}' -sL -o "$local_file" "$source_url")
+  else
+    code=$(curl -w '%{http_code}' -sL -H "$header" -o "$local_file" "$source_url")
+  fi
+  if [ "$code" != "200" ]; then
+    log_debug "http_download_curl received HTTP status $code"
+    return 1
+  fi
+  return 0
 }
 
 # http_download_wget
@@ -24,11 +23,11 @@ http_download_wget() {
   local_file=$1
   source_url=$2
   header=$3
-	if [ -z "$header" ]; then
-		wget -q -O "$local_file" "$source_url"
-	else
-		wget -q --header "$header" -O "$local_file" "$source_url"
-	fi
+  if [ -z "$header" ]; then
+    wget -q -O "$local_file" "$source_url"
+  else
+    wget -q --header "$header" -O "$local_file" "$source_url"
+  fi
 }
 #
 # http_download [local-file] [url] [optional extra header]
@@ -39,10 +38,10 @@ http_download_wget() {
 http_download() {
   log_debug "http_download $2"
   if is_command curl; then
-    http_download_curl $1 $2 $3
+    http_download_curl "$@"
     return
   elif is_command wget; then
-    http_download_wget $1 $2 $3
+    http_download_wget "$@"
     return
   fi
   log_crit "http_download unable to find wget or curl"
@@ -54,9 +53,9 @@ http_download() {
 # needed since curl is broken
 #
 http_copy() {
-	tmp=$(mktemp)
-	http_download "${tmp}" "$1" "$2" || return 1 
-	body=$(cat "$tmp")
-	rm -f "${tmp}"
-	echo "$body"
+  tmp=$(mktemp)
+  http_download "${tmp}" "$1" "$2" || return 1
+  body=$(cat "$tmp")
+  rm -f "${tmp}"
+  echo "$body"
 }
