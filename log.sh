@@ -40,15 +40,15 @@ log_tag() {
 }
 
 log_debug() {
-  log_priority 7 && echoerr "$(log_prefix)" "$(log_tag 7)" "$@"
+  log_priority 7 && echoerr "$(log_prefix)" "$(log_tag 7)" "$@" || true
 }
 
 log_info() {
-  log_priority 6 && echoerr "$(log_prefix)" "$(log_tag 6)" "$@"
+  log_priority 6 && echoerr "$(log_prefix)" "$(log_tag 6)" "$@" || true
 }
 
 log_err() {
-  log_priority 3 && echoerr "$(log_prefix)" "$(log_tag 3)" "$@"
+  log_priority 3 && echoerr "$(log_prefix)" "$(log_tag 3)" "$@" || true
 }
 
 # log_crit is for platform problems
