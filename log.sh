@@ -22,7 +22,7 @@ log_priority() {
     echo "$_logp"
     return
   fi
-  [ "$1" -ge "$_logp" ]
+  [ "$1" -le "$_logp" ]
 }
 
 log_tag() {
