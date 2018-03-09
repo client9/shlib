@@ -25,19 +25,33 @@ log_priority() {
   [ "$1" -ge "$_logp" ]
 }
 
+log_tag() {
+  case $1 in
+    0) echo "emerg" ;;
+    1) echo "alert" ;;
+    2) echo "crit" ;;
+    3) echo "err" ;;
+    4) echo "warning" ;;
+    5) echo "notice" ;;
+    6) echo "info" ;;
+    7) echo "debug" ;;
+    *) echo "$1" ;;
+  esac
+}
+
 log_debug() {
-  log_priority 7 && echoerr "$(log_prefix)" "DEBUG" "$@"
+  log_priority 7 && echoerr "$(log_prefix)" "$(log_tag 7)" "$@"
 }
 
 log_info() {
-  log_priority 6 && echoerr "$(log_prefix)" "INFO" "$@"
+  log_priority 6 && echoerr "$(log_prefix)" "$(log_tag 6)" "$@"
 }
 
 log_err() {
-  log_priority 3 && echoerr "$(log_prefix)" "ERR" "$@"
+  log_priority 3 && echoerr "$(log_prefix)" "$(log_tag 3)" "$@"
 }
 
 # log_crit is for platform problems
 log_crit() {
-  log_priority 2 && echoerr "$(log_prefix)" "CRIT" "$@"
+  log_priority 2 && echoerr "$(log_prefix)" "$(log_tag 2)" "$@"
 }
