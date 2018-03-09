@@ -1,6 +1,9 @@
 #!/bin/sh
 
-# github_last_release: returns the last release version or error
+# github_release: validates tag exists or returns latest tagged release
+#
+# If tag exists it is returned
+# If tag is latest, the latest tag is returned
 #
 # Requires: http_download, is_command
 #
@@ -14,7 +17,7 @@
 #
 #  what remains is the version number
 #
-github_last_release() {
+github_release() {
   owner_repo=$1
   version=$2
   test -z "$version" && version="latest"
