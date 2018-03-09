@@ -9,7 +9,7 @@ http_download_curl() {
 		code=$(curl -w '%{http_code}' -sL -H "$header" -o "$local_file" "$source_url")
 	fi
 	if [ "$code" != "200" ]; then
-		log_err "received HTTP status $code"
+		log_debug "http_download_curl received HTTP status $code"
 		return 1
 	fi
 	return 0
@@ -37,6 +37,7 @@ http_download_wget() {
 # must be in the form "foo: bar"
 #
 http_download() {
+  log_debug "http_download $2"
   if is_command curl; then
     http_download_curl $1 $2 $3
     return
