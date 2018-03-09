@@ -1,3 +1,35 @@
+
+http_download_curl() {
+	local_file=$1
+	source_url=$2
+	header=$3
+	if [ -z "$header" ]; then
+		code=$(curl -w '%{http_code}' -sL -o "$local_file" "$source_url")
+	else
+		code=$(curl -w '%{http_code}' -sL -H "$header" -o "$local_file" "$source_url")
+	fi
+	if [ "$code" != "200" ]; then
+		log_err "received HTTP status $code"
+		return 1
+	fi
+	return 0
+}
+
+# http_download_wget
+#
+# unable to get server response code in a portable manner
+# busybox wget (used on alpine linux) does not support "--server-response"
+#
+http_download_wget() {
+  local_file=$1
+  source_url=$2
+  header=$3
+	if [ -z "$header" ]; then
+		wget -q -O "$local_file" "$source_url"
+	else
+		wget -q --header "$header" -O "$local_file" "$source_url"
+	fi
+}
 #
 # http_download [local-file] [url] [optional extra header]
 #
@@ -5,29 +37,25 @@
 # must be in the form "foo: bar"
 #
 http_download() {
-  local_file=$1
-  source_url=$2
-  header=$3
-  headerflag=''
-  destflag=''
   if is_command curl; then
-    cmd='curl --fail -sSL'
-    destflag='-o'
-    headerflag='-H'
+    http_download_curl $1 $2 $3
+    return
   elif is_command wget; then
-    cmd='wget -q'
-    destflag='-O'
-    headerflag='--header'
-  else
-    log_crit "http_download unable to find wget or curl"
-    return 1
+    http_download_wget $1 $2 $3
+    return
   fi
-  if [ -z "$header" ]; then
-    $cmd $destflag "$local_file" "$source_url"
-  else
-    # this very explicit "$headerflag "$header"
-    # is needed when $header has spaces.
-    # cmd="$cmd -H $header" doesn't work
-    $cmd $headerflag "$header" $destflag "$local_file" "$source_url"
-  fi
+  log_crit "http_download unable to find wget or curl"
+  return 1
+}
+
+# http_copy - copies contents of a URL to stdout or fail
+#
+# needed since curl is broken
+#
+http_copy() {
+	tmp=$(mktemp)
+	http_download "${tmp}" "$1" "$2" || return 1 
+	body=$(cat "$tmp")
+	rm -f "${tmp}"
+	echo "$body"
 }
