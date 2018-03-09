@@ -40,22 +40,22 @@ log_tag() {
 }
 
 log_debug() {
-  log_priority 7 || return
+  log_priority 7 || return 0
   echoerr "$(log_prefix)" "$(log_tag 7)" "$@"
 }
 
 log_info() {
-  log_priority 6 || return
+  log_priority 6 || return 0
   echoerr "$(log_prefix)" "$(log_tag 6)" "$@"
 }
 
 log_err() {
-  log_priority 3 || return
+  log_priority 3 || return 0
   echoerr "$(log_prefix)" "$(log_tag 3)" "$@"
 }
 
 # log_crit is for platform problems
 log_crit() {
-  log_priority 2 || return
+  log_priority 2 || return 0
   echoerr "$(log_prefix)" "$(log_tag 2)" "$@"
 }
