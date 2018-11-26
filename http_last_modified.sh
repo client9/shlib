@@ -9,5 +9,5 @@ http_last_modified() {
   # head -c 29 -- removes them
   # curl -L = follow redirect
   # curl -s = no progress meter
-  curl -L -s --fail --head "$url" | grep 'Last-Modified:' | tail -c 31 | head -c 29
+  curl -L -s --fail --head "$url" | grep -i 'Last-Modified:' | tail -c 31 | head -c 29
 }
