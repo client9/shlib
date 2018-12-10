@@ -17,7 +17,8 @@ uname_os() {
 
   # fixed up for https://github.com/client9/shlib/issues/3
   case "$os" in
-    msys_nt) os="windows" ;;
+    msys_nt*) os="windows" ;;
+    mingw*) os="windows" ;;
   esac
 
   # other fixups here
