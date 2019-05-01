@@ -123,8 +123,10 @@ http_download() {
   fi
   if [ -z "$header" ]; then
     $cmd $destflag "$local_file" "$source_url"
+    echo $cmd $destflag "$local_file" "$source_url"
   else
     $cmd $headerflag "$header" $destflag "$local_file" "$source_url"
+    echo $cmd $headerflag "$header" $destflag "$local_file" "$source_url"
   fi
 }
 github_api() {
