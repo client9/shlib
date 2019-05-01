@@ -4,8 +4,6 @@ addons:
   apt:
     sources:
     - debian-sid
-    packages:
-    - shellcheck
 
 before_install:
   - sudo apt-get update
