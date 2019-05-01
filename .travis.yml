@@ -3,9 +3,13 @@ dist: xenial
 addons:
   apt:
     sources:
-    - debian-buster
+    - debian-sid
     packages:
     - shellcheck
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y shellcheck --allow-unauthenticated
 
 script:
   - ./scripts/godownloader-shfmt.sh
