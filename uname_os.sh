@@ -17,8 +17,10 @@ uname_os() {
 
   # fixed up for https://github.com/client9/shlib/issues/3
   case "$os" in
-    msys_nt*) os="windows" ;;
+    msys*) os="windows" ;;
     mingw*) os="windows" ;;
+    cygwin*) os="windows" ;;
+    win*) os="windows" ;; # for windows busybox and like # https://frippery.org/busybox/
   esac
 
   # other fixups here
