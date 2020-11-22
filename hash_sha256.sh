@@ -26,6 +26,9 @@ hash_sha256() {
     # darwin, freebsd?
     hash=$(shasum -a 256 "$TARGET" 2>/dev/null) || return 1
     echo "$hash" | cut -d ' ' -f 1
+  elif is_command sha256; then
+    hash=$(sha256 -q "$TARGET" 2>/dev/null) || return 1
+    echo "$hash" | cut -d ' ' -f 1
   elif is_command openssl; then
     hash=$(openssl -dst openssl dgst -sha256 "$TARGET") || return 1
     echo "$hash" | cut -d ' ' -f a
