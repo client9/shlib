@@ -1,15 +1,8 @@
 language: bash
-dist: xenial
-addons:
-  apt:
-    sources:
-    - debian-sid
-
-before_install:
-  - sudo apt-get update
-  - sudo apt-get install -y shellcheck --allow-unauthenticated
+# https://docs.travis-ci.com/user/reference/focal/
+# Includes shellcheck and shfmt
+dist: focal
 
 script:
-  - ./scripts/godownloader-shfmt.sh
   - shellcheck -V
   - make lint test
