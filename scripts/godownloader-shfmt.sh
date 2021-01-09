@@ -56,6 +56,7 @@ uname_os_check() {
    freebsd)   return 0 ;;
    linux)     return 0 ;;
    android)   return 0 ;;
+   midnightbsd) return 0;;
    nacl)      return 0 ;;
    netbsd)    return 0 ;;
    openbsd)   return 0 ;;
