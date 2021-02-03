@@ -1,6 +1,6 @@
 
 test: ## run tests
-	/bin/sh *_test.sh
+	for t in *_test.sh; do /bin/sh $$t || echo "^ $$t"; done
 
 lint: ./bin/shfmt ## run shellcheck and other lints
 	./scripts/lint.sh
