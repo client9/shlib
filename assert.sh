@@ -1,5 +1,5 @@
 assertTrue() {
-  if eval "$1"; then
+  if ! eval "$1"; then
     echo "assertTrue failed: $2"
     exit 2
   fi
