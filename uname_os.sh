@@ -23,6 +23,16 @@ uname_os() {
     win*) os="windows" ;; # for windows busybox and like # https://frippery.org/busybox/
   esac
 
+  # Sun Solaris and derived OS (Illumos, Oracle Solaris) reports to be the very ancient SunOS via uname not what it actually is
+  if [ "$os" = "sunos" ]; then
+    # Current illumos versions have -o to check if they are illumos or Solaris without breaking most builds.
+    if [ $(uname -o) == "illumos" ]; then
+      os="illumos"
+    else
+      os="solaris"
+    fi
+  fi
+
   # other fixups here
   echo "$os"
 }
