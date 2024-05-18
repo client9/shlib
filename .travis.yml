@@ -1,4 +1,4 @@
-language: bash
+language: shell
 dist: xenial
 addons:
   apt:
