@@ -1,6 +1,6 @@
 
 test: ## run tests
-	/bin/sh *_test.sh
+	err=0; for t in *_test.sh; do /bin/sh $$t; e=$$?; if [ $$e -ne 0 ]; then echo "^ $$t"; err=$$e; fi; done; exit $$err
 
 lint: ./bin/shfmt ## run shellcheck and other lints
 	./scripts/lint.sh
