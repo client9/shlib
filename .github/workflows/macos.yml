@@ -1,0 +1,40 @@
+name: macos
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # this repo goes quiet for long stretches; a monthly build catches bit-rot
+  # in the things we do not control (release URLs, runner images)
+  schedule:
+    - cron: '17 13 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # /bin/sh here is bash-in-posix-mode, and bash is still 3.2
+          - {name: 'sh', shell: '/bin/sh'}
+          - {name: 'bash 3.2', shell: '/bin/bash'}
+          - {name: 'ksh', shell: '/bin/ksh'}
+          # zsh has been the macOS default login shell since Catalina
+          - {name: 'zsh', shell: '/bin/zsh'}
+          - {name: 'dash', shell: 'dash', brew: 'dash'}
+    steps:
+      - uses: actions/checkout@v4
+      - name: install ${{ matrix.brew }}
+        if: matrix.brew != ''
+        run: brew install ${{ matrix.brew }}
+      - name: make test
+        run: make test TEST_SHELL="${{ matrix.shell }}"
+      - name: summary
+        if: always()
+        run: echo "\`${{ matrix.name }}\` - ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"

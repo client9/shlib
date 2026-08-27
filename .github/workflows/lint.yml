@@ -1,0 +1,24 @@
+name: lint
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # this repo goes quiet for long stretches; a monthly build catches bit-rot
+  # in the things we do not control (release URLs, runner images)
+  schedule:
+    - cron: '17 13 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: shellcheck + shfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install shellcheck + shfmt
+        run: make tools
+      - run: make lint

@@ -1,0 +1,45 @@
+name: linux
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # this repo goes quiet for long stretches; a monthly build catches bit-rot
+  # in the things we do not control (release URLs, runner images)
+  schedule:
+    - cron: '17 13 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.shell }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # dash is Debian/Ubuntu's /bin/sh and the strictest common target
+          - {shell: 'dash', apt: 'dash'}
+          - {shell: 'bash', apt: 'bash'}
+          - {shell: 'ksh', apt: 'ksh'}
+          - {shell: 'mksh', apt: 'mksh'}
+          # yash and posh are deliberately pedantic POSIX implementations
+          - {shell: 'yash', apt: 'yash'}
+          - {shell: 'posh', apt: 'posh'}
+          - {shell: 'busybox sh', apt: 'busybox-static'}
+    steps:
+      - uses: actions/checkout@v4
+      # openssl/bzip2/xz/zstd/zip back the hash-fallback and untar tests;
+      # without them those cases report "skip" instead of actually running
+      - name: install shell + test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.apt }} openssl bzip2 xz-utils zstd zip unzip
+      - name: make test
+        run: make test TEST_SHELL="${{ matrix.shell }}"
+      - name: summary
+        if: always()
+        run: echo "\`${{ matrix.shell }}\` - ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
