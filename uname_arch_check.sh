@@ -20,6 +20,10 @@ uname_arch_check() {
     mips64) return 0 ;;
     mips64le) return 0 ;;
     s390x) return 0 ;;
+    riscv64) return 0 ;;
+    loong64) return 0 ;;
+    # amd64p32 was dropped from Go in 1.14 along with nacl; kept so that
+    # existing callers do not start failing.
     amd64p32) return 0 ;;
   esac
   log_crit "uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value.  Please file bug report at https://github.com/client9/shlib"

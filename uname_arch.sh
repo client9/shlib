@@ -34,6 +34,7 @@ uname_arch() {
     armv5*) arch="armv5" ;;
     armv6*) arch="armv6" ;;
     armv7*) arch="armv7" ;;
+    loongarch64) arch="loong64" ;;
   esac
   echo "${arch}"
 }
