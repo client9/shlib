@@ -1,16 +1,15 @@
-# Shell scripts must keep LF endings everywhere.
+# Default: normalize text in the repo, check it out with LF everywhere.
 #
-# Git on Windows defaults to core.autocrlf=true, which would check these out
-# with CRLF -- and a shell script with \r line endings fails in confusing ways
-# ("command not found" on a line that looks fine).  This matters for anyone
-# cloning on Windows, not just for CI.
-*.sh text eol=lf
-*.sh.example text eol=lf
-Makefile text eol=lf
-.gitattributes text eol=lf
+# Git on Windows defaults to core.autocrlf=true.  A shell script with CRLF
+# fails in ways that look like anything but line endings, so pin the whole
+# tree rather than listing extensions and missing one.
+* text=auto eol=lf
 
-# generated bundles are shell too
+# Test fixtures must be byte-exact: their checksums are the assertion.
+# Without this, Windows checks them out as CRLF and every hash test fails
+# with a digest that looks arbitrary (md5 of "foobar\r\n" instead of
+# "foobar\n").  -text disables end-of-line conversion entirely.
+fixtures/** -text
+
+# Generated bundles are shell; keep them LF for the same reason.
 dist/* text eol=lf
-
-# docs can follow the platform
-*.md text
