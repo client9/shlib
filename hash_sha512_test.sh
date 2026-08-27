@@ -47,3 +47,48 @@ test5
 test6
 test7
 test8
+
+# --- regression tests for the unanchored-grep bug -------------------------
+test9() {
+  assertFalse "hash_sha512_verify fixtures/sample1.txt fixtures/sha512-checksums-substring.txt" \
+    "test9: checksum listed for a different file must not verify"
+}
+
+test10() {
+  assertFalse "hash_sha512_verify fixtures/sampleXtxt fixtures/sha512-checksums.txt" \
+    "test10: filename must be matched literally, not as a regex"
+}
+
+test11() {
+  assertTrue "hash_sha512_verify ./fixtures/sample1.txt fixtures/sha512-checksums.txt" \
+    "test11: path argument resolves to basename"
+}
+
+test9
+test10
+test11
+
+# --- openssl fallback -----------------------------------------------------
+# This branch never worked: it ran `openssl -dst openssl dgst -...` and then
+# `cut -f a`, an illegal field spec.  Force it by hiding the other hashers.
+test12() {
+  if ! command -v openssl >/dev/null 2>&1; then
+    assert_skip "test12: openssl not installed"
+    return 0
+  fi
+  is_command() {
+    case "$1" in
+      gsha512sum | sha512sum | shasum) return 1 ;;
+      *) command -v "$1" >/dev/null ;;
+    esac
+  }
+  want="e79b8ad22b34a54be999f4eadde2ee895c208d4b3d83f1954b61255d2556a8b73773c0dc0210aa044ffcca6834839460959cbc9f73d3079262fc8bc935d46262"
+  got=$(echo foobar | hash_sha512)
+  assertEquals "$want" "$got" "test12: openssl fallback via stdin"
+  got=$(hash_sha512 fixtures/sample1.txt)
+  assertEquals "$want" "$got" "test12a: openssl fallback via file"
+  assertFalse "hash_sha512 NONEXISTANT" "test12b: openssl fallback fails on missing file"
+  . ./is_command.sh
+}
+
+test12

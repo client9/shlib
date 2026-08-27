@@ -1,8 +1,6 @@
 #
 # hash_md5: produce md5 hash in hex digits for file or stding
 #
-# TODO: fall back to openssl (see hash_sha256)
-#
 # DEPENDS:
 #   log, is_command
 #
@@ -21,6 +19,10 @@ hash_md5() {
     echo "$sum" | cut -d ' ' -f 1
   elif is_command md5; then
     md5 -q "$@" 2>/dev/null
+  elif is_command openssl; then
+    # "MD5(name)= <hash>" / "(stdin)= <hash>"; digest is the last field
+    sum=$(openssl dgst -md5 "$@") || return 1
+    echo "$sum" | awk '{print $NF}'
   else
     log_crit "hash_md5 unable to find command to compute md5 hash"
     return 1
