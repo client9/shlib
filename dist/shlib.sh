@@ -144,7 +144,7 @@ uname_os() {
 # https://github.com/golang/go/wiki/GoArm
 # https://en.wikipedia.org/wiki/List_of_ARM_microarchitectures
 #
-# arm 8 is know as arm64, and aarch64
+# arm8 is known as arm64 and aarch64
 #
 # more notes: https://github.com/golang/go/issues/13669
 #
