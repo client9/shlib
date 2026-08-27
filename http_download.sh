@@ -46,14 +46,25 @@ http_download() {
   return 1
 }
 
-# http_copy - copies contents of a URL to stdout or fail
+# http_copy - copies contents of a URL to stdout, or fails
 #
 # needed since curl is broken
 #
+# The body is streamed with `cat` rather than captured into a variable:
+# command substitution strips trailing newlines and cannot carry NUL, so
+# `body=$(cat "$tmp")` silently corrupted binary and newline-terminated data.
+# The temp file is removed on the failure path too, which it previously was not.
 http_copy() {
-  tmp=$(mktemp)
-  http_download "${tmp}" "$1" "$2" || return 1
-  body=$(cat "$tmp")
+  # explicit template: bare `mktemp` ignores TMPDIR on BSD/macOS, so the
+  # temp file would land somewhere the caller cannot predict or clean up
+  _http_copy_dir=${TMPDIR:-/tmp}
+  tmp=$(mktemp "${_http_copy_dir%/}/shlib.XXXXXXXXXX") || return 1
+  if ! http_download "${tmp}" "$1" "$2"; then
+    rm -f "${tmp}"
+    return 1
+  fi
+  cat "${tmp}"
+  rc=$?
   rm -f "${tmp}"
-  echo "$body"
+  return $rc
 }
