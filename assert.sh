@@ -80,4 +80,17 @@ assert_summary() {
   exit 0
 }
 
-trap assert_summary EXIT
+# A test file that calls an undefined function would otherwise just print
+# "command not found" and still report ok, because nothing asserted.  Treat a
+# file that ran zero assertions as a failure.
+assert_summary_strict() {
+  test -n "$_assert_done" && return 0
+  if [ "$((_assert_pass + _assert_fail + _assert_skip))" -eq 0 ]; then
+    _assert_done=1
+    echo "FAIL ${_assert_file}: no assertions ran" >&2
+    exit 1
+  fi
+  assert_summary
+}
+
+trap assert_summary_strict EXIT

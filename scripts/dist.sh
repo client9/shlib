@@ -82,23 +82,44 @@ emit_preamble() {
 # shellcheck disable=SC2086
 emit_bundle() {
   emit_preamble
+  # shellcheck disable=SC2086
   cat $FILES
 }
 
 emit_bundle >"${DISTDIR}/shlib.sh"
 
-# same pipeline the README documents for hand-rolled bundles
-emit_bundle | grep -v '^#' | grep -v ' #' | tr -s '\n' >"${DISTDIR}/shlib.min.sh"
+# Strip whole-line comments only.
+#
+# The old idiom `grep -v '^#' | grep -v ' #'` also deleted any CODE line with a
+# trailing comment.  That silently removed `win*) os="windows" ;; # ...` from
+# uname_os and both `gitrepo=` assignments from git_clone_or_update, so the
+# minified bundle behaved differently from the sources it was built from.
+# Trailing comments are kept: stripping them safely needs quote and heredoc
+# awareness, and the few bytes are not worth the risk.
+emit_bundle | grep -v '^[[:space:]]*#' | tr -s '\n' >"${DISTDIR}/shlib.min.sh"
+
+# install-base.sh: everything a downstream install script needs except its own
+# config.  Consumers do:  cat config.sh install-base.sh > install.sh
+#
+# Order matters.  main.sh runs the flow and must come last, so that a truncated
+# `curl | sh` cannot execute a partial install.
+{
+  emit_preamble
+  # shellcheck disable=SC2086
+  cat $FILES
+  cat install/runner.sh
+  cat install/main.sh
+} | grep -v '^[[:space:]]*#' | tr -s '\n' >"${DISTDIR}/install-base.sh"
 
 # checksums, computed with our own hash_sha256
 (
   cd "$DISTDIR"
-  for f in shlib.sh shlib.min.sh; do
+  for f in shlib.sh shlib.min.sh install-base.sh; do
     echo "$(hash_sha256 "$f")  $f"
   done
 ) >"${DISTDIR}/checksums.txt"
 
 log_info "dist shlib ${VERSION}"
-for f in shlib.sh shlib.min.sh; do
+for f in shlib.sh shlib.min.sh install-base.sh; do
   log_info "dist ${DISTDIR}/${f} ($(wc -l <"${DISTDIR}/${f}" | tr -d ' ') lines)"
 done

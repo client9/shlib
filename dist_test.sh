@@ -48,3 +48,40 @@ test_uname
 test_hash
 test_mktmpdir
 test_untar
+
+# The minifier must not change behaviour.  It once did: the old
+# `grep -v ' #'` filter deleted code lines that carried trailing comments,
+# silently removing the win*->windows mapping and both gitrepo= assignments.
+# Compare the bundle against the sources for every mapping case.
+test_bundle_matches_sources() {
+  for probe in Linux Darwin FreeBSD MINGW64_NT-10.0 MSYS_NT-10.0 CYGWIN_NT-10.0 Windows_NT AIX; do
+    want=$(sh -c ". ./uname_os.sh
+      uname() { case \"\$1\" in -s) echo '$probe' ;; -o) return 1 ;; esac; }
+      uname_os")
+    got=$(sh -c ". ./dist/shlib.min.sh
+      uname() { case \"\$1\" in -s) echo '$probe' ;; -o) return 1 ;; esac; }
+      uname_os")
+    assertEquals "$want" "$got" "bundle matches sources for uname -s '$probe'"
+  done
+
+  for probe in x86_64 aarch64 armv7l loongarch64 riscv64; do
+    want=$(sh -c ". ./uname_arch.sh; uname() { echo '$probe'; }; uname_arch")
+    got=$(sh -c ". ./dist/shlib.min.sh; uname() { echo '$probe'; }; uname_arch")
+    assertEquals "$want" "$got" "bundle matches sources for uname -m '$probe'"
+  done
+}
+
+# every function defined in a source file must survive into the bundle
+test_no_function_lost() {
+  missing=""
+  for f in ./*.sh; do
+    case "$f" in ./*_test.sh | ./assert.sh) continue ;; esac
+    for fn in $(grep -oE '^[a-z_][a-z0-9_]*\(\)' "$f" | tr -d '()'); do
+      grep -q "^${fn}()" ./dist/shlib.min.sh || missing="$missing $fn"
+    done
+  done
+  assertEquals "" "$missing" "no function lost in minification"
+}
+
+test_bundle_matches_sources
+test_no_function_lost

@@ -383,3 +383,128 @@ cat /dev/null <<EOF
 End of functions from https://github.com/client9/shlib
 ------------------------------------------------------------------------
 EOF
+usage() {
+  this=$1
+  cat <<EOF
+$this: download binaries for ${OWNER}/${REPO}
+Usage: $this [-b bindir] [-d] [tag]
+  -b  install directory (default ${BINDIR})
+  -d  turn on debug logging
+  tag a tag from https://github.com/${OWNER}/${REPO}/releases
+      if missing, the latest release is used
+EOF
+  exit 2
+}
+parse_args() {
+  BINDIR=${BINDIR:-./bin}
+  while getopts "b:dh?x" arg; do
+    case "$arg" in
+      b) BINDIR="$OPTARG" ;;
+      d) log_set_priority 10 ;;
+      h | \?) usage "$0" ;;
+      x) set -x ;;
+      *) usage "$0" ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+  TAG=$1
+}
+normalize_platforms() {
+  PLATFORMS=$(printf '%s' "${PLATFORMS}" | tr '\t\n' '  ' | tr -s ' ')
+  PLATFORMS=${PLATFORMS# }
+  PLATFORMS=${PLATFORMS% }
+}
+check_platform() {
+  test -z "${PLATFORMS}" && return 0
+  case " ${PLATFORMS} " in
+    *" ${PLATFORM} "*) return 0 ;;
+  esac
+  log_crit "no binary published for ${PLATFORM}"
+  log_crit "available platforms: ${PLATFORMS}"
+  return 1
+}
+tag_to_version() {
+  if [ -z "${TAG}" ]; then
+    log_info "checking GitHub for latest tag"
+  else
+    log_info "checking GitHub for tag '${TAG}'"
+  fi
+  REALTAG=$(github_release "${OWNER}/${REPO}" "${TAG}") && true
+  if test -z "$REALTAG"; then
+    log_crit "unable to find '${TAG}' - use 'latest' or see https://github.com/${OWNER}/${REPO}/releases for details"
+    return 1
+  fi
+  TAG="$REALTAG"
+  VERSION=${TAG#v}
+}
+if ! command -v adjust_format >/dev/null 2>&1; then
+  adjust_format() { :; }
+fi
+if ! command -v adjust_os >/dev/null 2>&1; then
+  adjust_os() { :; }
+fi
+if ! command -v adjust_arch >/dev/null 2>&1; then
+  adjust_arch() { :; }
+fi
+if ! command -v binary_path >/dev/null 2>&1; then
+  binary_path() { echo "$1"; }
+fi
+execute() {
+  tmpdir=$(mktmpdir) || return 1
+  log_debug "downloading files into ${tmpdir}"
+  http_download "${tmpdir}/${TARBALL}" "${TARBALL_URL}" || return 1
+  if [ -n "${CHECKSUM}" ]; then
+    http_download "${tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}" || return 1
+    hash_sha256_verify "${tmpdir}/${TARBALL}" "${tmpdir}/${CHECKSUM}" || return 1
+  fi
+  (cd "${tmpdir}" && untar "${TARBALL}") || return 1
+  mkdir -p "${BINDIR}" || return 1
+  _bins=$(printf '%s' "${BINARIES:-$BINARY}" | tr '\t\n' '  ' | tr -s ' ')
+  _bins=${_bins# }
+  _bins=${_bins% }
+  while [ -n "${_bins}" ]; do
+    case "${_bins}" in
+      *" "*)
+        binexe=${_bins%% *}
+        _bins=${_bins#* }
+        ;;
+      *)
+        binexe=${_bins}
+        _bins=""
+        ;;
+    esac
+    if [ "$OS" = "windows" ]; then
+      binexe="${binexe}.exe"
+    fi
+    srcpath=$(binary_path "${binexe}")
+    install "${tmpdir}/${srcpath}" "${BINDIR}/${binexe}" || return 1
+    log_info "installed ${BINDIR}/${binexe}"
+  done
+  rm -rf "${tmpdir}"
+}
+PREFIX="${OWNER}/${REPO}"
+log_prefix() {
+  echo "$PREFIX"
+}
+OS=$(uname_os)
+ARCH=$(uname_arch)
+PLATFORM="${OS}/${ARCH}"
+GITHUB_DOWNLOAD="https://github.com/${OWNER}/${REPO}/releases/download"
+uname_os_check || exit 1
+uname_arch_check || exit 1
+parse_args "$@"
+normalize_platforms
+check_platform || exit 1
+tag_to_version || exit 1
+adjust_format
+adjust_os
+adjust_arch
+NAME=$(archive_name)
+TARBALL="${NAME}.${FORMAT}"
+TARBALL_URL="${GITHUB_DOWNLOAD}/${TAG}/${TARBALL}"
+if is_command checksum_name; then
+  CHECKSUM=$(checksum_name)
+  CHECKSUM_URL="${GITHUB_DOWNLOAD}/${TAG}/${CHECKSUM}"
+fi
+log_info "found version ${VERSION} for ${PLATFORM}"
+execute || exit 1

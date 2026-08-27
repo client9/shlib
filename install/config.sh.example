@@ -1,0 +1,61 @@
+# config.sh: the only per-project file
+#
+# Build an installer with:
+#
+#   curl -sSfL -o /tmp/base.sh \
+#     https://raw.githubusercontent.com/client9/shlib/master/dist/install-base.sh
+#   cat config.sh /tmp/base.sh > install.sh
+#
+# This file must only DEFINE things -- assignments and function bodies.  It is
+# concatenated first, before the library is loaded, so calling log_info or any
+# other shlib function at the top level here will not work.
+
+# These files are concatenation fragments: variables set here are consumed by
+# the other fragments, which shellcheck cannot see when linting one file alone.
+# The assembled script IS linted -- see scripts/lint.sh.
+# shellcheck disable=SC2034
+OWNER=securego
+REPO=gosec
+BINARY=gosec
+FORMAT=tar.gz
+BINDIR=${BINDIR:-./bin}
+
+# Platforms this project actually publishes.
+#
+# You already know this -- it is your build matrix.  Declaring it lets the
+# installer say "we do not ship a binary for windows/arm64" instead of failing
+# with a bare 404 from the download.
+#
+# Leave empty to skip the check.
+PLATFORMS="darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64"
+
+# How the release archive is named.
+#
+# This is a function, not a template string: it runs after VERSION, OS and ARCH
+# are known, so ordinary shell expansion does the whole job.  Anything a
+# template language could express, you can write here directly.
+archive_name() {
+  echo "${BINARY}_${VERSION}_${OS}_${ARCH}"
+}
+
+# Optional: name of the checksum file to verify against.  Delete this function
+# entirely to skip verification (not recommended).
+checksum_name() {
+  echo "${BINARY}_${VERSION}_checksums.txt"
+}
+
+# Optional: where the binary sits INSIDE the archive.  The default is the
+# archive root.  Some projects wrap everything in a versioned directory:
+#   golangci-lint-2.13.1-darwin-arm64/golangci-lint
+# for which you would use:
+# binary_path() { echo "${NAME}/$1"; }
+
+# Optional: several binaries in one archive.  Defaults to $BINARY.
+# BINARIES="gosec gosec-helper"
+
+# Optional overrides, for projects whose filenames do not use the canonical
+# GOOS/GOARCH spellings.  Delete any you do not need.
+#
+# adjust_format() { case ${OS} in windows) FORMAT=zip ;; esac; }
+# adjust_os()     { case ${OS} in darwin) OS=macos ;; esac; }
+# adjust_arch()   { case ${ARCH} in amd64) ARCH=64bit ;; esac; }

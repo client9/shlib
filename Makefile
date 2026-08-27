@@ -36,7 +36,7 @@ lint: $(SHFMT) ## run shellcheck and check formatting
 	@SHELLCHECK='$(SHELLCHECK)' SHFMT='$(SHFMT)' ./scripts/lint.sh
 
 fmt: $(SHFMT) ## reformat shell scripts
-	$(SHFMT) -ci -p -i 2 -w *.sh scripts/*.sh
+	$(SHFMT) -ci -p -i 2 -w *.sh scripts/*.sh install/*.sh
 
 dist: ## rebuild the concatenated bundles in ./dist
 	./scripts/dist.sh
