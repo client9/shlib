@@ -59,6 +59,9 @@ log_priority() {
   [ "$1" -le "$_shlib_logp" ]
 }
 
+# log_tag: map a syslog priority number to its name
+#
+# Unrecognised values are echoed back unchanged.
 log_tag() {
   case $1 in
     0) echo "emerg" ;;
@@ -73,29 +76,33 @@ log_tag() {
   esac
 }
 
+# log_debug: log at debug priority (7)
 log_debug() {
   log_priority 7 || return 0
   echoerr "$(log_prefix)" "$(log_tag 7)" "$@"
 }
 
+# log_info: log at info priority (6)
 log_info() {
   log_priority 6 || return 0
   echoerr "$(log_prefix)" "$(log_tag 6)" "$@"
 }
 
+# log_err: log at error priority (3)
 log_err() {
   log_priority 3 || return 0
   echoerr "$(log_prefix)" "$(log_tag 3)" "$@"
 }
 
-# log_crit is for platform problems
+# log_crit: log at critical priority (2), for platform problems
 log_crit() {
   log_priority 2 || return 0
   echoerr "$(log_prefix)" "$(log_tag 2)" "$@"
 }
 #!/bin/sh
 
-# uname_os converts `uname -s` into standard golang OS types
+# uname_os: convert `uname -s` into a standard golang GOOS value
+#
 # golang types are used since they cover
 # most platforms and are standardized while raw uname values vary
 # wildly.  See complete list of values by running
@@ -131,8 +138,9 @@ uname_os() {
   # other fixups here
   echo "$_shlib_os"
 }
-# uname_arch converts `uname -m` back into standardized golang
-# OS types.
+# uname_arch: convert `uname -m` into a standard golang GOARCH value
+#
+# Converts back into standardized golang OS types.
 #
 # See also `uname_arch_check` for a self-check
 #
@@ -171,7 +179,7 @@ uname_arch() {
   esac
   echo "${_shlib_arch}"
 }
-# uname_os_check: self-check `uname_os`
+# uname_os_check: self-check that uname_os produced a valid GOOS
 #
 # This checks that uname_os is working correctly.  If
 # the conversion from `uname -s` to golang GOOS isn't
@@ -204,6 +212,7 @@ uname_os_check() {
   log_crit "uname_os_check '$(uname -s)' got converted to '$_shlib_os' which is not a GOOS value"
   return 1
 }
+# uname_arch_check: self-check that uname_arch produced a valid GOARCH
 #
 # supported names can be found
 # around here: https://github.com/golang/go/blob/master/src/cmd/dist/build.go#L1094
@@ -303,7 +312,7 @@ untar() {
       ;;
   esac
 }
-# http_download_curl
+# http_download_curl: download a URL to a local file using curl
 #
 # on error: displays a message on STDERR and returns non-zero code
 http_download_curl() {
@@ -317,7 +326,7 @@ http_download_curl() {
   fi
 }
 
-# http_download_wget
+# http_download_wget: download a URL to a local file using wget
 #
 # unable to get server response code in a portable manner
 # busybox wget (used on alpine linux) does not support "--server-response"
@@ -332,7 +341,7 @@ http_download_wget() {
     wget -q --header "$_shlib_header" -O "$_shlib_local_file" "$_shlib_source_url"
   fi
 }
-# http_download_fetch
+# http_download_fetch: download a URL to a local file using FreeBSD fetch(1)
 #
 # fetch(1) is the FreeBSD base-system downloader.  FreeBSD ships neither curl
 # nor wget in base, so without this branch http_download fails outright on a
@@ -371,6 +380,7 @@ http_download_fetch() {
   return 1
 }
 
+# http_download: download a URL to a local file, using whichever downloader exists
 #
 # http_download [local-file] [url] [optional extra header]
 #
@@ -431,7 +441,7 @@ http_last_modified() {
 }
 #!/bin/sh
 
-# github_api: make a api request to api.github.com with auth token
+# github_api: make an API request to api.github.com, with auth token if set
 #
 # Requires `http_download`
 #
@@ -477,7 +487,7 @@ github_release() {
   echo "$_shlib_version"
 }
 #
-# hash_md5: produce md5 hash in hex digits for file or stding
+# hash_md5: produce md5 hash in hex digits for a file or stdin
 #
 # DEPENDS:
 #   log, is_command

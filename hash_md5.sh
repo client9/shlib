@@ -1,5 +1,5 @@
 #
-# hash_md5: produce md5 hash in hex digits for file or stding
+# hash_md5: produce md5 hash in hex digits for a file or stdin
 #
 # DEPENDS:
 #   log, is_command

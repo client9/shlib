@@ -25,6 +25,9 @@ log_priority() {
   [ "$1" -le "$_shlib_logp" ]
 }
 
+# log_tag: map a syslog priority number to its name
+#
+# Unrecognised values are echoed back unchanged.
 log_tag() {
   case $1 in
     0) echo "emerg" ;;
@@ -39,22 +42,25 @@ log_tag() {
   esac
 }
 
+# log_debug: log at debug priority (7)
 log_debug() {
   log_priority 7 || return 0
   echoerr "$(log_prefix)" "$(log_tag 7)" "$@"
 }
 
+# log_info: log at info priority (6)
 log_info() {
   log_priority 6 || return 0
   echoerr "$(log_prefix)" "$(log_tag 6)" "$@"
 }
 
+# log_err: log at error priority (3)
 log_err() {
   log_priority 3 || return 0
   echoerr "$(log_prefix)" "$(log_tag 3)" "$@"
 }
 
-# log_crit is for platform problems
+# log_crit: log at critical priority (2), for platform problems
 log_crit() {
   log_priority 2 || return 0
   echoerr "$(log_prefix)" "$(log_tag 2)" "$@"

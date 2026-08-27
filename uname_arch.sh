@@ -1,5 +1,6 @@
-# uname_arch converts `uname -m` back into standardized golang
-# OS types.
+# uname_arch: convert `uname -m` into a standard golang GOARCH value
+#
+# Converts back into standardized golang OS types.
 #
 # See also `uname_arch_check` for a self-check
 #

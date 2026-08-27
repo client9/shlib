@@ -1,6 +1,7 @@
 #!/bin/sh
 
-# uname_os converts `uname -s` into standard golang OS types
+# uname_os: convert `uname -s` into a standard golang GOOS value
+#
 # golang types are used since they cover
 # most platforms and are standardized while raw uname values vary
 # wildly.  See complete list of values by running

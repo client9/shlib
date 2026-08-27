@@ -1,4 +1,4 @@
-# uname_os_check: self-check `uname_os`
+# uname_os_check: self-check that uname_os produced a valid GOOS
 #
 # This checks that uname_os is working correctly.  If
 # the conversion from `uname -s` to golang GOOS isn't

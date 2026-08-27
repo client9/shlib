@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# github_api: make a api request to api.github.com with auth token
+# github_api: make an API request to api.github.com, with auth token if set
 #
 # Requires `http_download`
 #

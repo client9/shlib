@@ -1,3 +1,4 @@
+# uname_arch_check: self-check that uname_arch produced a valid GOARCH
 #
 # supported names can be found
 # around here: https://github.com/golang/go/blob/master/src/cmd/dist/build.go#L1094

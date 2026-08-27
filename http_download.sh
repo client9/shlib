@@ -1,4 +1,4 @@
-# http_download_curl
+# http_download_curl: download a URL to a local file using curl
 #
 # on error: displays a message on STDERR and returns non-zero code
 http_download_curl() {
@@ -12,7 +12,7 @@ http_download_curl() {
   fi
 }
 
-# http_download_wget
+# http_download_wget: download a URL to a local file using wget
 #
 # unable to get server response code in a portable manner
 # busybox wget (used on alpine linux) does not support "--server-response"
@@ -27,7 +27,7 @@ http_download_wget() {
     wget -q --header "$_shlib_header" -O "$_shlib_local_file" "$_shlib_source_url"
   fi
 }
-# http_download_fetch
+# http_download_fetch: download a URL to a local file using FreeBSD fetch(1)
 #
 # fetch(1) is the FreeBSD base-system downloader.  FreeBSD ships neither curl
 # nor wget in base, so without this branch http_download fails outright on a
@@ -66,6 +66,7 @@ http_download_fetch() {
   return 1
 }
 
+# http_download: download a URL to a local file, using whichever downloader exists
 #
 # http_download [local-file] [url] [optional extra header]
 #
