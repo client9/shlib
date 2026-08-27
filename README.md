@@ -19,7 +19,7 @@ GitHub provides no FreeBSD runner.
 | Alpine (musl)   | `busybox ash`                                        |
 | macOS           | `sh` `bash 3.2` `ksh` `zsh` `dash`                   |
 | FreeBSD 14, 15  | `sh` `dash` `bash` `ksh93` `mksh` `yash` `zsh`       |
-| Windows         | `git bash` `msys2` — `uname` mapping only            |
+| Windows         | `git bash` `msys2`                                   |
 
 I've sadly written a lot of shell scripts.   Mostly for installers on
 completely alien environments.
