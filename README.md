@@ -1,7 +1,20 @@
 # shlib
 portable functions for posix shell environments
 
-[![ci](https://github.com/client9/shlib/actions/workflows/ci.yml/badge.svg)](https://github.com/client9/shlib/actions/workflows/ci.yml)
+[![lint](https://github.com/client9/shlib/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/lint.yml)
+[![linux](https://github.com/client9/shlib/actions/workflows/linux.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/linux.yml)
+[![macos](https://github.com/client9/shlib/actions/workflows/macos.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/macos.yml)
+[![alpine](https://github.com/client9/shlib/actions/workflows/alpine.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/alpine.yml)
+
+Every push is tested against each shell below.  A GitHub Actions badge covers
+a whole workflow, so the badges are grouped by platform; the per-shell result
+for a given run is in the Actions tab.
+
+| platform        | shells tested                                        |
+| --------------- | ---------------------------------------------------- |
+| Linux (glibc)   | `dash` `bash` `ksh93` `mksh` `yash` `posh` `busybox ash` |
+| Alpine (musl)   | `busybox ash`                                        |
+| macOS           | `sh` `bash 3.2` `ksh` `zsh` `dash`                   |
 
 I've sadly written a lot of shell scripts.   Mostly for installers on
 completely alien environments.
@@ -12,13 +25,20 @@ However acknowledgement (and pull requests) are appreciated.  You can optionally
 
 ## Usage
 
-Here's an example of how create and compress a custom set of functions.  Using `grep -v '^#' | grep -v ' #' | tr -s '\n'` strips away comments and blank lines.
+Here's an example of how to create and compress a custom set of functions.  Using `grep -v '^#' | grep -v ' #' | tr -s '\n'` strips away comments and blank lines.
+
+List the files in dependency order.  Most functions report errors through
+`log_err` / `log_crit`, so include `echoerr.sh` and `log.sh` whenever you
+include something that can fail.
 
 ```bash
 cat \
   license.sh \
   is_command.sh \
-  uname.sh \
+  echoerr.sh \
+  log.sh \
+  uname_os.sh \
+  uname_arch.sh \
   untar.sh \
   mktmpdir.sh \
   http_download.sh \
@@ -34,15 +54,25 @@ improved.  Pull requests very welcome:
 
 * Simplify
 * Clean up local variable use
-* Remove any "exit 1" I may have left behind
 
 ## Testing
 
-I'm unlikely to work on this in the short term, but.. someone, someday could:
+The test harness is plain POSIX shell (see [assert.sh](assert.sh)); a test file
+is just a shell script that sources the functions it exercises.  Assertions are
+non-fatal, so one failure does not hide the rest of the file, and each file
+prints a pass/fail total.
 
-* Probably write the test harness in go, not shell.
-* Using travis.ci we can definite test ubuntu, centos and alpine/busybox using docker
-* Can we test macOS on travis?  They support something here but unclear how it works.
+```bash
+make test                      # run everything under /bin/sh
+make test TEST_SHELL=dash      # ... under one specific shell
+make test TESTS=untar_test.sh  # ... one file
+make test-all                  # ... under every shell installed locally
+make lint                      # shellcheck (sh, bash, dash, ksh) + shfmt
+```
+
+Functions that consult `uname` are tested with a stubbed `uname`, so the whole
+mapping table is exercised on every machine rather than only the branch that
+matches the host.
 
 ## Documentation
 
