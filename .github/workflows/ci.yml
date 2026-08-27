@@ -44,12 +44,18 @@ jobs:
           - {name: 'macos / sh', os: macos-latest, shell: '/bin/sh'}
           - {name: 'macos / bash 3.2', os: macos-latest, shell: '/bin/bash'}
           - {name: 'macos / ksh', os: macos-latest, shell: '/bin/ksh'}
+          # zsh has been the macOS default login shell since Catalina
+          - {name: 'macos / zsh', os: macos-latest, shell: '/bin/zsh'}
           - {name: 'macos / dash', os: macos-latest, shell: 'dash', brew: 'dash'}
     steps:
       - uses: actions/checkout@v4
-      - name: install ${{ matrix.apt }}
-        if: matrix.apt != ''
-        run: sudo apt-get update && sudo apt-get install -y ${{ matrix.apt }}
+      # openssl/bzip2/xz/zstd/zip back the hash-fallback and untar tests;
+      # without them those cases report "skip" instead of actually running
+      - name: install shell + test dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.apt }} openssl bzip2 xz-utils zstd zip unzip
       - name: install ${{ matrix.brew }}
         if: matrix.brew != ''
         run: brew install ${{ matrix.brew }}
@@ -66,4 +72,5 @@ jobs:
       - name: make test
         run: |
           docker run --rm -v "$PWD:/src" -w /src alpine:3.20 sh -c '
-            apk add --no-cache make curl tar && make test TEST_SHELL=/bin/sh'
+            apk add --no-cache make curl tar openssl bzip2 xz zstd zip unzip &&
+            make test TEST_SHELL=/bin/sh'
