@@ -1,0 +1,50 @@
+name: freebsd
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # this repo goes quiet for long stretches; a monthly build catches bit-rot
+  # in the things we do not control (release URLs, runner images)
+  schedule:
+    - cron: '17 13 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.release }}
+    # GitHub has no FreeBSD runner; vmactions boots one under QEMU on the
+    # normal x86_64 Linux runner and mounts the checkout into the VM.
+    #
+    # This is a third-party action running in CI.  It is pinned to the v1
+    # major tag for low maintenance; pin to a full commit SHA instead if you
+    # want the stricter supply-chain posture.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        release: ['14.4', '15.1']
+    steps:
+      - uses: actions/checkout@v4
+      - name: test on FreeBSD ${{ matrix.release }}
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          # FreeBSD's make is bmake; the Makefile uses .DEFAULT_GOAL,
+          # MAKEFILE_LIST and --no-print-directory, which are GNU-only.
+          #
+          # curl is not in the base system (base has fetch), and http_download
+          # needs curl or wget.  The rest back the untar and hash tests.
+          prepare: |
+            pkg install -y gmake curl bash dash ksh93 mksh yash zsh zip unzip
+          # `run` is always executed with sh, which on FreeBSD is the
+          # ash-derived FreeBSD sh -- a POSIX implementation the Linux and
+          # macOS matrices do not cover.
+          run: |
+            set -e
+            uname -a
+            gmake test TEST_SHELL=/bin/sh
+            gmake test-all

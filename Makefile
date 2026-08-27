@@ -22,7 +22,7 @@ test: ## run tests (TEST_SHELL=dash, TESTS=hash_sha256_test.sh)
 
 test-all: ## run tests under every POSIX-ish shell found on this machine
 	@err=0; \
-	for s in sh dash bash ksh mksh yash zsh "busybox sh"; do \
+	for s in sh dash bash ksh ksh93 mksh yash zsh "busybox sh"; do \
 	  c=$${s%% *}; \
 	  command -v "$$c" >/dev/null 2>&1 || { printf '%-14s -- not installed\n' "$$s"; continue; }; \
 	  if $(MAKE) --no-print-directory test TEST_SHELL="$$s" >/dev/null 2>&1; then \

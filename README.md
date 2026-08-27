@@ -4,17 +4,20 @@ portable functions for posix shell environments
 [![lint](https://github.com/client9/shlib/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/lint.yml)
 [![linux](https://github.com/client9/shlib/actions/workflows/linux.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/linux.yml)
 [![macos](https://github.com/client9/shlib/actions/workflows/macos.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/macos.yml)
+[![freebsd](https://github.com/client9/shlib/actions/workflows/freebsd.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/freebsd.yml)
 [![alpine](https://github.com/client9/shlib/actions/workflows/alpine.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/alpine.yml)
 
 Every push is tested against each shell below.  A GitHub Actions badge covers
 a whole workflow, so the badges are grouped by platform; the per-shell result
-for a given run is in the Actions tab.
+for a given run is in the Actions tab.  FreeBSD runs in a QEMU VM, since
+GitHub provides no FreeBSD runner.
 
 | platform        | shells tested                                        |
 | --------------- | ---------------------------------------------------- |
 | Linux (glibc)   | `dash` `bash` `ksh93` `mksh` `yash` `posh` `busybox ash` |
 | Alpine (musl)   | `busybox ash`                                        |
 | macOS           | `sh` `bash 3.2` `ksh` `zsh` `dash`                   |
+| FreeBSD 14, 15  | `sh` `dash` `bash` `ksh93` `mksh` `yash` `zsh`       |
 
 I've sadly written a lot of shell scripts.   Mostly for installers on
 completely alien environments.
