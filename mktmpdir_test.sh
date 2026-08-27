@@ -2,6 +2,7 @@
 . ./is_command.sh
 . ./echoerr.sh
 . ./log.sh
+. ./uname_os.sh
 . ./mktmpdir.sh
 
 # each call must return a NEW, private directory.  The old implementation
@@ -47,14 +48,30 @@ test5() {
   rmdir "$d" 2>/dev/null
 }
 
-# private to the owner (mktemp -d creates 0700)
+# private to the owner
+#
+# mktmpdir sets 0700 explicitly rather than trusting mktemp, whose default is
+# not guaranteed (git-bash on Windows creates 0755).
+#
+# On Windows the mode bits are an emulation layered over NTFS ACLs and do not
+# reliably reflect access, so assert what is actually meaningful there: that
+# the directory belongs to us and is usable.  The parent temp directory on
+# Windows is already per-user.
 test6() {
   d=$(mktmpdir)
-  # ls -ld is the portable way to read a mode; the path is one we just
-  # created, so the SC2012 filename concerns do not apply
-  # shellcheck disable=SC2012
-  mode=$(ls -ld "$d" | cut -c1-10)
-  assertEquals "drwx------" "$mode" "test6: directory is private (0700)"
+  case "$(uname_os)" in
+    windows)
+      assert_skip "test6: mode bits are emulated on Windows; checking usability instead"
+      assertTrue "[ -r '$d' ] && [ -w '$d' ] && [ -x '$d' ]" "test6: directory is usable by the owner"
+      ;;
+    *)
+      # ls -ld is the portable way to read a mode; the path is one we just
+      # created, so the SC2012 filename concerns do not apply
+      # shellcheck disable=SC2012
+      mode=$(ls -ld "$d" | cut -c1-10)
+      assertEquals "drwx------" "$mode" "test6: directory is private (0700)"
+      ;;
+  esac
   rmdir "$d" 2>/dev/null
 }
 

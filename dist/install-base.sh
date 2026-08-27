@@ -141,7 +141,9 @@ uname_arch_check() {
 }
 mktmpdir() {
   _shlib_mktmpdir_parent=${TMPDIR:-/tmp}
-  mktemp -d "${_shlib_mktmpdir_parent%/}/shlib.XXXXXXXXXX"
+  _shlib_mktmpdir_dir=$(mktemp -d "${_shlib_mktmpdir_parent%/}/shlib.XXXXXXXXXX") || return 1
+  chmod 0700 "$_shlib_mktmpdir_dir" 2>/dev/null
+  echo "$_shlib_mktmpdir_dir"
 }
 untar() {
   _shlib_tarball=$1

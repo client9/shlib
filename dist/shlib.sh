@@ -251,7 +251,16 @@ uname_arch_check() {
 mktmpdir() {
   # strip any trailing slash so the result has no "//"
   _shlib_mktmpdir_parent=${TMPDIR:-/tmp}
-  mktemp -d "${_shlib_mktmpdir_parent%/}/shlib.XXXXXXXXXX"
+  _shlib_mktmpdir_dir=$(mktemp -d "${_shlib_mktmpdir_parent%/}/shlib.XXXXXXXXXX") || return 1
+
+  # Set the mode explicitly rather than inheriting whatever mktemp does.
+  # mktemp is not in POSIX and its default is not guaranteed: git-bash on
+  # Windows creates 0755.  Failure is not fatal -- on Windows the mode bits
+  # are an emulation over NTFS ACLs and the parent temp directory is already
+  # per-user -- but on a real POSIX system this is the privacy guarantee.
+  chmod 0700 "$_shlib_mktmpdir_dir" 2>/dev/null
+
+  echo "$_shlib_mktmpdir_dir"
 }
 #
 # untar: unpack $1 into the current directory
