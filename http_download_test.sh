@@ -13,7 +13,8 @@ test1() {
 
 # test 404, missing
 test2() {
-  http_download /dev/null https://raw.githubusercontent.com/client9/shlib/master/does_not_exist
+  # curl's own 404 message is expected here; keep it out of a passing run
+  http_download /dev/null https://raw.githubusercontent.com/client9/shlib/master/does_not_exist 2>/dev/null
   assertNotEquals "$?" "0" "expected return to be non-zero on 404"
 }
 

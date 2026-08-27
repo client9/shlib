@@ -12,6 +12,26 @@ _assert_pass=0
 _assert_fail=0
 _assert_skip=0
 _assert_file=${0##*/}
+_assert_errfile=${TMPDIR:-/tmp}/shlib-assert.$$
+
+# Run an assertion's command, stashing its stderr.
+#
+# A negative assertion is EXPECTED to make things complain: `assertFalse
+# "hash_sha256 NONEXISTANT"` really does run sha256sum on a missing file.
+# Printing that on a passing run buried the real output -- 25 lines of stderr
+# against 14 of stdout -- and made green runs look broken.  So stderr is held
+# back and only shown when the assertion fails, where it is the useful part.
+#
+# eval runs in the CURRENT shell, not a subshell, so any side effects behave
+# exactly as they did before.
+_assert_run() {
+  eval "$1" 2>"$_assert_errfile"
+}
+
+_assert_show_stderr() {
+  test -s "$_assert_errfile" || return 0
+  sed 's/^/       | /' "$_assert_errfile" >&2
+}
 
 _assert_ok() {
   _assert_pass=$((_assert_pass + 1))
@@ -31,16 +51,18 @@ assert_skip() {
 }
 
 assertTrue() {
-  if eval "$1"; then
+  if _assert_run "$1"; then
     _assert_ok "$2"
   else
     _assert_no "assertTrue [$1] $2"
+    _assert_show_stderr
   fi
 }
 
 assertFalse() {
-  if eval "$1"; then
+  if _assert_run "$1"; then
     _assert_no "assertFalse [$1] $2"
+    _assert_show_stderr
   else
     _assert_ok "$2"
   fi
@@ -67,6 +89,7 @@ assertNotEquals() {
 assert_summary() {
   test -z "$_assert_done" || return 0
   _assert_done=1
+  rm -f "$_assert_errfile"
   _assert_total=$((_assert_pass + _assert_fail))
   if [ "$_assert_fail" -gt 0 ]; then
     echo "FAIL ${_assert_file}: ${_assert_fail}/${_assert_total} assertions failed" >&2
@@ -87,6 +110,7 @@ assert_summary_strict() {
   test -n "$_assert_done" && return 0
   if [ "$((_assert_pass + _assert_fail + _assert_skip))" -eq 0 ]; then
     _assert_done=1
+    rm -f "$_assert_errfile"
     echo "FAIL ${_assert_file}: no assertions ran" >&2
     exit 1
   fi
