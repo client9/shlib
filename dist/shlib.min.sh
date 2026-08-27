@@ -192,6 +192,25 @@ http_download_wget() {
     wget -q --header "$_shlib_header" -O "$_shlib_local_file" "$_shlib_source_url"
   fi
 }
+http_download_fetch() {
+  _shlib_local_file=$1
+  _shlib_source_url=$2
+  _shlib_header=$3
+  if [ -z "$_shlib_header" ]; then
+    fetch -q -o "$_shlib_local_file" "$_shlib_source_url"
+    return
+  fi
+  case "$_shlib_header" in
+    [Aa]ccept:*)
+      _shlib_accept=${_shlib_header#*:}
+      _shlib_accept=${_shlib_accept# }
+      HTTP_ACCEPT="$_shlib_accept" fetch -q -o "$_shlib_local_file" "$_shlib_source_url"
+      return
+      ;;
+  esac
+  log_crit "http_download fetch cannot send '${_shlib_header%%:*}' headers; install curl or wget"
+  return 1
+}
 http_download() {
   log_debug "http_download $2"
   if is_command curl; then
@@ -200,8 +219,11 @@ http_download() {
   elif is_command wget; then
     http_download_wget "$@"
     return
+  elif is_command fetch; then
+    http_download_fetch "$@"
+    return
   fi
-  log_crit "http_download unable to find wget or curl"
+  log_crit "http_download unable to find curl, wget or fetch"
   return 1
 }
 http_copy() {

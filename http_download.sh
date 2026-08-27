@@ -27,6 +27,45 @@ http_download_wget() {
     wget -q --header "$_shlib_header" -O "$_shlib_local_file" "$_shlib_source_url"
   fi
 }
+# http_download_fetch
+#
+# fetch(1) is the FreeBSD base-system downloader.  FreeBSD ships neither curl
+# nor wget in base, so without this branch http_download fails outright on a
+# stock FreeBSD box.
+#
+# fetch cannot send arbitrary request headers -- there is no -H equivalent.
+# It honours HTTP_ACCEPT for the Accept header, which covers github_release.
+# Authorization (github_api with GITHUB_TOKEN) has no equivalent, so that case
+# reports a clear error instead of silently sending an unauthenticated
+# request.
+#
+# Redirects are followed by default (-A would disable them), which release
+# downloads require.
+http_download_fetch() {
+  _shlib_local_file=$1
+  _shlib_source_url=$2
+  _shlib_header=$3
+
+  if [ -z "$_shlib_header" ]; then
+    fetch -q -o "$_shlib_local_file" "$_shlib_source_url"
+    return
+  fi
+
+  case "$_shlib_header" in
+    [Aa]ccept:*)
+      # strip the field name and any leading space; set it for this command
+      # only, so a caller's HTTP_ACCEPT is left alone
+      _shlib_accept=${_shlib_header#*:}
+      _shlib_accept=${_shlib_accept# }
+      HTTP_ACCEPT="$_shlib_accept" fetch -q -o "$_shlib_local_file" "$_shlib_source_url"
+      return
+      ;;
+  esac
+
+  log_crit "http_download fetch cannot send '${_shlib_header%%:*}' headers; install curl or wget"
+  return 1
+}
+
 #
 # http_download [local-file] [url] [optional extra header]
 #
@@ -41,8 +80,12 @@ http_download() {
   elif is_command wget; then
     http_download_wget "$@"
     return
+  elif is_command fetch; then
+    # FreeBSD base ships fetch but neither curl nor wget
+    http_download_fetch "$@"
+    return
   fi
-  log_crit "http_download unable to find wget or curl"
+  log_crit "http_download unable to find curl, wget or fetch"
   return 1
 }
 

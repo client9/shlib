@@ -36,15 +36,30 @@ jobs:
           # FreeBSD's make is bmake; the Makefile uses .DEFAULT_GOAL,
           # MAKEFILE_LIST and --no-print-directory, which are GNU-only.
           #
-          # curl is not in the base system (base has fetch), and http_download
-          # needs curl or wget.  The rest back the untar and hash tests.
+          # curl and wget are deliberately NOT installed.  FreeBSD base ships
+          # neither -- it has fetch(1) -- so leaving them out is what a stock
+          # box looks like, and it makes this the only leg that exercises
+          # http_download's fetch branch for real.
           prepare: |
-            pkg install -y gmake curl bash dash ksh93 mksh yash zsh zip unzip
+            pkg install -y gmake bash dash ksh93 mksh yash zsh zip unzip
           # `run` is always executed with sh, which on FreeBSD is the
           # ash-derived FreeBSD sh -- a POSIX implementation the Linux and
           # macOS matrices do not cover.
           run: |
             set -e
             uname -a
+
+            # assert the premise: no curl, no wget, fetch present.  If a
+            # dependency ever drags curl in, this leg would silently stop
+            # testing the fetch path.
+            for c in curl wget; do
+              if command -v "$c" >/dev/null 2>&1; then
+                echo "::error::$c is installed; this leg is meant to run without it"
+                exit 1
+              fi
+            done
+            command -v fetch >/dev/null 2>&1 || { echo "::error::fetch(1) missing"; exit 1; }
+            echo "downloader: $(command -v fetch)"
+
             gmake test TEST_SHELL=/bin/sh
             gmake test-all
