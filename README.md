@@ -6,6 +6,7 @@ portable functions for posix shell environments
 [![macos](https://github.com/client9/shlib/actions/workflows/macos.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/macos.yml)
 [![freebsd](https://github.com/client9/shlib/actions/workflows/freebsd.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/freebsd.yml)
 [![alpine](https://github.com/client9/shlib/actions/workflows/alpine.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/alpine.yml)
+[![windows](https://github.com/client9/shlib/actions/workflows/windows.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/windows.yml)
 
 Every push is tested against each shell below.  A GitHub Actions badge covers
 a whole workflow, so the badges are grouped by platform; the per-shell result
@@ -18,6 +19,7 @@ GitHub provides no FreeBSD runner.
 | Alpine (musl)   | `busybox ash`                                        |
 | macOS           | `sh` `bash 3.2` `ksh` `zsh` `dash`                   |
 | FreeBSD 14, 15  | `sh` `dash` `bash` `ksh93` `mksh` `yash` `zsh`       |
+| Windows         | `git bash` `msys2` — `uname` mapping only            |
 
 I've sadly written a lot of shell scripts.   Mostly for installers on
 completely alien environments.

@@ -1,0 +1,16 @@
+# Shell scripts must keep LF endings everywhere.
+#
+# Git on Windows defaults to core.autocrlf=true, which would check these out
+# with CRLF -- and a shell script with \r line endings fails in confusing ways
+# ("command not found" on a line that looks fine).  This matters for anyone
+# cloning on Windows, not just for CI.
+*.sh text eol=lf
+*.sh.example text eol=lf
+Makefile text eol=lf
+.gitattributes text eol=lf
+
+# generated bundles are shell too
+dist/* text eol=lf
+
+# docs can follow the platform
+*.md text

@@ -1,0 +1,94 @@
+name: windows
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # this repo goes quiet for long stretches; a monthly build catches bit-rot
+  # in the things we do not control (release URLs, runner images)
+  schedule:
+    - cron: '17 13 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Windows is not a POSIX platform and shlib does not claim to run natively on
+# it.  What this workflow validates is narrow but real: uname_os maps the
+# strings that git-bash and MSYS2 actually emit (MINGW64_NT-..., MSYS_NT-...)
+# onto "windows".  Until now that mapping was only ever exercised with a
+# stubbed uname -- and a git-bash user hitting exactly this path is what
+# produced a bug report against a stale copy of this library.
+#
+# WSL is deliberately not tested: it reports "Linux" and runs a normal Linux
+# userland, which the linux workflow already covers thoroughly.
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # `shell: bash` on a Windows runner is Git Bash
+          - name: git bash
+            shell: bash
+          # MSYS2 ships with the image but is not on PATH
+          - name: msys2
+            shell: 'C:\msys64\usr\bin\bash.exe -eo pipefail {0}'
+    steps:
+      - uses: actions/checkout@v4
+
+      # .gitattributes pins *.sh to eol=lf, but assert it rather than trust it:
+      # a CRLF checkout fails in ways that look like anything but line endings
+      - name: line endings must be LF
+        run: |
+          # $'\r' is a bashism and grep -U is not universal; printf is neither
+          cr=$(printf '\r')
+          if grep -l "$cr" ./*.sh >/dev/null 2>&1; then
+            echo "::error::CRLF line endings in checkout - .gitattributes not applied"
+            grep -l "$cr" ./*.sh
+            exit 1
+          fi
+          echo "line endings ok"
+
+      # The first run is diagnostic: nothing here has been observed on a real
+      # Windows runner, only assumed.
+      - name: environment
+        run: |
+          echo "uname -s : $(uname -s)"
+          echo "uname -m : $(uname -m)"
+          echo "uname -o : $(uname -o 2>/dev/null || echo '(unsupported)')"
+          for c in sh bash make curl wget tar unzip zstd install mktemp \
+                   sha256sum sha512sum md5sum shasum openssl awk sed tr; do
+            printf '%-10s %s\n' "$c" "$(command -v "$c" 2>/dev/null || echo MISSING)"
+          done
+
+      # what this workflow exists to prove
+      - name: uname maps to a real GOOS/GOARCH
+        run: |
+          . ./echoerr.sh; . ./log.sh
+          . ./uname_os.sh; . ./uname_arch.sh
+          . ./uname_os_check.sh; . ./uname_arch_check.sh
+          os=$(uname_os); arch=$(uname_arch)
+          echo "$(uname -s) -> $os"
+          echo "$(uname -m) -> $arch"
+          if [ "$os" != "windows" ]; then
+            echo "::error::uname_os returned '$os', expected 'windows'"
+            exit 1
+          fi
+          uname_os_check || exit 1
+          uname_arch_check || exit 1
+
+      # run the suite directly: Git Bash has no make, and the Makefile is only
+      # a runner
+      - name: test
+        run: |
+          err=0
+          for t in *_test.sh; do
+            if sh "$t"; then :; else err=1; fi
+          done
+          exit $err
