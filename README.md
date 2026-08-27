@@ -36,7 +36,7 @@ Maintainers: see [docs/RELEASING.md](docs/RELEASING.md).
 **Building a `curl | sh` installer?** See
 [docs/INSTALLERS.md](docs/INSTALLERS.md) — the replacement for the archived
 `godownloader`, with no Go, YAML or template language.
-Worked examples for three real projects are in
+Worked examples for four real projects are in
 [install/examples/](install/examples/).
 
 Pre-built bundles are committed to this repo and attached to every release:

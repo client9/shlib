@@ -65,26 +65,17 @@ complete set, including `BINARIES` for multi-binary archives.
 
 ## Worked examples
 
-Three real projects, each with a different naming scheme. All are tested
-against the actual asset names from the releases noted, and all three install
-successfully today.
+Four real projects, each with a different naming scheme — from "no hooks at
+all" through renamed arch spellings, archives with no version in the name, and
+a binary nested inside a versioned directory.
 
-| example | what it shows |
-| ------- | ------------- |
-| [`gosec.sh`](../install/examples/gosec.sh) | the simple case — canonical GOOS/GOARCH, `tar.gz` everywhere, no hooks at all |
-| [`hydra.sh`](../install/examples/hydra.sh) | renamed OS and arch (`darwin`→`macOS`, `amd64`→`64bit`), a hyphen instead of an underscore, and `.zip` on windows |
-| [`task.sh`](../install/examples/task.sh) | **no version in the archive name** — which a `{name}_{version}_{os}_{arch}` template cannot express — plus folding `armv6`/`armv7` back to `arm` |
-| [`golangci-lint.sh`](../install/examples/golangci-lint.sh) | 27 platforms, and the binary is **nested in a versioned directory** inside the archive — see `binary_path` below |
+**[install/examples/](../install/examples/)** — the table of what each one
+shows, and which to copy.
 
 ```sh
 cat install/examples/gosec.sh dist/install-base.sh > install.sh
-sh install.sh -b ./bin        # -> installed ./bin/gosec
-sh install.sh -b ./bin v2.22.0  # or pin a tag
+sh install.sh -b ./bin
 ```
-
-`task.sh` is the one worth reading if you are coming from godownloader: its
-archives carry no version, so there is no template string that produces the
-right name. As a shell function it is a one-liner.
 
 ### If your filenames are unusual
 
