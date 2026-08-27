@@ -1,6 +1,0 @@
-language: shell
-dist: xenial
-script:
-  - ./scripts/godownloader-shfmt.sh
-  - shellcheck -V
-  - make lint test

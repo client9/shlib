@@ -26,7 +26,7 @@ uname_os() {
   # Sun Solaris and derived OS (Illumos, Oracle Solaris) reports to be the very ancient SunOS via uname not what it actually is
   if [ "$os" = "sunos" ]; then
     # Current illumos versions have -o to check if they are illumos or Solaris without breaking most builds.
-    if [ $(uname -o) == "illumos" ]; then
+    if [ "$(uname -o 2>/dev/null)" = "illumos" ]; then
       os="illumos"
     else
       os="solaris"

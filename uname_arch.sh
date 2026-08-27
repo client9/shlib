@@ -35,5 +35,5 @@ uname_arch() {
     armv6*) arch="armv6" ;;
     armv7*) arch="armv7" ;;
   esac
-  echo ${arch}
+  echo "${arch}"
 }

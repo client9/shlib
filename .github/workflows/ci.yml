@@ -1,0 +1,69 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # this repo goes quiet for long stretches; a monthly build catches bit-rot
+  # in the things we do not control (GitHub release URLs, runner images).
+  schedule:
+    - cron: '17 13 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install shellcheck + shfmt
+        run: make tools
+      - name: shellcheck + shfmt
+        run: make lint
+
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # dash is Debian/Ubuntu's /bin/sh and the strictest common target
+          - {name: 'ubuntu / dash', os: ubuntu-latest, shell: 'dash', apt: 'dash'}
+          - {name: 'ubuntu / bash', os: ubuntu-latest, shell: 'bash', apt: 'bash'}
+          - {name: 'ubuntu / ksh93', os: ubuntu-latest, shell: 'ksh', apt: 'ksh'}
+          - {name: 'ubuntu / mksh', os: ubuntu-latest, shell: 'mksh', apt: 'mksh'}
+          # yash is a deliberately pedantic POSIX implementation
+          - {name: 'ubuntu / yash', os: ubuntu-latest, shell: 'yash', apt: 'yash'}
+          - {name: 'ubuntu / posh', os: ubuntu-latest, shell: 'posh', apt: 'posh'}
+          - {name: 'ubuntu / busybox ash', os: ubuntu-latest, shell: 'busybox sh', apt: 'busybox-static'}
+          # macOS: /bin/sh is bash-in-posix-mode, and bash is still 3.2
+          - {name: 'macos / sh', os: macos-latest, shell: '/bin/sh'}
+          - {name: 'macos / bash 3.2', os: macos-latest, shell: '/bin/bash'}
+          - {name: 'macos / ksh', os: macos-latest, shell: '/bin/ksh'}
+          - {name: 'macos / dash', os: macos-latest, shell: 'dash', brew: 'dash'}
+    steps:
+      - uses: actions/checkout@v4
+      - name: install ${{ matrix.apt }}
+        if: matrix.apt != ''
+        run: sudo apt-get update && sudo apt-get install -y ${{ matrix.apt }}
+      - name: install ${{ matrix.brew }}
+        if: matrix.brew != ''
+        run: brew install ${{ matrix.brew }}
+      - name: make test
+        run: make test TEST_SHELL="${{ matrix.shell }}"
+
+  # musl + real busybox, which is where installer scripts actually get run.
+  # Run under docker rather than `container:` -- actions/checkout needs glibc.
+  test-alpine:
+    name: alpine / busybox ash (musl)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: make test
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src alpine:3.20 sh -c '
+            apk add --no-cache make curl tar && make test TEST_SHELL=/bin/sh'

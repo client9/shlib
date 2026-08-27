@@ -1,24 +1,54 @@
+# Shell used to run the *_test.sh files.  Override to test portability:
+#   make test TEST_SHELL=dash
+#   make test TEST_SHELL="busybox sh"
+TEST_SHELL ?= /bin/sh
 
-test: ## run tests
-	err=0; for t in *_test.sh; do /bin/sh $$t; e=$$?; if [ $$e -ne 0 ]; then echo "^ $$t"; err=$$e; fi; done; exit $$err
+# Linters.  Override if they live somewhere other than PATH / ./bin
+SHELLCHECK ?= shellcheck
+SHFMT      ?= ./bin/shfmt
 
-lint: ./bin/shfmt ## run shellcheck and other lints
-	./scripts/lint.sh
+test: ## run tests (override shell with TEST_SHELL=dash)
+	@echo "== $@: using shell '$(TEST_SHELL)' =="
+	@err=0; for t in *_test.sh; do \
+	  if $(TEST_SHELL) $$t; then \
+	    echo "ok   $$t"; \
+	  else \
+	    echo "FAIL $$t"; err=1; \
+	  fi; \
+	done; exit $$err
 
-fmt: ./bin/shfmt  ## reformat shell scripts
-	./bin/shfmt -ci -p -i 2 -w *.sh
+test-all: ## run tests under every POSIX-ish shell found on this machine
+	@err=0; \
+	for s in sh dash bash ksh mksh yash "busybox sh"; do \
+	  c=$${s%% *}; \
+	  command -v "$$c" >/dev/null 2>&1 || { printf '%-14s -- not installed\n' "$$s"; continue; }; \
+	  if $(MAKE) --no-print-directory test TEST_SHELL="$$s" >/dev/null 2>&1; then \
+	    printf '%-14s PASS\n' "$$s"; \
+	  else \
+	    printf '%-14s FAIL\n' "$$s"; err=1; \
+	  fi; \
+	done; exit $$err
 
-clean:  ## clean up
+lint: $(SHFMT) ## run shellcheck and check formatting
+	@SHELLCHECK='$(SHELLCHECK)' SHFMT='$(SHFMT)' ./scripts/lint.sh
+
+fmt: $(SHFMT) ## reformat shell scripts
+	$(SHFMT) -ci -p -i 2 -w *.sh scripts/*.sh
+
+tools: ## download pinned shellcheck + shfmt into ./bin
+	./scripts/install-tools.sh
+
+clean: ## clean up
 	rm -rf ./bin
-	git gc --aggressive
 
-./bin/shfmt: ./scripts/godownloader-shfmt.sh
-	./scripts/godownloader-shfmt.sh
+./bin/shfmt:
+	./scripts/install-tools.sh
 
 # https://www.client9.com/self-documenting-makefiles/
 help:
 	@awk -F ':|##' '/^[^\t].+?:.*?##/ {\
 	printf "\033[36m%-30s\033[0m %s\n", $$1, $$NF \
 	}' $(MAKEFILE_LIST)
-.DEFAULT_GOAL=help
-.PHONY=help
+
+.DEFAULT_GOAL = help
+.PHONY: help test test-all lint fmt tools clean
