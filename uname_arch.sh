@@ -23,18 +23,18 @@
 #
 #
 uname_arch() {
-  arch=$(uname -m)
-  case $arch in
-    x86_64) arch="amd64" ;;
-    i86pc) arch="amd64" ;;
-    x86) arch="386" ;;
-    i686) arch="386" ;;
-    i386) arch="386" ;;
-    aarch64) arch="arm64" ;;
-    armv5*) arch="armv5" ;;
-    armv6*) arch="armv6" ;;
-    armv7*) arch="armv7" ;;
-    loongarch64) arch="loong64" ;;
+  _shlib_arch=$(uname -m)
+  case $_shlib_arch in
+    x86_64) _shlib_arch="amd64" ;;
+    i86pc) _shlib_arch="amd64" ;;
+    x86) _shlib_arch="386" ;;
+    i686) _shlib_arch="386" ;;
+    i386) _shlib_arch="386" ;;
+    aarch64) _shlib_arch="arm64" ;;
+    armv5*) _shlib_arch="armv5" ;;
+    armv6*) _shlib_arch="armv6" ;;
+    armv7*) _shlib_arch="armv7" ;;
+    loongarch64) _shlib_arch="loong64" ;;
   esac
-  echo "${arch}"
+  echo "${_shlib_arch}"
 }

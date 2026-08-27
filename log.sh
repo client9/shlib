@@ -7,22 +7,22 @@ log_prefix() {
 }
 
 # default priority
-_logp=6
+_shlib_logp=6
 
 # set the log priority
 #  todo: fancy turn string into number
 log_set_priority() {
-  _logp="$1"
+  _shlib_logp="$1"
 }
 
 # if no args, return the priority
 # if arg, then test if greater than or equals to priority
 log_priority() {
   if test -z "$1"; then
-    echo "$_logp"
+    echo "$_shlib_logp"
     return
   fi
-  [ "$1" -le "$_logp" ]
+  [ "$1" -le "$_shlib_logp" ]
 }
 
 log_tag() {

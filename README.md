@@ -77,14 +77,6 @@ cat \
   grep -v '^[[:space:]]*#' | tr -s '\n'
 ```
 
-## WIP
-
-Some of these are new, some are these are pulled from old code I wrote.   All can definitely be
-improved.  Pull requests very welcome:
-
-* Simplify
-* Clean up local variable use
-
 ## Testing
 
 The test harness is plain POSIX shell (see [assert.sh](assert.sh)); a test file

@@ -5,8 +5,8 @@
 # done correctly it will error.
 #
 uname_os_check() {
-  os=$(uname_os)
-  case "$os" in
+  _shlib_os=$(uname_os)
+  case "$_shlib_os" in
     aix) return 0 ;;
     darwin) return 0 ;;
     dragonfly) return 0 ;;
@@ -28,6 +28,6 @@ uname_os_check() {
     wasip1) return 0 ;;
     windows) return 0 ;;
   esac
-  log_crit "uname_os_check '$(uname -s)' got converted to '$os' which is not a GOOS value"
+  log_crit "uname_os_check '$(uname -s)' got converted to '$_shlib_os' which is not a GOOS value"
   return 1
 }

@@ -18,13 +18,13 @@
 #  what remains is the version number
 #
 github_release() {
-  owner_repo=$1
-  version=$2
-  test -z "$version" && version="latest"
-  giturl="https://github.com/${owner_repo}/releases/${version}"
-  json=$(http_copy "$giturl" "Accept:application/json")
-  test -z "$json" && return 1
-  version=$(echo "$json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
-  test -z "$version" && return 1
-  echo "$version"
+  _shlib_owner_repo=$1
+  _shlib_version=$2
+  test -z "$_shlib_version" && _shlib_version="latest"
+  _shlib_giturl="https://github.com/${_shlib_owner_repo}/releases/${_shlib_version}"
+  _shlib_json=$(http_copy "$_shlib_giturl" "Accept:application/json")
+  test -z "$_shlib_json" && return 1
+  _shlib_version=$(echo "$_shlib_json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
+  test -z "$_shlib_version" && return 1
+  echo "$_shlib_version"
 }

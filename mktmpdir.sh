@@ -13,6 +13,6 @@
 # a row collided, and the caller's TMPDIR was overwritten as a side effect.
 mktmpdir() {
   # strip any trailing slash so the result has no "//"
-  _mktmpdir_parent=${TMPDIR:-/tmp}
-  mktemp -d "${_mktmpdir_parent%/}/shlib.XXXXXXXXXX"
+  _shlib_mktmpdir_parent=${TMPDIR:-/tmp}
+  mktemp -d "${_shlib_mktmpdir_parent%/}/shlib.XXXXXXXXXX"
 }

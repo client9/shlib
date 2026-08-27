@@ -5,12 +5,12 @@
 # or update depending if it exists or not locally.
 #
 git_clone_or_update() {
-  giturl=$1
-  gitrepo=${giturl##*/}   # foo.git
-  gitrepo=${gitrepo%.git} # foo
-  if [ ! -d "$gitrepo" ]; then
-    git clone "$giturl"
+  _shlib_giturl=$1
+  _shlib_gitrepo=${_shlib_giturl##*/}   # foo.git
+  _shlib_gitrepo=${_shlib_gitrepo%.git} # foo
+  if [ ! -d "$_shlib_gitrepo" ]; then
+    git clone "$_shlib_giturl"
   else
-    (cd "$gitrepo" && git pull >/dev/null)
+    (cd "$_shlib_gitrepo" && git pull >/dev/null)
   fi
 }

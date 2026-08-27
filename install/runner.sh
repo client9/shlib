@@ -12,11 +12,11 @@
 #          mktmpdir, untar, uname_os, uname_arch
 
 usage() {
-  this=$1
+  _shlib_this=$1
   cat <<EOF
-$this: download binaries for ${OWNER}/${REPO}
+$_shlib_this: download binaries for ${OWNER}/${REPO}
 
-Usage: $this [-b bindir] [-d] [tag]
+Usage: $_shlib_this [-b bindir] [-d] [tag]
   -b  install directory (default ${BINDIR})
   -d  turn on debug logging
   tag a tag from https://github.com/${OWNER}/${REPO}/releases
@@ -95,12 +95,12 @@ tag_to_version() {
   else
     log_info "checking GitHub for tag '${TAG}'"
   fi
-  REALTAG=$(github_release "${OWNER}/${REPO}" "${TAG}") && true
-  if test -z "$REALTAG"; then
+  _shlib_realtag=$(github_release "${OWNER}/${REPO}" "${TAG}") && true
+  if test -z "$_shlib_realtag"; then
     log_crit "unable to find '${TAG}' - use 'latest' or see https://github.com/${OWNER}/${REPO}/releases for details"
     return 1
   fi
-  TAG="$REALTAG"
+  TAG="$_shlib_realtag"
   # consumed by the project's archive_name(), which shellcheck cannot see
   # shellcheck disable=SC2034
   VERSION=${TAG#v}
@@ -140,43 +140,43 @@ fi
 # execute wraps every destructive operation in one function, so that a
 # `curl | sh` truncated mid-download cannot leave a half-installed mess.
 execute() {
-  tmpdir=$(mktmpdir) || return 1
-  log_debug "downloading files into ${tmpdir}"
+  _shlib_tmpdir=$(mktmpdir) || return 1
+  log_debug "downloading files into ${_shlib_tmpdir}"
 
-  http_download "${tmpdir}/${TARBALL}" "${TARBALL_URL}" || return 1
+  http_download "${_shlib_tmpdir}/${TARBALL}" "${TARBALL_URL}" || return 1
 
   if [ -n "${CHECKSUM}" ]; then
-    http_download "${tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}" || return 1
-    hash_sha256_verify "${tmpdir}/${TARBALL}" "${tmpdir}/${CHECKSUM}" || return 1
+    http_download "${_shlib_tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}" || return 1
+    hash_sha256_verify "${_shlib_tmpdir}/${TARBALL}" "${_shlib_tmpdir}/${CHECKSUM}" || return 1
   fi
 
-  (cd "${tmpdir}" && untar "${TARBALL}") || return 1
+  (cd "${_shlib_tmpdir}" && untar "${TARBALL}") || return 1
 
   mkdir -p "${BINDIR}" || return 1
 
   # Peel the list with parameter expansion rather than `for b in ${BINARIES}`:
   # zsh does not word-split unquoted parameters, so a multi-binary list would
   # be treated as one filename.
-  _bins=$(printf '%s' "${BINARIES:-$BINARY}" | tr '\t\n' '  ' | tr -s ' ')
-  _bins=${_bins# }
-  _bins=${_bins% }
-  while [ -n "${_bins}" ]; do
-    case "${_bins}" in
+  _shlib_bins=$(printf '%s' "${BINARIES:-$BINARY}" | tr '\t\n' '  ' | tr -s ' ')
+  _shlib_bins=${_shlib_bins# }
+  _shlib_bins=${_shlib_bins% }
+  while [ -n "${_shlib_bins}" ]; do
+    case "${_shlib_bins}" in
       *" "*)
-        binexe=${_bins%% *}
-        _bins=${_bins#* }
+        _shlib_binexe=${_shlib_bins%% *}
+        _shlib_bins=${_shlib_bins#* }
         ;;
       *)
-        binexe=${_bins}
-        _bins=""
+        _shlib_binexe=${_shlib_bins}
+        _shlib_bins=""
         ;;
     esac
     if [ "$OS" = "windows" ]; then
-      binexe="${binexe}.exe"
+      _shlib_binexe="${_shlib_binexe}.exe"
     fi
-    srcpath=$(binary_path "${binexe}")
-    install "${tmpdir}/${srcpath}" "${BINDIR}/${binexe}" || return 1
-    log_info "installed ${BINDIR}/${binexe}"
+    _shlib_srcpath=$(binary_path "${_shlib_binexe}")
+    install "${_shlib_tmpdir}/${_shlib_srcpath}" "${BINDIR}/${_shlib_binexe}" || return 1
+    log_info "installed ${BINDIR}/${_shlib_binexe}"
   done
-  rm -rf "${tmpdir}"
+  rm -rf "${_shlib_tmpdir}"
 }

@@ -24,22 +24,22 @@ hash_sha256() {
   fi
   if is_command gsha256sum; then
     # mac homebrew, others
-    hash=$(gsha256sum "$@") || return 1
-    echo "$hash" | cut -d ' ' -f 1
+    _shlib_hash=$(gsha256sum "$@") || return 1
+    echo "$_shlib_hash" | cut -d ' ' -f 1
   elif is_command sha256sum; then
     # gnu, busybox
-    hash=$(sha256sum "$@") || return 1
-    echo "$hash" | cut -d ' ' -f 1
+    _shlib_hash=$(sha256sum "$@") || return 1
+    echo "$_shlib_hash" | cut -d ' ' -f 1
   elif is_command shasum; then
     # darwin, freebsd?
-    hash=$(shasum -a 256 "$@" 2>/dev/null) || return 1
-    echo "$hash" | cut -d ' ' -f 1
+    _shlib_hash=$(shasum -a 256 "$@" 2>/dev/null) || return 1
+    echo "$_shlib_hash" | cut -d ' ' -f 1
   elif is_command openssl; then
     # openssl prints "SHA2-256(name)= <hash>" (openssl 3.x),
     # "SHA256(name)= <hash>" (1.x), or "(stdin)= <hash>" when reading stdin.
     # The digest is always the last field.
-    hash=$(openssl dgst -sha256 "$@") || return 1
-    echo "$hash" | awk '{print $NF}'
+    _shlib_hash=$(openssl dgst -sha256 "$@") || return 1
+    echo "$_shlib_hash" | awk '{print $NF}'
   else
     log_crit "hash_sha256 unable to find command to compute sha-256 hash"
     return 1
@@ -50,18 +50,18 @@ hash_sha256() {
 #
 #
 hash_sha256_verify() {
-  TARGET=$1
-  checksums=$2
+  _shlib_target=$1
+  _shlib_checksums=$2
 
-  if [ -z "$checksums" ]; then
+  if [ -z "$_shlib_checksums" ]; then
     log_err "hash_sha256_verify checksum file not specified in arg2"
     return 1
   fi
 
   # http://stackoverflow.com/questions/2664740/extract-file-basename-without-path-and-extension-in-bash
-  BASENAME=${TARGET##*/}
+  _shlib_basename=${_shlib_target##*/}
 
-  # Match the filename field EXACTLY.  A plain `grep "$BASENAME" file` matches
+  # Match the filename field EXACTLY.  A plain `grep "$_shlib_basename" file` matches
   # anywhere on the line and treats the name as a regular expression, so a
   # checksum listed for "evil-foo.tgz" would happily verify "foo.tgz".
   #
@@ -72,31 +72,31 @@ hash_sha256_verify() {
   #
   # Filenames containing spaces are not supported; checksum tools escape
   # those and no release artifact we have seen uses them.
-  want=$(awk -v name="$BASENAME" '
+  _shlib_want=$(awk -v name="$_shlib_basename" '
     {
       f = $2
       sub(/^\*/, "", f)
       sub(/.*\//, "", f)
       if (f == name) print $1
-    }' "$checksums" 2>/dev/null)
+    }' "$_shlib_checksums" 2>/dev/null)
 
-  # if the file is not listed, $want will be empty
-  if [ -z "$want" ]; then
-    log_err "hash_sha256_verify unable to find checksum for '${TARGET}' in '${checksums}'"
+  # if the file is not listed, $_shlib_want will be empty
+  if [ -z "$_shlib_want" ]; then
+    log_err "hash_sha256_verify unable to find checksum for '${_shlib_target}' in '${_shlib_checksums}'"
     return 1
   fi
 
   # more than one entry for the same name means the checksum file is
   # ambiguous.  Refuse rather than silently picking one.
-  nwant=$(printf '%s\n' "$want" | wc -l | tr -d ' ')
-  if [ "$nwant" != "1" ]; then
-    log_err "hash_sha256_verify multiple checksums for '${BASENAME}' in '${checksums}'"
+  _shlib_nwant=$(printf '%s\n' "$_shlib_want" | wc -l | tr -d ' ')
+  if [ "$_shlib_nwant" != "1" ]; then
+    log_err "hash_sha256_verify multiple checksums for '${_shlib_basename}' in '${_shlib_checksums}'"
     return 1
   fi
 
-  got=$(hash_sha256 "$TARGET")
-  if [ "$want" != "$got" ]; then
-    log_err "hash_sha256_verify checksum for '$TARGET' did not verify ${want} vs $got"
+  _shlib_got=$(hash_sha256 "$_shlib_target")
+  if [ "$_shlib_want" != "$_shlib_got" ]; then
+    log_err "hash_sha256_verify checksum for '$_shlib_target' did not verify ${_shlib_want} vs $_shlib_got"
     return 1
   fi
 }

@@ -19,16 +19,16 @@ echoerr() {
 log_prefix() {
   echo "$0"
 }
-_logp=6
+_shlib_logp=6
 log_set_priority() {
-  _logp="$1"
+  _shlib_logp="$1"
 }
 log_priority() {
   if test -z "$1"; then
-    echo "$_logp"
+    echo "$_shlib_logp"
     return
   fi
-  [ "$1" -le "$_logp" ]
+  [ "$1" -le "$_shlib_logp" ]
 }
 log_tag() {
   case $1 in
@@ -60,41 +60,41 @@ log_crit() {
   echoerr "$(log_prefix)" "$(log_tag 2)" "$@"
 }
 uname_os() {
-  os=$(uname -s | tr '[:upper:]' '[:lower:]')
-  case "$os" in
-    msys*) os="windows" ;;
-    mingw*) os="windows" ;;
-    cygwin*) os="windows" ;;
-    win*) os="windows" ;; # for windows busybox and like # https://frippery.org/busybox/
+  _shlib_os=$(uname -s | tr '[:upper:]' '[:lower:]')
+  case "$_shlib_os" in
+    msys*) _shlib_os="windows" ;;
+    mingw*) _shlib_os="windows" ;;
+    cygwin*) _shlib_os="windows" ;;
+    win*) _shlib_os="windows" ;; # for windows busybox and like # https://frippery.org/busybox/
   esac
-  if [ "$os" = "sunos" ]; then
+  if [ "$_shlib_os" = "sunos" ]; then
     if [ "$(uname -o 2>/dev/null)" = "illumos" ]; then
-      os="illumos"
+      _shlib_os="illumos"
     else
-      os="solaris"
+      _shlib_os="solaris"
     fi
   fi
-  echo "$os"
+  echo "$_shlib_os"
 }
 uname_arch() {
-  arch=$(uname -m)
-  case $arch in
-    x86_64) arch="amd64" ;;
-    i86pc) arch="amd64" ;;
-    x86) arch="386" ;;
-    i686) arch="386" ;;
-    i386) arch="386" ;;
-    aarch64) arch="arm64" ;;
-    armv5*) arch="armv5" ;;
-    armv6*) arch="armv6" ;;
-    armv7*) arch="armv7" ;;
-    loongarch64) arch="loong64" ;;
+  _shlib_arch=$(uname -m)
+  case $_shlib_arch in
+    x86_64) _shlib_arch="amd64" ;;
+    i86pc) _shlib_arch="amd64" ;;
+    x86) _shlib_arch="386" ;;
+    i686) _shlib_arch="386" ;;
+    i386) _shlib_arch="386" ;;
+    aarch64) _shlib_arch="arm64" ;;
+    armv5*) _shlib_arch="armv5" ;;
+    armv6*) _shlib_arch="armv6" ;;
+    armv7*) _shlib_arch="armv7" ;;
+    loongarch64) _shlib_arch="loong64" ;;
   esac
-  echo "${arch}"
+  echo "${_shlib_arch}"
 }
 uname_os_check() {
-  os=$(uname_os)
-  case "$os" in
+  _shlib_os=$(uname_os)
+  case "$_shlib_os" in
     aix) return 0 ;;
     darwin) return 0 ;;
     dragonfly) return 0 ;;
@@ -113,12 +113,12 @@ uname_os_check() {
     wasip1) return 0 ;;
     windows) return 0 ;;
   esac
-  log_crit "uname_os_check '$(uname -s)' got converted to '$os' which is not a GOOS value"
+  log_crit "uname_os_check '$(uname -s)' got converted to '$_shlib_os' which is not a GOOS value"
   return 1
 }
 uname_arch_check() {
-  arch=$(uname_arch)
-  case "$arch" in
+  _shlib_arch=$(uname_arch)
+  case "$_shlib_arch" in
     386) return 0 ;;
     amd64) return 0 ;;
     arm64) return 0 ;;
@@ -136,58 +136,58 @@ uname_arch_check() {
     loong64) return 0 ;;
     amd64p32) return 0 ;;
   esac
-  log_crit "uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value"
+  log_crit "uname_arch_check '$(uname -m)' got converted to '$_shlib_arch' which is not a GOARCH value"
   return 1
 }
 mktmpdir() {
-  _mktmpdir_parent=${TMPDIR:-/tmp}
-  mktemp -d "${_mktmpdir_parent%/}/shlib.XXXXXXXXXX"
+  _shlib_mktmpdir_parent=${TMPDIR:-/tmp}
+  mktemp -d "${_shlib_mktmpdir_parent%/}/shlib.XXXXXXXXXX"
 }
 untar() {
-  tarball=$1
-  case "${tarball}" in
-    *.tar.gz | *.tgz) tar -xzf "${tarball}" ;;
-    *.tar.bz2 | *.tbz | *.tbz2) tar -xjf "${tarball}" ;;
-    *.tar.xz | *.txz) tar -xJf "${tarball}" ;;
+  _shlib_tarball=$1
+  case "${_shlib_tarball}" in
+    *.tar.gz | *.tgz) tar -xzf "${_shlib_tarball}" ;;
+    *.tar.bz2 | *.tbz | *.tbz2) tar -xjf "${_shlib_tarball}" ;;
+    *.tar.xz | *.txz) tar -xJf "${_shlib_tarball}" ;;
     *.tar.zst | *.tzst)
       if ! is_command zstd; then
-        log_err "untar zstd is required to unpack ${tarball}"
+        log_err "untar zstd is required to unpack ${_shlib_tarball}"
         return 1
       fi
-      zstd -dc "${tarball}" | tar -xf -
+      zstd -dc "${_shlib_tarball}" | tar -xf -
       ;;
-    *.tar) tar -xf "${tarball}" ;;
+    *.tar) tar -xf "${_shlib_tarball}" ;;
     *.zip)
       if ! is_command unzip; then
-        log_err "untar unzip is required to unpack ${tarball}"
+        log_err "untar unzip is required to unpack ${_shlib_tarball}"
         return 1
       fi
-      unzip "${tarball}"
+      unzip "${_shlib_tarball}"
       ;;
     *)
-      log_err "untar unknown archive format for ${tarball}"
+      log_err "untar unknown archive format for ${_shlib_tarball}"
       return 1
       ;;
   esac
 }
 http_download_curl() {
-  local_file=$1
-  source_url=$2
-  header=$3
-  if [ -z "$header" ]; then
-    curl -fsSL -o "$local_file" "$source_url"
+  _shlib_local_file=$1
+  _shlib_source_url=$2
+  _shlib_header=$3
+  if [ -z "$_shlib_header" ]; then
+    curl -fsSL -o "$_shlib_local_file" "$_shlib_source_url"
   else
-    curl -fsSL -H "$header" -o "$local_file" "$source_url"
+    curl -fsSL -H "$_shlib_header" -o "$_shlib_local_file" "$_shlib_source_url"
   fi
 }
 http_download_wget() {
-  local_file=$1
-  source_url=$2
-  header=$3
-  if [ -z "$header" ]; then
-    wget -q -O "$local_file" "$source_url"
+  _shlib_local_file=$1
+  _shlib_source_url=$2
+  _shlib_header=$3
+  if [ -z "$_shlib_header" ]; then
+    wget -q -O "$_shlib_local_file" "$_shlib_source_url"
   else
-    wget -q --header "$header" -O "$local_file" "$source_url"
+    wget -q --header "$_shlib_header" -O "$_shlib_local_file" "$_shlib_source_url"
   fi
 }
 http_download() {
@@ -203,42 +203,42 @@ http_download() {
   return 1
 }
 http_copy() {
-  _http_copy_dir=${TMPDIR:-/tmp}
-  tmp=$(mktemp "${_http_copy_dir%/}/shlib.XXXXXXXXXX") || return 1
-  if ! http_download "${tmp}" "$1" "$2"; then
-    rm -f "${tmp}"
+  _shlib_http_copy_dir=${TMPDIR:-/tmp}
+  _shlib_tmp=$(mktemp "${_shlib_http_copy_dir%/}/shlib.XXXXXXXXXX") || return 1
+  if ! http_download "${_shlib_tmp}" "$1" "$2"; then
+    rm -f "${_shlib_tmp}"
     return 1
   fi
-  cat "${tmp}"
-  rc=$?
-  rm -f "${tmp}"
-  return $rc
+  cat "${_shlib_tmp}"
+  _shlib_rc=$?
+  rm -f "${_shlib_tmp}"
+  return $_shlib_rc
 }
 http_last_modified() {
-  url=${1:-/dev/stdin}
-  curl -L -s --fail --head "$url" | grep -i 'Last-Modified:' | tail -c 31 | head -c 29
+  _shlib_url=${1:-/dev/stdin}
+  curl -L -s --fail --head "$_shlib_url" | grep -i 'Last-Modified:' | tail -c 31 | head -c 29
 }
 github_api() {
-  local_file=$1
-  source_url=$2
-  header=""
-  case "$source_url" in
+  _shlib_local_file=$1
+  _shlib_source_url=$2
+  _shlib_header=""
+  case "$_shlib_source_url" in
     https://api.github.com*)
-      test -z "$GITHUB_TOKEN" || header="Authorization: token $GITHUB_TOKEN"
+      test -z "$GITHUB_TOKEN" || _shlib_header="Authorization: token $GITHUB_TOKEN"
       ;;
   esac
-  http_download "$local_file" "$source_url" "$header"
+  http_download "$_shlib_local_file" "$_shlib_source_url" "$_shlib_header"
 }
 github_release() {
-  owner_repo=$1
-  version=$2
-  test -z "$version" && version="latest"
-  giturl="https://github.com/${owner_repo}/releases/${version}"
-  json=$(http_copy "$giturl" "Accept:application/json")
-  test -z "$json" && return 1
-  version=$(echo "$json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
-  test -z "$version" && return 1
-  echo "$version"
+  _shlib_owner_repo=$1
+  _shlib_version=$2
+  test -z "$_shlib_version" && _shlib_version="latest"
+  _shlib_giturl="https://github.com/${_shlib_owner_repo}/releases/${_shlib_version}"
+  _shlib_json=$(http_copy "$_shlib_giturl" "Accept:application/json")
+  test -z "$_shlib_json" && return 1
+  _shlib_version=$(echo "$_shlib_json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
+  test -z "$_shlib_version" && return 1
+  echo "$_shlib_version"
 }
 hash_md5() {
   if [ -z "$1" ]; then
@@ -247,13 +247,13 @@ hash_md5() {
     set -- "$1"
   fi
   if is_command md5sum; then
-    sum=$(md5sum "$@" 2>/dev/null) || return 1
-    echo "$sum" | cut -d ' ' -f 1
+    _shlib_sum=$(md5sum "$@" 2>/dev/null) || return 1
+    echo "$_shlib_sum" | cut -d ' ' -f 1
   elif is_command md5; then
     md5 -q "$@" 2>/dev/null
   elif is_command openssl; then
-    sum=$(openssl dgst -md5 "$@") || return 1
-    echo "$sum" | awk '{print $NF}'
+    _shlib_sum=$(openssl dgst -md5 "$@") || return 1
+    echo "$_shlib_sum" | awk '{print $NF}'
   else
     log_crit "hash_md5 unable to find command to compute md5 hash"
     return 1
@@ -266,49 +266,49 @@ hash_sha256() {
     set -- "$1"
   fi
   if is_command gsha256sum; then
-    hash=$(gsha256sum "$@") || return 1
-    echo "$hash" | cut -d ' ' -f 1
+    _shlib_hash=$(gsha256sum "$@") || return 1
+    echo "$_shlib_hash" | cut -d ' ' -f 1
   elif is_command sha256sum; then
-    hash=$(sha256sum "$@") || return 1
-    echo "$hash" | cut -d ' ' -f 1
+    _shlib_hash=$(sha256sum "$@") || return 1
+    echo "$_shlib_hash" | cut -d ' ' -f 1
   elif is_command shasum; then
-    hash=$(shasum -a 256 "$@" 2>/dev/null) || return 1
-    echo "$hash" | cut -d ' ' -f 1
+    _shlib_hash=$(shasum -a 256 "$@" 2>/dev/null) || return 1
+    echo "$_shlib_hash" | cut -d ' ' -f 1
   elif is_command openssl; then
-    hash=$(openssl dgst -sha256 "$@") || return 1
-    echo "$hash" | awk '{print $NF}'
+    _shlib_hash=$(openssl dgst -sha256 "$@") || return 1
+    echo "$_shlib_hash" | awk '{print $NF}'
   else
     log_crit "hash_sha256 unable to find command to compute sha-256 hash"
     return 1
   fi
 }
 hash_sha256_verify() {
-  TARGET=$1
-  checksums=$2
-  if [ -z "$checksums" ]; then
+  _shlib_target=$1
+  _shlib_checksums=$2
+  if [ -z "$_shlib_checksums" ]; then
     log_err "hash_sha256_verify checksum file not specified in arg2"
     return 1
   fi
-  BASENAME=${TARGET##*/}
-  want=$(awk -v name="$BASENAME" '
+  _shlib_basename=${_shlib_target##*/}
+  _shlib_want=$(awk -v name="$_shlib_basename" '
     {
       f = $2
       sub(/^\*/, "", f)
       sub(/.*\//, "", f)
       if (f == name) print $1
-    }' "$checksums" 2>/dev/null)
-  if [ -z "$want" ]; then
-    log_err "hash_sha256_verify unable to find checksum for '${TARGET}' in '${checksums}'"
+    }' "$_shlib_checksums" 2>/dev/null)
+  if [ -z "$_shlib_want" ]; then
+    log_err "hash_sha256_verify unable to find checksum for '${_shlib_target}' in '${_shlib_checksums}'"
     return 1
   fi
-  nwant=$(printf '%s\n' "$want" | wc -l | tr -d ' ')
-  if [ "$nwant" != "1" ]; then
-    log_err "hash_sha256_verify multiple checksums for '${BASENAME}' in '${checksums}'"
+  _shlib_nwant=$(printf '%s\n' "$_shlib_want" | wc -l | tr -d ' ')
+  if [ "$_shlib_nwant" != "1" ]; then
+    log_err "hash_sha256_verify multiple checksums for '${_shlib_basename}' in '${_shlib_checksums}'"
     return 1
   fi
-  got=$(hash_sha256 "$TARGET")
-  if [ "$want" != "$got" ]; then
-    log_err "hash_sha256_verify checksum for '$TARGET' did not verify ${want} vs $got"
+  _shlib_got=$(hash_sha256 "$_shlib_target")
+  if [ "$_shlib_want" != "$_shlib_got" ]; then
+    log_err "hash_sha256_verify checksum for '$_shlib_target' did not verify ${_shlib_want} vs $_shlib_got"
     return 1
   fi
 }
@@ -319,49 +319,49 @@ hash_sha512() {
     set -- "$1"
   fi
   if is_command gsha512sum; then
-    hash=$(gsha512sum "$@") || return 1
-    echo "$hash" | cut -d ' ' -f 1
+    _shlib_hash=$(gsha512sum "$@") || return 1
+    echo "$_shlib_hash" | cut -d ' ' -f 1
   elif is_command sha512sum; then
-    hash=$(sha512sum "$@") || return 1
-    echo "$hash" | cut -d ' ' -f 1
+    _shlib_hash=$(sha512sum "$@") || return 1
+    echo "$_shlib_hash" | cut -d ' ' -f 1
   elif is_command shasum; then
-    hash=$(shasum -a 512 "$@" 2>/dev/null) || return 1
-    echo "$hash" | cut -d ' ' -f 1
+    _shlib_hash=$(shasum -a 512 "$@" 2>/dev/null) || return 1
+    echo "$_shlib_hash" | cut -d ' ' -f 1
   elif is_command openssl; then
-    hash=$(openssl dgst -sha512 "$@") || return 1
-    echo "$hash" | awk '{print $NF}'
+    _shlib_hash=$(openssl dgst -sha512 "$@") || return 1
+    echo "$_shlib_hash" | awk '{print $NF}'
   else
     log_crit "hash_sha512 unable to find command to compute sha-512 hash"
     return 1
   fi
 }
 hash_sha512_verify() {
-  TARGET=$1
-  checksums=$2
-  if [ -z "$checksums" ]; then
+  _shlib_target=$1
+  _shlib_checksums=$2
+  if [ -z "$_shlib_checksums" ]; then
     log_err "hash_sha512_verify checksum file not specified in arg2"
     return 1
   fi
-  BASENAME=${TARGET##*/}
-  want=$(awk -v name="$BASENAME" '
+  _shlib_basename=${_shlib_target##*/}
+  _shlib_want=$(awk -v name="$_shlib_basename" '
     {
       f = $2
       sub(/^\*/, "", f)
       sub(/.*\//, "", f)
       if (f == name) print $1
-    }' "$checksums" 2>/dev/null)
-  if [ -z "$want" ]; then
-    log_err "hash_sha512_verify unable to find checksum for '${TARGET}' in '${checksums}'"
+    }' "$_shlib_checksums" 2>/dev/null)
+  if [ -z "$_shlib_want" ]; then
+    log_err "hash_sha512_verify unable to find checksum for '${_shlib_target}' in '${_shlib_checksums}'"
     return 1
   fi
-  nwant=$(printf '%s\n' "$want" | wc -l | tr -d ' ')
-  if [ "$nwant" != "1" ]; then
-    log_err "hash_sha512_verify multiple checksums for '${BASENAME}' in '${checksums}'"
+  _shlib_nwant=$(printf '%s\n' "$_shlib_want" | wc -l | tr -d ' ')
+  if [ "$_shlib_nwant" != "1" ]; then
+    log_err "hash_sha512_verify multiple checksums for '${_shlib_basename}' in '${_shlib_checksums}'"
     return 1
   fi
-  got=$(hash_sha512 "$TARGET")
-  if [ "$want" != "$got" ]; then
-    log_err "hash_sha512_verify checksum for '$TARGET' did not verify ${want} vs $got"
+  _shlib_got=$(hash_sha512 "$_shlib_target")
+  if [ "$_shlib_want" != "$_shlib_got" ]; then
+    log_err "hash_sha512_verify checksum for '$_shlib_target' did not verify ${_shlib_want} vs $_shlib_got"
     return 1
   fi
 }
@@ -369,13 +369,13 @@ date_iso8601() {
   date -u +%Y-%m-%dT%H:%M:%S+0000
 }
 git_clone_or_update() {
-  giturl=$1
-  gitrepo=${giturl##*/}   # foo.git
-  gitrepo=${gitrepo%.git} # foo
-  if [ ! -d "$gitrepo" ]; then
-    git clone "$giturl"
+  _shlib_giturl=$1
+  _shlib_gitrepo=${_shlib_giturl##*/}   # foo.git
+  _shlib_gitrepo=${_shlib_gitrepo%.git} # foo
+  if [ ! -d "$_shlib_gitrepo" ]; then
+    git clone "$_shlib_giturl"
   else
-    (cd "$gitrepo" && git pull >/dev/null)
+    (cd "$_shlib_gitrepo" && git pull >/dev/null)
   fi
 }
 cat /dev/null <<EOF

@@ -15,14 +15,14 @@ hash_md5() {
     set -- "$1"
   fi
   if is_command md5sum; then
-    sum=$(md5sum "$@" 2>/dev/null) || return 1
-    echo "$sum" | cut -d ' ' -f 1
+    _shlib_sum=$(md5sum "$@" 2>/dev/null) || return 1
+    echo "$_shlib_sum" | cut -d ' ' -f 1
   elif is_command md5; then
     md5 -q "$@" 2>/dev/null
   elif is_command openssl; then
     # "MD5(name)= <hash>" / "(stdin)= <hash>"; digest is the last field
-    sum=$(openssl dgst -md5 "$@") || return 1
-    echo "$sum" | awk '{print $NF}'
+    _shlib_sum=$(openssl dgst -md5 "$@") || return 1
+    echo "$_shlib_sum" | awk '{print $NF}'
   else
     log_crit "hash_md5 unable to find command to compute md5 hash"
     return 1

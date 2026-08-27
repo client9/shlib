@@ -85,3 +85,34 @@ test_no_function_lost() {
 
 test_bundle_matches_sources
 test_no_function_lost
+
+# The library must not clobber the caller's variables.  It used to: calling
+# github_release overwrote $version, and uname_os overwrote $os.  Everything
+# internal is now prefixed _shlib_.
+test_no_variable_leak() {
+  leaked=$(sh -c '. ./dist/shlib.min.sh
+    echo foobar | hash_sha256 >/dev/null 2>&1
+    uname_os >/dev/null 2>&1
+    uname_arch >/dev/null 2>&1
+    uname_os_check >/dev/null 2>&1
+    uname_arch_check >/dev/null 2>&1
+    hash_sha256_verify fixtures/sample1.txt fixtures/sha256-checksums.txt >/dev/null 2>&1
+    d=$(mktmpdir); rmdir "$d" 2>/dev/null
+    untar x.rar >/dev/null 2>&1
+    set | sed -n "s/^\\([a-z][A-Za-z0-9_]*\\)=.*/\\1/p"' | grep -v '^_shlib_' | grep -v '^d$' | tr '\n' ' ')
+  assertEquals "" "$leaked" "library leaves no unprefixed lowercase globals behind"
+}
+
+# and the specific collision that started this
+test_caller_variables_survive() {
+  got=$(sh -c '. ./dist/shlib.min.sh
+    version=mine; os=mine; arch=mine; want=mine; got=mine; url=mine; tarball=mine
+    uname_os >/dev/null 2>&1; uname_arch >/dev/null 2>&1
+    hash_sha256_verify fixtures/sample1.txt fixtures/sha256-checksums.txt >/dev/null 2>&1
+    untar x.rar >/dev/null 2>&1
+    echo "$version$os$arch$want$got$url$tarball"')
+  assertEquals "mineminemineminemineminemine" "$got" "caller variables are not clobbered"
+}
+
+test_no_variable_leak
+test_caller_variables_survive

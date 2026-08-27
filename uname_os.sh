@@ -13,26 +13,26 @@
 # ```
 #
 uname_os() {
-  os=$(uname -s | tr '[:upper:]' '[:lower:]')
+  _shlib_os=$(uname -s | tr '[:upper:]' '[:lower:]')
 
   # fixed up for https://github.com/client9/shlib/issues/3
-  case "$os" in
-    msys*) os="windows" ;;
-    mingw*) os="windows" ;;
-    cygwin*) os="windows" ;;
-    win*) os="windows" ;; # for windows busybox and like # https://frippery.org/busybox/
+  case "$_shlib_os" in
+    msys*) _shlib_os="windows" ;;
+    mingw*) _shlib_os="windows" ;;
+    cygwin*) _shlib_os="windows" ;;
+    win*) _shlib_os="windows" ;; # for windows busybox and like # https://frippery.org/busybox/
   esac
 
   # Sun Solaris and derived OS (Illumos, Oracle Solaris) reports to be the very ancient SunOS via uname not what it actually is
-  if [ "$os" = "sunos" ]; then
+  if [ "$_shlib_os" = "sunos" ]; then
     # Current illumos versions have -o to check if they are illumos or Solaris without breaking most builds.
     if [ "$(uname -o 2>/dev/null)" = "illumos" ]; then
-      os="illumos"
+      _shlib_os="illumos"
     else
-      os="solaris"
+      _shlib_os="solaris"
     fi
   fi
 
   # other fixups here
-  echo "$os"
+  echo "$_shlib_os"
 }

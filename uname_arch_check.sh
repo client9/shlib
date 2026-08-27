@@ -5,8 +5,8 @@
 # Except instead of `arm`, this checks for `armv5`, `armv6`, armv7`
 #
 uname_arch_check() {
-  arch=$(uname_arch)
-  case "$arch" in
+  _shlib_arch=$(uname_arch)
+  case "$_shlib_arch" in
     386) return 0 ;;
     amd64) return 0 ;;
     arm64) return 0 ;;
@@ -26,6 +26,6 @@ uname_arch_check() {
     # existing callers do not start failing.
     amd64p32) return 0 ;;
   esac
-  log_crit "uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value"
+  log_crit "uname_arch_check '$(uname -m)' got converted to '$_shlib_arch' which is not a GOARCH value"
   return 1
 }

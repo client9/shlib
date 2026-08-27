@@ -5,13 +5,13 @@
 # Requires `http_download`
 #
 github_api() {
-  local_file=$1
-  source_url=$2
-  header=""
-  case "$source_url" in
+  _shlib_local_file=$1
+  _shlib_source_url=$2
+  _shlib_header=""
+  case "$_shlib_source_url" in
     https://api.github.com*)
-      test -z "$GITHUB_TOKEN" || header="Authorization: token $GITHUB_TOKEN"
+      test -z "$GITHUB_TOKEN" || _shlib_header="Authorization: token $GITHUB_TOKEN"
       ;;
   esac
-  http_download "$local_file" "$source_url" "$header"
+  http_download "$_shlib_local_file" "$_shlib_source_url" "$_shlib_header"
 }
