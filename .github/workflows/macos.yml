@@ -29,7 +29,7 @@ jobs:
           - {name: 'zsh', shell: '/bin/zsh'}
           - {name: 'dash', shell: 'dash', brew: 'dash'}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: install ${{ matrix.brew }}
         if: matrix.brew != ''
         run: brew install ${{ matrix.brew }}

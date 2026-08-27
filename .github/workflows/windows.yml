@@ -40,7 +40,7 @@ jobs:
           - name: msys2
             shell: 'C:\msys64\usr\bin\bash.exe -eo pipefail {0}'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # .gitattributes pins *.sh to eol=lf, but assert it rather than trust it:
       # a CRLF checkout fails in ways that look like anything but line endings

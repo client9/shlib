@@ -18,7 +18,7 @@ jobs:
     name: shellcheck + shfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: install shellcheck + shfmt
         run: make tools
       - run: make lint
@@ -27,7 +27,7 @@ jobs:
     name: dist/ in sync with sources
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: rebuild dist/
         run: make dist
       - name: dist/ must match the committed files

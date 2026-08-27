@@ -31,7 +31,7 @@ jobs:
           - {shell: 'posh', apt: 'posh'}
           - {shell: 'busybox sh', apt: 'busybox-static'}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # openssl/bzip2/xz/zstd/zip back the hash-fallback and untar tests;
       # without them those cases report "skip" instead of actually running
       - name: install shell + test dependencies
