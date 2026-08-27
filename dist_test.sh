@@ -89,17 +89,29 @@ test_no_function_lost
 # The library must not clobber the caller's variables.  It used to: calling
 # github_release overwrote $version, and uname_os overwrote $os.  Everything
 # internal is now prefixed _shlib_.
+#
+# Compare the variable set before and after rather than assuming the
+# environment holds no lowercase names -- GitHub's Windows runners export
+# npm_config_prefix, which an absolute check flagged as a leak.
 test_no_variable_leak() {
-  leaked=$(sh -c '. ./dist/shlib.min.sh
+  workdir=$(mktmpdir)
+  sh -c '
+    varnames() { set | sed -n "s/^\([a-z][A-Za-z0-9_]*\)=.*/\1/p" | sort; }
+    varnames >"$1/before"
+    . ./dist/shlib.min.sh
     echo foobar | hash_sha256 >/dev/null 2>&1
     uname_os >/dev/null 2>&1
     uname_arch >/dev/null 2>&1
     uname_os_check >/dev/null 2>&1
     uname_arch_check >/dev/null 2>&1
     hash_sha256_verify fixtures/sample1.txt fixtures/sha256-checksums.txt >/dev/null 2>&1
-    d=$(mktmpdir); rmdir "$d" 2>/dev/null
     untar x.rar >/dev/null 2>&1
-    set | sed -n "s/^\\([a-z][A-Za-z0-9_]*\\)=.*/\\1/p"' | grep -v '^_shlib_' | grep -v '^d$' | tr '\n' ' ')
+    varnames >"$1/after"
+  ' _ "$workdir"
+
+  # grep -Fxv -f, not comm: fewer assumptions about what is installed
+  leaked=$(grep -Fxv -f "$workdir/before" "$workdir/after" | grep -v "^_shlib_" | tr "\n" " ")
+  rm -rf "$workdir"
   assertEquals "" "$leaked" "library leaves no unprefixed lowercase globals behind"
 }
 

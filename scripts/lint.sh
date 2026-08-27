@@ -50,6 +50,25 @@ if [ -f ./dist/shlib.sh ]; then
   fi
 fi
 
+# Every bare `test_foo` invocation must have a matching `test_foo()`
+# definition.  A lost definition otherwise prints "command not found" and the
+# file can still report ok -- which has happened twice.
+#
+# Collected into a variable rather than setting rc inside the loop: a `while`
+# on the right of a pipe runs in a subshell, so the assignment would be lost.
+echo "== test invocations =="
+_undefined=$(
+  for t in ./*_test.sh; do
+    sed -n 's/^\(test_[a-z0-9_]*\)$/\1/p' "$t" | while read -r fn; do
+      grep -q "^${fn}() {" "$t" || echo "${t}: calls ${fn} but never defines it"
+    done
+  done
+)
+if [ -n "$_undefined" ]; then
+  echo "$_undefined"
+  rc=1
+fi
+
 echo "== shfmt =="
 if [ -n "$("$SHFMT" -ci -p -i 2 -l ./*.sh ./scripts/*.sh ./install/*.sh)" ]; then
   echo "not formatted - run 'make fmt' to fix:"
