@@ -54,6 +54,10 @@ test_unix() {
   check_os OpenBSD openbsd
   check_os DragonFly dragonfly
   check_os AIX aix
+  # MidnightBSD is a FreeBSD derivative; reported as a bug against a stale
+  # vendored copy of this library that predated commit 7f68437 (2021-01-09).
+  # See the note in uname_os_check.sh: midnightbsd is not actually a GOOS.
+  check_os MidnightBSD midnightbsd
 }
 
 # https://github.com/client9/shlib/issues/3
@@ -77,6 +81,7 @@ test_checker() {
   check_accepted Darwin
   check_accepted MINGW64_NT-10.0
   check_accepted SunOS illumos
+  check_accepted MidnightBSD
   check_accepted SunOS
   # the checker must reject something that is not a GOOS
   stub_uname NotAnOS
