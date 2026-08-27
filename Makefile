@@ -38,6 +38,9 @@ lint: $(SHFMT) ## run shellcheck and check formatting
 fmt: $(SHFMT) ## reformat shell scripts
 	$(SHFMT) -ci -p -i 2 -w *.sh scripts/*.sh
 
+dist: ## rebuild the concatenated bundles in ./dist
+	./scripts/dist.sh
+
 tools: ## download pinned shellcheck + shfmt into ./bin
 	./scripts/install-tools.sh
 
@@ -54,4 +57,4 @@ help:
 	}' $(MAKEFILE_LIST)
 
 .DEFAULT_GOAL = help
-.PHONY: help test test-all lint fmt tools clean
+.PHONY: help test test-all lint fmt dist tools clean

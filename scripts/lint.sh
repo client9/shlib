@@ -28,6 +28,13 @@ done
 echo "== shellcheck -x scripts/ =="
 "$SHELLCHECK" -x -f gcc -s sh ./scripts/*.sh || rc=1
 
+# lint the generated bundle too: it is what users actually run, and it can
+# break in ways the individual files cannot (bad concatenation order).
+if [ -f ./dist/shlib.sh ]; then
+  echo "== shellcheck dist/ =="
+  "$SHELLCHECK" -f gcc -s sh ./dist/shlib.sh || rc=1
+fi
+
 echo "== shfmt =="
 if [ -n "$("$SHFMT" -ci -p -i 2 -l ./*.sh ./scripts/*.sh)" ]; then
   echo "not formatted - run 'make fmt' to fix:"

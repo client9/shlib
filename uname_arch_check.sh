@@ -26,6 +26,6 @@ uname_arch_check() {
     # existing callers do not start failing.
     amd64p32) return 0 ;;
   esac
-  log_crit "uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value.  Please file bug report at https://github.com/client9/shlib"
+  log_crit "uname_arch_check '$(uname -m)' got converted to '$arch' which is not a GOARCH value"
   return 1
 }

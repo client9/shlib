@@ -28,6 +28,6 @@ uname_os_check() {
     wasip1) return 0 ;;
     windows) return 0 ;;
   esac
-  log_crit "uname_os_check '$(uname -s)' got converted to '$os' which is not a GOOS value. Please file bug at https://github.com/client9/shlib"
+  log_crit "uname_os_check '$(uname -s)' got converted to '$os' which is not a GOOS value"
   return 1
 }

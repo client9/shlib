@@ -22,3 +22,17 @@ jobs:
       - name: install shellcheck + shfmt
         run: make tools
       - run: make lint
+
+  dist:
+    name: dist/ in sync with sources
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: rebuild dist/
+        run: make dist
+      - name: dist/ must match the committed files
+        run: |
+          if ! git diff --exit-code dist/; then
+            echo "::error::dist/ is out of date -- run 'make dist' and commit the result"
+            exit 1
+          fi

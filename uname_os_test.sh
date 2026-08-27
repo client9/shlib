@@ -63,6 +63,9 @@ test_unix() {
 # https://github.com/client9/shlib/issues/3
 test_windows() {
   check_os MINGW64_NT-10.0 windows
+  # git-bash on Windows 10 appends the build number; reported as a bug
+  # against a vendored copy that predated 56b1c04 (2018-12-10)
+  check_os MINGW64_NT-10.0-19045 windows
   check_os MINGW32_NT-6.1 windows
   check_os MSYS_NT-10.0 windows
   check_os CYGWIN_NT-10.0 windows

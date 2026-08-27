@@ -28,6 +28,25 @@ However acknowledgement (and pull requests) are appreciated.  You can optionally
 
 ## Usage
 
+**Embedding this in an install script?** Read
+[docs/EMBEDDING.md](docs/EMBEDDING.md) — it explains how to pull a current
+bundle at build time instead of vendoring a copy that goes stale.
+Maintainers: see [docs/RELEASING.md](docs/RELEASING.md).
+
+Pre-built bundles are committed to this repo and attached to every release:
+
+| file | what it is |
+| ---- | ---------- |
+| [`dist/shlib.min.sh`](dist/shlib.min.sh) | all functions, comments stripped — embed this |
+| [`dist/shlib.sh`](dist/shlib.sh) | all functions, comments intact |
+
+```sh
+curl -sSfL -o vendor/shlib.min.sh \
+  https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.min.sh
+```
+
+Or build a custom subset yourself.
+
 Here's an example of how to create and compress a custom set of functions.  Using `grep -v '^#' | grep -v ' #' | tr -s '\n'` strips away comments and blank lines.
 
 List the files in dependency order.  Most functions report errors through
