@@ -45,10 +45,14 @@ jobs:
           release: ${{ matrix.release }}
           # Nothing is installed.  A stock box is the point: any package that
           # dragged in curl would silently stop this leg exercising ftp(1).
-          # `run` is always executed with sh whatever the login shell is.
+          # `run` is always executed with sh whatever the login shell is --
+          # and, as the first run showed, under `set -u`.  That is what
+          # nounset_test.sh exists to keep the library safe for.
           run: |
-            # Diagnostics first.  These have not all been observed on a real
-            # OpenBSD runner, only inferred from the man pages.
+            # Diagnostics first.  The first run of this workflow confirmed
+            # the shape this leg assumes: no curl, no wget, no fetch, ftp
+            # present, no sha256sum/shasum, openssl present (so the hash
+            # functions take their openssl branch), and no unzip or zip.
             uname -a
             for c in sh ksh bash gmake make curl wget fetch ftp openssl \
                      install cp chmod sha256sum sha512sum md5sum shasum \
@@ -97,10 +101,23 @@ jobs:
             . ./is_command.sh; . ./mktmpdir.sh
             . ./http_download.sh; . ./github_release.sh
             echo "== github_release on a headerless downloader =="
-            if github_release client9/shlib 2>&1; then
+            if out=$(github_release client9/shlib 2>&1); then
               echo "::error::github_release unexpectedly succeeded without an Accept header"
               exit 1
             fi
+            echo "$out"
+            # Assert WHY it failed.  The first version of this leg only checked
+            # that it failed at all, and it duly "passed" while the real cause
+            # was a `set -u` abort in github_release -- a bug, not the
+            # limitation being documented.  A negative assertion is worth
+            # little unless it pins the reason.
+            case "$out" in
+              *"cannot send"*) ;;
+              *)
+                echo "::error::github_release failed, but not with the header message"
+                exit 1
+                ;;
+            esac
 
             # Run the suite directly rather than through make: the Makefile is
             # GNU-only (.DEFAULT_GOAL, MAKEFILE_LIST) and gmake is not in base.

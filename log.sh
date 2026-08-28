@@ -18,7 +18,7 @@ log_set_priority() {
 # if no args, return the priority
 # if arg, then test if greater than or equals to priority
 log_priority() {
-  if test -z "$1"; then
+  if test -z "${1-}"; then
     echo "$_shlib_logp"
     return
   fi

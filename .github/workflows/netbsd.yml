@@ -46,10 +46,15 @@ jobs:
           release: ${{ matrix.release }}
           # Nothing is installed.  A stock box is the point: any package that
           # dragged in curl would silently stop this leg exercising ftp(1).
-          # `run` is always executed with sh whatever the login shell is.
+          # `run` is always executed with sh whatever the login shell is --
+          # and, as the first run showed, under `set -u`.  That is what
+          # nounset_test.sh exists to keep the library safe for.
           run: |
-            # Diagnostics first.  These have not all been observed on a real
-            # NetBSD runner, only inferred from the man pages.
+            # Diagnostics first.  The first run of this workflow confirmed
+            # the shape this leg assumes: no curl, no wget, no fetch, ftp
+            # present and advertising -H, no sha256sum/shasum, openssl present
+            # (so the hash functions take their openssl branch), and both
+            # /bin/sh and /bin/ksh available.
             uname -a
             for c in sh ksh bash gmake make curl wget fetch ftp openssl \
                      install cp chmod sha256sum sha512sum md5sum shasum \

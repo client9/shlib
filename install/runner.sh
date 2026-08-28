@@ -37,7 +37,10 @@ parse_args() {
     esac
   done
   shift $((OPTIND - 1))
-  TAG=$1
+  # No tag argument is the normal `curl | sh` case, so $1 may be unset.  An
+  # install script is exactly the kind of thing a careful user runs under
+  # `set -u`, where a bare $1 aborts before anything is installed.
+  TAG=${1-}
 }
 
 # check_platform verifies that this project actually publishes something for
@@ -55,7 +58,7 @@ parse_args() {
 # stderr when that function contains a command substitution and the caller
 # captures it with `$(f 2>&1)`, which silently swallowed the error message.
 normalize_platforms() {
-  PLATFORMS=$(printf '%s' "${PLATFORMS}" | tr '\t\n' '  ' | tr -s ' ')
+  PLATFORMS=$(printf '%s' "${PLATFORMS-}" | tr '\t\n' '  ' | tr -s ' ')
   PLATFORMS=${PLATFORMS# }
   PLATFORMS=${PLATFORMS% }
 }
@@ -69,7 +72,7 @@ normalize_platforms() {
 # what made an unsupported-Windows install look like a library bug.
 check_platform() {
   # empty PLATFORMS means "do not check"
-  test -z "${PLATFORMS}" && return 0
+  test -z "${PLATFORMS-}" && return 0
 
   # Substring match on a space-padded list rather than `for p in $PLATFORMS`:
   # zsh does not word-split unquoted parameters, so the loop would compare the
@@ -90,6 +93,11 @@ check_platform() {
 # VERSION is TAG without any leading "v", which is what release filenames
 # usually use.
 tag_to_version() {
+  # TAG may be unset -- parse_args fills it from an optional argument, and a
+  # caller need not have gone through parse_args at all.  Normalise it once,
+  # here, so the rest of this function and latest_version can use it plainly
+  # instead of every reference needing its own ${TAG-}.
+  TAG=${TAG-}
   # not "checking GitHub": latest_version may point anywhere
   if [ -z "${TAG}" ]; then
     log_info "checking for latest tag"
@@ -165,7 +173,7 @@ execute() {
 
   http_download "${_shlib_tmpdir}/${TARBALL}" "${TARBALL_URL}" || return 1
 
-  if [ -n "${CHECKSUM}" ]; then
+  if [ -n "${CHECKSUM-}" ]; then
     http_download "${_shlib_tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}" || return 1
     hash_sha256_verify "${_shlib_tmpdir}/${TARBALL}" "${_shlib_tmpdir}/${CHECKSUM}" || return 1
   fi

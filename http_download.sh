@@ -4,7 +4,7 @@
 http_download_curl() {
   _shlib_local_file=$1
   _shlib_source_url=$2
-  _shlib_header=$3
+  _shlib_header=${3-}
   if [ -z "$_shlib_header" ]; then
     curl -fsSL -o "$_shlib_local_file" "$_shlib_source_url"
   else
@@ -20,7 +20,7 @@ http_download_curl() {
 http_download_wget() {
   _shlib_local_file=$1
   _shlib_source_url=$2
-  _shlib_header=$3
+  _shlib_header=${3-}
   if [ -z "$_shlib_header" ]; then
     wget -q -O "$_shlib_local_file" "$_shlib_source_url"
   else
@@ -44,7 +44,7 @@ http_download_wget() {
 http_download_fetch() {
   _shlib_local_file=$1
   _shlib_source_url=$2
-  _shlib_header=$3
+  _shlib_header=${3-}
 
   if [ -z "$_shlib_header" ]; then
     fetch -q -o "$_shlib_local_file" "$_shlib_source_url"
@@ -96,7 +96,7 @@ http_download_fetch() {
 http_download_ftp() {
   _shlib_local_file=$1
   _shlib_source_url=$2
-  _shlib_header=$3
+  _shlib_header=${3-}
 
   if [ -z "$_shlib_header" ]; then
     ftp -V -o "$_shlib_local_file" "$_shlib_source_url"
@@ -155,7 +155,7 @@ http_copy() {
   # temp file would land somewhere the caller cannot predict or clean up
   _shlib_http_copy_dir=${TMPDIR:-/tmp}
   _shlib_tmp=$(mktemp "${_shlib_http_copy_dir%/}/shlib.XXXXXXXXXX") || return 1
-  if ! http_download "${_shlib_tmp}" "$1" "$2"; then
+  if ! http_download "${_shlib_tmp}" "$1" "${2-}"; then
     rm -f "${_shlib_tmp}"
     return 1
   fi

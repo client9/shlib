@@ -9,7 +9,7 @@
 # cannot be reopened by path (open() returns ENXIO on Linux).  Calling the
 # hasher with no file operand lets it read fd 0 directly, which is portable.
 hash_md5() {
-  if [ -z "$1" ]; then
+  if [ -z "${1-}" ]; then
     set --
   else
     set -- "$1"

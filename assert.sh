@@ -35,7 +35,7 @@ _assert_show_stderr() {
 
 _assert_ok() {
   _assert_pass=$((_assert_pass + 1))
-  test -z "$ASSERT_VERBOSE" || echo "ok   ${_assert_file}: $1"
+  test -z "${ASSERT_VERBOSE-}" || echo "ok   ${_assert_file}: $1"
 }
 
 _assert_no() {

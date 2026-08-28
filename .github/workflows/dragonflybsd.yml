@@ -19,10 +19,17 @@ permissions:
 # straight to the GOOS `dragonfly` with no fixup, and until now nothing
 # checked that on a real machine.
 #
-# Being FreeBSD-derived it has fetch(1) in base, so it goes down the same
-# http_download branch the freebsd leg covers rather than the ftp(1) branch
-# OpenBSD and NetBSD exercise.  Base also has tnftp, which is why the
-# assertion below is that fetch WINS -- the dispatch order matters here.
+# Being FreeBSD-derived it has fetch(1), so it goes down the same http_download
+# branch the freebsd leg covers rather than the ftp(1) branch OpenBSD and
+# NetBSD exercise.
+#
+# Unlike every other BSD leg this one does NOT assert that curl is absent: the
+# vmactions image ships curl in /usr/local/bin (verified in the first run's
+# tool inventory), so dispatch here picks curl and the fetch branch would
+# never run.  Rather than fight the image, the fetch branch is invoked
+# DIRECTLY below.  That is the more robust shape anyway -- it tests the branch
+# rather than testing the absence of its alternatives, which is a property of
+# somebody else's disk image and can change under us.
 #
 # One release only: nothing about this leg is version-sensitive, and each
 # leg is a QEMU boot.
@@ -46,12 +53,13 @@ jobs:
         uses: vmactions/dragonflybsd-vm@v1
         with:
           release: ${{ matrix.release }}
-          # Nothing is installed.  A stock box is the point: any package that
-          # dragged in curl would silently stop this leg exercising fetch(1).
-          # `run` is always executed with sh whatever the login shell is.
+          # Nothing is installed.  `run` is always executed with sh whatever
+          # the login shell is -- and, as the first run of this workflow
+          # showed, under `set -u`.  That is why nounset_test.sh exists.
           run: |
-            # Diagnostics first.  These have not all been observed on a real
-            # DragonFly runner, only inferred from the man pages.
+            # Diagnostics first.  The first run of this workflow is what
+            # established what is actually on the image -- notably curl, and
+            # no ksh or bash -- so keep this printing.
             uname -a
             for c in sh ksh bash gmake make curl wget fetch ftp openssl \
                      install cp chmod sha256sum sha512sum md5sum shasum \
@@ -59,13 +67,8 @@ jobs:
               printf '%-10s %s\n' "$c" "$(command -v "$c" 2>/dev/null || echo MISSING)"
             done
 
-            # Assert the premise of this leg.
-            for c in curl wget; do
-              if command -v "$c" >/dev/null 2>&1; then
-                echo "::error::$c is installed; this leg is meant to run without it"
-                exit 1
-              fi
-            done
+            # Assert the premise of this leg.  curl is deliberately NOT
+            # asserted absent here -- see the note at the top of this file.
             command -v fetch >/dev/null 2>&1 || { echo "::error::fetch(1) missing"; exit 1; }
             echo "downloader: $(command -v fetch)"
 
@@ -81,14 +84,36 @@ jobs:
             fi
             uname_os_check || exit 1
 
-            # fetch and tnftp both exist here, and only fetch can express the
-            # Accept header github_release needs.  So this doubles as a check
-            # that http_download's dispatch prefers fetch over ftp.
+            # Exercise the fetch branch DIRECTLY, since curl is present and
+            # would otherwise win dispatch.  Both forms: a plain download, and
+            # one carrying the Accept header fetch maps onto HTTP_ACCEPT.
             . ./is_command.sh; . ./mktmpdir.sh
             . ./http_download.sh; . ./github_release.sh
-            echo "== github_release over fetch =="
+            d=$(mktmpdir)
+            echo "== http_download_fetch, no header =="
+            http_download_fetch "$d/plain" \
+              https://raw.githubusercontent.com/client9/shlib/master/fixtures/sample1.txt || {
+              echo "::error::http_download_fetch failed on a plain download"
+              exit 1
+            }
+            echo "got: $(cat "$d/plain")"
+            echo "== http_download_fetch, Accept header via HTTP_ACCEPT =="
+            http_download_fetch "$d/json" \
+              https://github.com/client9/shlib/releases/latest "Accept:application/json" || {
+              echo "::error::http_download_fetch failed with an Accept header"
+              exit 1
+            }
+            body=$(cat "$d/json")
+            case "$body" in
+              *tag_name*) echo "Accept honoured: got JSON" ;;
+              *) echo "::error::HTTP_ACCEPT was not honoured; got a non-JSON body"; exit 1 ;;
+            esac
+            rm -rf "$d"
+
+            # And through normal dispatch, which here means curl.
+            echo "== github_release through dispatch =="
             tag=$(github_release client9/shlib) || {
-              echo "::error::github_release failed; did dispatch pick ftp over fetch?"
+              echo "::error::github_release failed"
               exit 1
             }
             echo "github_release -> $tag"

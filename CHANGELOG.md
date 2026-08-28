@@ -28,6 +28,16 @@ Rename this heading to the release date when cutting a release — see
   installer were unusable there.
 - Same gap on OpenBSD and NetBSD, which ship neither curl, wget *nor* fetch.
   Their base downloader is `ftp(1)`, now a branch of its own — see below.
+- **The library aborted under `set -u`.** Every optional argument was read as a
+  bare `$2` / `$3`, which nounset treats as an error rather than an empty
+  string, so `github_release owner/repo` (tag omitted — the documented form),
+  `http_download file url` (no header), `hash_sha256` reading stdin, and
+  `github_api` without `GITHUB_TOKEN` all killed the calling shell. The
+  installer was worse: `curl … | sh` with no tag argument aborted in
+  `parse_args` before anything was downloaded, and a config without
+  `PLATFORMS` or `checksum_name` aborted too. An install script is exactly the
+  kind of thing people run under `set -eu`. All optional parameters are now
+  `${n-}`; `nounset_test.sh` covers every documented call form.
 - `github_release` returned an empty tag on Solaris. `tr` converted `echo`'s
   trailing newline to a space, leaving `sed` an unterminated final line, which
   SVR4 sed drops. Only surfaced once there was a Solaris CI leg.
@@ -65,11 +75,15 @@ Rename this heading to the release date when cutting a release — see
   ftp; `ftp` is last because a Linux box may carry a legacy client that
   cannot fetch a URL at all.
 - **OpenBSD, NetBSD and DragonFly CI**, under QEMU via `vmactions`. Beyond the
-  full suite these assert that curl, wget and (on the first two) fetch are
-  absent, that `uname -s` maps to `openbsd` / `netbsd` / `dragonfly`, and that
-  the `ftp -H` probe agrees with the real binary on each. NetBSD and DragonFly
-  additionally resolve a live `github_release` end to end, which is the only
-  proof that what those downloaders send is what GitHub accepts.
+  full suite these assert that `uname -s` maps to `openbsd` / `netbsd` /
+  `dragonfly`, and that the `ftp -H` probe agrees with the real binary on each
+  — in opposite directions, so either usage line changing is caught. OpenBSD
+  and NetBSD also assert curl, wget and fetch really are absent, since there
+  the absence is what makes the `ftp(1)` branch run. NetBSD resolves a live
+  `github_release` over `ftp -H`, and DragonFly calls `http_download_fetch`
+  directly; those are the only proof that what these downloaders send is what
+  GitHub accepts.
+- `nounset_test.sh`, which runs every documented call form under `set -u`.
 - **`install_exe`** — copy a file into place and make it executable. Placing a
   binary portably is a shell primitive, so it belongs in the library rather
   than inside the installer: `install(1)` is not in POSIX and its grammar

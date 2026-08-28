@@ -24,7 +24,7 @@ log_set_priority() {
   _shlib_logp="$1"
 }
 log_priority() {
-  if test -z "$1"; then
+  if test -z "${1-}"; then
     echo "$_shlib_logp"
     return
   fi
@@ -190,7 +190,7 @@ install_exe() {
 http_download_curl() {
   _shlib_local_file=$1
   _shlib_source_url=$2
-  _shlib_header=$3
+  _shlib_header=${3-}
   if [ -z "$_shlib_header" ]; then
     curl -fsSL -o "$_shlib_local_file" "$_shlib_source_url"
   else
@@ -200,7 +200,7 @@ http_download_curl() {
 http_download_wget() {
   _shlib_local_file=$1
   _shlib_source_url=$2
-  _shlib_header=$3
+  _shlib_header=${3-}
   if [ -z "$_shlib_header" ]; then
     wget -q -O "$_shlib_local_file" "$_shlib_source_url"
   else
@@ -210,7 +210,7 @@ http_download_wget() {
 http_download_fetch() {
   _shlib_local_file=$1
   _shlib_source_url=$2
-  _shlib_header=$3
+  _shlib_header=${3-}
   if [ -z "$_shlib_header" ]; then
     fetch -q -o "$_shlib_local_file" "$_shlib_source_url"
     return
@@ -229,7 +229,7 @@ http_download_fetch() {
 http_download_ftp() {
   _shlib_local_file=$1
   _shlib_source_url=$2
-  _shlib_header=$3
+  _shlib_header=${3-}
   if [ -z "$_shlib_header" ]; then
     ftp -V -o "$_shlib_local_file" "$_shlib_source_url"
     return
@@ -262,7 +262,7 @@ http_download() {
 http_copy() {
   _shlib_http_copy_dir=${TMPDIR:-/tmp}
   _shlib_tmp=$(mktemp "${_shlib_http_copy_dir%/}/shlib.XXXXXXXXXX") || return 1
-  if ! http_download "${_shlib_tmp}" "$1" "$2"; then
+  if ! http_download "${_shlib_tmp}" "$1" "${2-}"; then
     rm -f "${_shlib_tmp}"
     return 1
   fi
@@ -281,14 +281,14 @@ github_api() {
   _shlib_header=""
   case "$_shlib_source_url" in
     https://api.github.com*)
-      test -z "$GITHUB_TOKEN" || _shlib_header="Authorization: token $GITHUB_TOKEN"
+      test -z "${GITHUB_TOKEN-}" || _shlib_header="Authorization: token $GITHUB_TOKEN"
       ;;
   esac
   http_download "$_shlib_local_file" "$_shlib_source_url" "$_shlib_header"
 }
 github_release() {
   _shlib_owner_repo=$1
-  _shlib_version=$2
+  _shlib_version=${2-}
   test -z "$_shlib_version" && _shlib_version="latest"
   _shlib_giturl="https://github.com/${_shlib_owner_repo}/releases/${_shlib_version}"
   _shlib_json=$(http_copy "$_shlib_giturl" "Accept:application/json")
@@ -305,7 +305,7 @@ github_release() {
   echo "$_shlib_version"
 }
 hash_md5() {
-  if [ -z "$1" ]; then
+  if [ -z "${1-}" ]; then
     set --
   else
     set -- "$1"
@@ -324,7 +324,7 @@ hash_md5() {
   fi
 }
 hash_sha256() {
-  if [ -z "$1" ]; then
+  if [ -z "${1-}" ]; then
     set --
   else
     set -- "$1"
@@ -348,7 +348,7 @@ hash_sha256() {
 }
 hash_sha256_verify() {
   _shlib_target=$1
-  _shlib_checksums=$2
+  _shlib_checksums=${2-}
   if [ -z "$_shlib_checksums" ]; then
     log_err "hash_sha256_verify checksum file not specified in arg2"
     return 1
@@ -377,7 +377,7 @@ hash_sha256_verify() {
   fi
 }
 hash_sha512() {
-  if [ -z "$1" ]; then
+  if [ -z "${1-}" ]; then
     set --
   else
     set -- "$1"
@@ -401,7 +401,7 @@ hash_sha512() {
 }
 hash_sha512_verify() {
   _shlib_target=$1
-  _shlib_checksums=$2
+  _shlib_checksums=${2-}
   if [ -z "$_shlib_checksums" ]; then
     log_err "hash_sha512_verify checksum file not specified in arg2"
     return 1

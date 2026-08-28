@@ -19,7 +19,7 @@
 #
 github_release() {
   _shlib_owner_repo=$1
-  _shlib_version=$2
+  _shlib_version=${2-}
   test -z "$_shlib_version" && _shlib_version="latest"
   _shlib_giturl="https://github.com/${_shlib_owner_repo}/releases/${_shlib_version}"
   _shlib_json=$(http_copy "$_shlib_giturl" "Accept:application/json")

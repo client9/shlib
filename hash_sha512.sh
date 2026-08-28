@@ -17,7 +17,7 @@
 # cannot be reopened by path (open() returns ENXIO on Linux).  Calling the
 # hasher with no file operand lets it read fd 0 directly, which is portable.
 hash_sha512() {
-  if [ -z "$1" ]; then
+  if [ -z "${1-}" ]; then
     set --
   else
     set -- "$1"
@@ -51,7 +51,7 @@ hash_sha512() {
 #
 hash_sha512_verify() {
   _shlib_target=$1
-  _shlib_checksums=$2
+  _shlib_checksums=${2-}
 
   if [ -z "$_shlib_checksums" ]; then
     log_err "hash_sha512_verify checksum file not specified in arg2"
