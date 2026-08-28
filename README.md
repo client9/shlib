@@ -40,6 +40,7 @@ However acknowledgement (and pull requests) are appreciated.  You can optionally
 [docs/EMBEDDING.md](docs/EMBEDDING.md) — it explains how to pull a current
 bundle at build time instead of vendoring a copy that goes stale.
 Maintainers: see [docs/RELEASING.md](docs/RELEASING.md).
+Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 **Building a `curl | sh` installer?** See
 [docs/INSTALLERS.md](docs/INSTALLERS.md) — the replacement for the archived

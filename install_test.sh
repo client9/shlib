@@ -204,6 +204,85 @@ test_execute_bad_checksum() {
   STUB_VERIFY_RC=0
 }
 
+# --- forge independence --------------------------------------------------
+
+# Only two seams are GitHub-specific: where artifacts live (DOWNLOAD_BASE,
+# pure string construction) and how "latest" resolves (latest_version, which
+# genuinely differs per forge -- GitLab returns no JSON and Forgejo returns
+# HTML).  Override both and nothing else in the installer knows the difference.
+test_download_base_override() {
+  d=$(mktmpdir)
+  cat >"$d/config.sh" <<'CFG'
+OWNER=example
+REPO=widget
+BINARY=widget
+FORMAT=tar.gz
+PLATFORMS="linux/amd64"
+DOWNLOAD_BASE="https://downloads.example.internal/widget"
+RELEASES_URL="https://git.example.internal/example/widget/releases"
+latest_version() { test -n "$1" && echo "$1" || echo "v9.9.9"; }
+archive_name() { echo "${BINARY}_${VERSION}_${OS}_${ARCH}"; }
+CFG
+  got=$(sh -c ". '$d/config.sh'
+    . ./dist/shlib.min.sh
+    . ./install/runner.sh
+    OS=linux; ARCH=amd64; PLATFORM=linux/amd64
+    parse_args
+    tag_to_version >/dev/null 2>&1
+    NAME=\$(archive_name)
+    echo \"\${DOWNLOAD_BASE}/\${TAG}/\${NAME}.\${FORMAT}\"")
+  assertEquals "https://downloads.example.internal/widget/v9.9.9/widget_9.9.9_linux_amd64.tar.gz" \
+    "$got" "forge: DOWNLOAD_BASE and latest_version override cleanly"
+  rm -rf "$d"
+}
+
+# the default still points at GitHub when a config says nothing
+test_download_base_defaults_to_github() {
+  d=$(mktmpdir)
+  got=$(sh -c 'OWNER=securego; REPO=gosec
+    DOWNLOAD_BASE="${DOWNLOAD_BASE:-https://github.com/${OWNER}/${REPO}/releases/download}"
+    echo "$DOWNLOAD_BASE"')
+  assertEquals "https://github.com/securego/gosec/releases/download" "$got" \
+    "forge: defaults to GitHub when unset"
+  rm -rf "$d"
+}
+
+# the log line must not claim GitHub when latest_version points elsewhere
+test_no_github_in_log_when_overridden() {
+  d=$(mktmpdir)
+  got=$(sh -c '. ./dist/shlib.min.sh
+    . ./install/runner.sh
+    OWNER=x; REPO=y
+    latest_version() { echo v1.0.0; }
+    TAG=""
+    tag_to_version 2>&1 >/dev/null' | tr -d '\n')
+  case "$got" in
+    *GitHub*) assertTrue "false" "forge: log still says GitHub [$got]" ;;
+    *) assertTrue "true" "forge: log does not assume GitHub" ;;
+  esac
+  rm -rf "$d"
+}
+
+# github_release must reject a response that is not GitHub JSON.  It used to
+# return whatever sed found, so a Forgejo instance yielded
+# "<!DOCTYPE html> <html lang=" as the version and a baffling 404 downstream.
+test_github_release_rejects_html() {
+  got=$(sh -c '. ./dist/shlib.min.sh
+    http_copy() { printf "<!DOCTYPE html>\n<html lang=\"en\">\n"; }
+    github_release owner/repo 2>/dev/null; echo "rc=$?"' | tail -1)
+  assertEquals "rc=1" "$got" "github_release: rejects an HTML response"
+
+  got=$(sh -c '. ./dist/shlib.min.sh
+    http_copy() { printf "{\"tag_name\":\"v1.2.3-rc1+build.5\"}"; }
+    github_release owner/repo 2>/dev/null')
+  assertEquals "v1.2.3-rc1+build.5" "$got" "github_release: accepts a legitimate odd tag"
+}
+
+test_github_release_rejects_html
+test_download_base_override
+test_download_base_defaults_to_github
+test_no_github_in_log_when_overridden
+
 # --- assembled script ----------------------------------------------------
 
 # The real artifact is config.sh + install-base.sh concatenated.  Assembly

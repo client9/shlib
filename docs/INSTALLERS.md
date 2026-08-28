@@ -120,6 +120,34 @@ BINARIES="task taskfile"
 
 Each is installed into `BINDIR` under its own name.
 
+## Installing from somewhere other than GitHub
+
+Only two seams know about GitHub, out of 37 functions:
+
+| seam | what it is | generalises? |
+| ---- | ---------- | ------------ |
+| `DOWNLOAD_BASE` | where artifacts live | **yes** — pure string construction, point it anywhere |
+| `latest_version()` | how "latest" becomes a tag | **no** — every forge differs |
+
+```sh
+DOWNLOAD_BASE="https://downloads.example.com/widget"
+RELEASES_URL="https://git.example.com/example/widget/releases"
+latest_version() {
+  test -n "$1" && { echo "$1"; return 0; }
+  http_copy "https://git.example.com/api/v1/repos/example/widget/releases/latest" |
+    sed 's/.*"tag_name":"//; s/".*//'
+}
+```
+
+Resolving "latest" is the part shlib cannot do for you. Its GitHub default
+works because `github.com/O/R/releases/latest` answers with JSON when sent
+`Accept: application/json`. Nothing else does — GitLab returns no JSON body,
+Forgejo returns an HTML page. Rather than guess at each forge's API, shlib
+hands you the hook: you know your host, and a wrong guess here would surface
+as a bug report against shlib rather than against the thing that changed.
+
+Projects that always install a pinned tag need neither override.
+
 ## Regenerate on every release
 
 **This is the part that matters.** godownloader's output was committed once and

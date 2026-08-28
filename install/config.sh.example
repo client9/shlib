@@ -44,6 +44,27 @@ checksum_name() {
   echo "${BINARY}_${VERSION}_checksums.txt"
 }
 
+# Optional: install from somewhere other than GitHub.
+#
+# Only two things in the installer know about GitHub:
+#
+#   DOWNLOAD_BASE   where artifacts live -- pure string construction, so any
+#                   host works: GitLab, Gitea, S3, an internal mirror
+#   latest_version  how "latest" resolves to a tag.  This genuinely differs
+#                   per forge: GitLab returns no JSON for the equivalent URL
+#                   and Forgejo returns HTML, so there is nothing portable to
+#                   default to.  shlib asks GitHub unless you say otherwise.
+#
+# Projects that always pass an explicit tag need neither.
+#
+# DOWNLOAD_BASE="https://downloads.example.com/widget"
+# RELEASES_URL="https://git.example.com/example/widget/releases"
+# latest_version() {
+#   test -n "$1" && { echo "$1"; return 0; }
+#   http_copy "https://git.example.com/api/v1/repos/example/widget/releases/latest" |
+#     sed 's/.*"tag_name":"//; s/".*//'
+# }
+
 # Optional: where the binary sits INSIDE the archive.  The default is the
 # archive root.  Some projects wrap everything in a versioned directory:
 #   golangci-lint-2.13.1-darwin-arm64/golangci-lint

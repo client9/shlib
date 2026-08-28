@@ -262,6 +262,12 @@ github_release() {
   test -z "$_shlib_json" && return 1
   _shlib_version=$(echo "$_shlib_json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
   test -z "$_shlib_version" && return 1
+  case "$_shlib_version" in
+    *[!A-Za-z0-9._+-]* | "")
+      log_err "github_release did not find a tag at ${_shlib_giturl} (got '$(echo "$_shlib_version" | cut -c1-40)')"
+      return 1
+      ;;
+  esac
   echo "$_shlib_version"
 }
 hash_md5() {
@@ -414,7 +420,7 @@ $_shlib_this: download binaries for ${OWNER}/${REPO}
 Usage: $_shlib_this [-b bindir] [-d] [tag]
   -b  install directory (default ${BINDIR})
   -d  turn on debug logging
-  tag a tag from https://github.com/${OWNER}/${REPO}/releases
+  tag a tag from ${RELEASES_URL}
       if missing, the latest release is used
 EOF
   exit 2
@@ -449,13 +455,13 @@ check_platform() {
 }
 tag_to_version() {
   if [ -z "${TAG}" ]; then
-    log_info "checking GitHub for latest tag"
+    log_info "checking for latest tag"
   else
-    log_info "checking GitHub for tag '${TAG}'"
+    log_info "checking for tag '${TAG}'"
   fi
-  _shlib_realtag=$(github_release "${OWNER}/${REPO}" "${TAG}") && true
+  _shlib_realtag=$(latest_version "${TAG}") && true
   if test -z "$_shlib_realtag"; then
-    log_crit "unable to find '${TAG}' - use 'latest' or see https://github.com/${OWNER}/${REPO}/releases for details"
+    log_crit "unable to find '${TAG}' - use 'latest' or see ${RELEASES_URL} for details"
     return 1
   fi
   TAG="$_shlib_realtag"
@@ -472,6 +478,9 @@ if ! command -v adjust_arch >/dev/null 2>&1; then
 fi
 if ! command -v binary_path >/dev/null 2>&1; then
   binary_path() { echo "$1"; }
+fi
+if ! command -v latest_version >/dev/null 2>&1; then
+  latest_version() { github_release "${OWNER}/${REPO}" "$1"; }
 fi
 execute() {
   _shlib_tmpdir=$(mktmpdir) || return 1
@@ -513,7 +522,9 @@ log_prefix() {
 OS=$(uname_os)
 ARCH=$(uname_arch)
 PLATFORM="${OS}/${ARCH}"
-GITHUB_DOWNLOAD="https://github.com/${OWNER}/${REPO}/releases/download"
+DOWNLOAD_BASE="${DOWNLOAD_BASE:-https://github.com/${OWNER}/${REPO}/releases/download}"
+RELEASES_URL="${RELEASES_URL:-https://github.com/${OWNER}/${REPO}/releases}"
+GITHUB_DOWNLOAD="$DOWNLOAD_BASE"
 uname_os_check || exit 1
 uname_arch_check || exit 1
 parse_args "$@"
@@ -525,10 +536,10 @@ adjust_os
 adjust_arch
 NAME=$(archive_name)
 TARBALL="${NAME}.${FORMAT}"
-TARBALL_URL="${GITHUB_DOWNLOAD}/${TAG}/${TARBALL}"
+TARBALL_URL="${DOWNLOAD_BASE}/${TAG}/${TARBALL}"
 if is_command checksum_name; then
   CHECKSUM=$(checksum_name)
-  CHECKSUM_URL="${GITHUB_DOWNLOAD}/${TAG}/${CHECKSUM}"
+  CHECKSUM_URL="${DOWNLOAD_BASE}/${TAG}/${CHECKSUM}"
 fi
 log_info "found version ${VERSION} for ${PLATFORM}"
 execute || exit 1

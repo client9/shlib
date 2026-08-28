@@ -18,7 +18,15 @@ log_prefix() {
 OS=$(uname_os)
 ARCH=$(uname_arch)
 PLATFORM="${OS}/${ARCH}"
-GITHUB_DOWNLOAD="https://github.com/${OWNER}/${REPO}/releases/download"
+# Where artifacts live.  A config may set these to anything -- GitLab, Gitea,
+# S3, an internal mirror -- and nothing else in the installer needs to change;
+# it is only string construction.  Resolving "latest" is the separate, genuinely
+# forge-specific problem, handled by latest_version().
+DOWNLOAD_BASE="${DOWNLOAD_BASE:-https://github.com/${OWNER}/${REPO}/releases/download}"
+RELEASES_URL="${RELEASES_URL:-https://github.com/${OWNER}/${REPO}/releases}"
+
+# kept for configs written against the old name
+GITHUB_DOWNLOAD="$DOWNLOAD_BASE"
 
 uname_os_check || exit 1
 uname_arch_check || exit 1
@@ -37,12 +45,12 @@ adjust_arch
 
 NAME=$(archive_name)
 TARBALL="${NAME}.${FORMAT}"
-TARBALL_URL="${GITHUB_DOWNLOAD}/${TAG}/${TARBALL}"
+TARBALL_URL="${DOWNLOAD_BASE}/${TAG}/${TARBALL}"
 
 # CHECKSUM is optional; when set, execute() verifies the download against it
 if is_command checksum_name; then
   CHECKSUM=$(checksum_name)
-  CHECKSUM_URL="${GITHUB_DOWNLOAD}/${TAG}/${CHECKSUM}"
+  CHECKSUM_URL="${DOWNLOAD_BASE}/${TAG}/${CHECKSUM}"
 fi
 
 log_info "found version ${VERSION} for ${PLATFORM}"

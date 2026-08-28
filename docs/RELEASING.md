@@ -61,6 +61,15 @@ A file is stable, needs no git, and works in shallow clones and source tarballs.
 
 If you cut two releases on the same day, add a suffix: `2026.08.27.1`.
 
+## Step 2b — move the CHANGELOG heading
+
+Rename `## Unreleased` in [CHANGELOG.md](../CHANGELOG.md) to the version you
+just put in `VERSION`, and start a fresh `## Unreleased` above it.
+
+This is deliberately manual: the entries are written by hand as changes land,
+so there is nothing to generate. But an unreleased heading shipped under a
+version number is worse than no changelog, so do not skip it.
+
 ## Step 3 — rebuild `dist/`
 
 ```sh
@@ -90,7 +99,7 @@ artifact you are about to publish is tested, not just the sources it came from.
 ## Step 5 — commit
 
 ```sh
-git add VERSION dist/
+git add VERSION dist/ CHANGELOG.md
 git commit -m "release $(cat VERSION)"
 git push
 ```

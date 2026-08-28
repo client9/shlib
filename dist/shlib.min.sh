@@ -262,6 +262,12 @@ github_release() {
   test -z "$_shlib_json" && return 1
   _shlib_version=$(echo "$_shlib_json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
   test -z "$_shlib_version" && return 1
+  case "$_shlib_version" in
+    *[!A-Za-z0-9._+-]* | "")
+      log_err "github_release did not find a tag at ${_shlib_giturl} (got '$(echo "$_shlib_version" | cut -c1-40)')"
+      return 1
+      ;;
+  esac
   echo "$_shlib_version"
 }
 hash_md5() {

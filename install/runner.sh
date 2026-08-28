@@ -19,7 +19,7 @@ $_shlib_this: download binaries for ${OWNER}/${REPO}
 Usage: $_shlib_this [-b bindir] [-d] [tag]
   -b  install directory (default ${BINDIR})
   -d  turn on debug logging
-  tag a tag from https://github.com/${OWNER}/${REPO}/releases
+  tag a tag from ${RELEASES_URL}
       if missing, the latest release is used
 EOF
   exit 2
@@ -90,14 +90,15 @@ check_platform() {
 # VERSION is TAG without any leading "v", which is what release filenames
 # usually use.
 tag_to_version() {
+  # not "checking GitHub": latest_version may point anywhere
   if [ -z "${TAG}" ]; then
-    log_info "checking GitHub for latest tag"
+    log_info "checking for latest tag"
   else
-    log_info "checking GitHub for tag '${TAG}'"
+    log_info "checking for tag '${TAG}'"
   fi
-  _shlib_realtag=$(github_release "${OWNER}/${REPO}" "${TAG}") && true
+  _shlib_realtag=$(latest_version "${TAG}") && true
   if test -z "$_shlib_realtag"; then
-    log_crit "unable to find '${TAG}' - use 'latest' or see https://github.com/${OWNER}/${REPO}/releases for details"
+    log_crit "unable to find '${TAG}' - use 'latest' or see ${RELEASES_URL} for details"
     return 1
   fi
   TAG="$_shlib_realtag"
@@ -135,6 +136,25 @@ fi
 #   binary_path() { echo "${NAME}/$1"; }
 if ! command -v binary_path >/dev/null 2>&1; then
   binary_path() { echo "$1"; }
+fi
+
+# latest_version resolves "newest release" to a tag.
+#
+# This is the one genuinely forge-specific piece.  The default asks GitHub,
+# which answers `releases/latest` with JSON when sent `Accept: application/json`.
+# No other forge does: GitLab returns no JSON body and Forgejo returns HTML.
+#
+# A project hosted elsewhere overrides this with whatever its host provides:
+#
+#   latest_version() {
+#     http_copy "https://gitlab.example/api/v4/projects/42/releases" |
+#       sed 's/.*"tag_name":"//; s/".*//'
+#   }
+#
+# shlib deliberately does not try to know other forges' APIs -- that is the
+# project's own knowledge, and every variation would arrive here as a bug.
+if ! command -v latest_version >/dev/null 2>&1; then
+  latest_version() { github_release "${OWNER}/${REPO}" "$1"; }
 fi
 
 # execute wraps every destructive operation in one function, so that a
