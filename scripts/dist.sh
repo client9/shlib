@@ -36,6 +36,7 @@ uname_os_check.sh
 uname_arch_check.sh
 mktmpdir.sh
 untar.sh
+install_exe.sh
 http_download.sh
 http_last_modified.sh
 github_api.sh

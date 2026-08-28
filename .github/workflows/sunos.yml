@@ -43,7 +43,7 @@ jobs:
             echo "uname -s : $(uname -s)"
             echo "uname -o : $(uname -o 2>/dev/null || echo '(unsupported)')"
             echo "uname -m : $(uname -m)"
-            for c in sh gmake make curl wget fetch openssl \
+            for c in sh gmake make curl wget fetch openssl install cp chmod \
                      sha256sum sha512sum md5sum shasum digest gtar tar; do
               printf '%-10s %s\n' "$c" "$(command -v "$c" 2>/dev/null || echo MISSING)"
             done
@@ -77,7 +77,7 @@ jobs:
             echo "uname -s : $(uname -s)"
             echo "uname -o : $(uname -o 2>/dev/null || echo '(unsupported)')"
             echo "uname -m : $(uname -m)"
-            for c in sh gmake make curl wget fetch openssl \
+            for c in sh gmake make curl wget fetch openssl install cp chmod \
                      sha256sum sha512sum md5sum shasum digest gtar tar; do
               printf '%-10s %s\n' "$c" "$(command -v "$c" 2>/dev/null || echo MISSING)"
             done

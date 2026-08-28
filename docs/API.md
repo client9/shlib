@@ -27,6 +27,7 @@ install script and are covered by [INSTALLERS.md](INSTALLERS.md).
 | [`http_download_fetch`](../http_download.sh) | download a URL to a local file using FreeBSD fetch(1) |
 | [`http_download_wget`](../http_download.sh) | download a URL to a local file using wget |
 | [`http_last_modified`](../http_last_modified.sh) | returns the last modified timestamp from a HTTP URL |
+| [`install_exe`](../install_exe.sh) | copy a file into place and make it executable |
 | [`is_command`](../is_command.sh) | returns true if command exists |
 | [`log_crit`](../log.sh) | log at critical priority (2), for platform problems |
 | [`log_debug`](../log.sh) | log at debug priority (7) |
@@ -43,7 +44,7 @@ install script and are covered by [INSTALLERS.md](INSTALLERS.md).
 | [`uname_os_check`](../uname_os_check.sh) | self-check that uname_os produced a valid GOOS |
 | [`untar`](../untar.sh) | unpack $1 into the current directory |
 
-31 functions.
+32 functions.
 
 ## Platforms
 

@@ -172,6 +172,21 @@ untar() {
       ;;
   esac
 }
+install_exe() {
+  _shlib_install_src=$1
+  _shlib_install_dst=$2
+  if [ -z "$_shlib_install_src" ] || [ -z "$_shlib_install_dst" ]; then
+    log_err "install_exe usage: install_exe SOURCE DEST"
+    return 1
+  fi
+  if [ ! -f "$_shlib_install_src" ]; then
+    log_err "install_exe source '${_shlib_install_src}' does not exist"
+    return 1
+  fi
+  rm -f "$_shlib_install_dst"
+  cp "$_shlib_install_src" "$_shlib_install_dst" || return 1
+  chmod 0755 "$_shlib_install_dst" || return 1
+}
 http_download_curl() {
   _shlib_local_file=$1
   _shlib_source_url=$2
@@ -510,7 +525,7 @@ execute() {
       _shlib_binexe="${_shlib_binexe}.exe"
     fi
     _shlib_srcpath=$(binary_path "${_shlib_binexe}")
-    install "${_shlib_tmpdir}/${_shlib_srcpath}" "${BINDIR}/${_shlib_binexe}" || return 1
+    install_exe "${_shlib_tmpdir}/${_shlib_srcpath}" "${BINDIR}/${_shlib_binexe}" || return 1
     log_info "installed ${BINDIR}/${_shlib_binexe}"
   done
   rm -rf "${_shlib_tmpdir}"

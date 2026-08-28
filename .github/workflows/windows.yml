@@ -62,7 +62,7 @@ jobs:
           echo "uname -s : $(uname -s)"
           echo "uname -m : $(uname -m)"
           echo "uname -o : $(uname -o 2>/dev/null || echo '(unsupported)')"
-          for c in sh bash make curl wget tar unzip zstd install mktemp \
+          for c in sh bash make curl wget tar unzip zstd install cp chmod mktemp \
                    sha256sum sha512sum md5sum shasum openssl awk sed tr; do
             printf '%-10s %s\n' "$c" "$(command -v "$c" 2>/dev/null || echo MISSING)"
           done

@@ -9,7 +9,7 @@
 # one.  See config.sh.example.
 #
 # DEPENDS: log, is_command, http_download, github_release, hash_sha256,
-#          mktmpdir, untar, uname_os, uname_arch
+#          mktmpdir, untar, install_exe, uname_os, uname_arch
 
 usage() {
   _shlib_this=$1
@@ -195,7 +195,8 @@ execute() {
       _shlib_binexe="${_shlib_binexe}.exe"
     fi
     _shlib_srcpath=$(binary_path "${_shlib_binexe}")
-    install "${_shlib_tmpdir}/${_shlib_srcpath}" "${BINDIR}/${_shlib_binexe}" || return 1
+
+    install_exe "${_shlib_tmpdir}/${_shlib_srcpath}" "${BINDIR}/${_shlib_binexe}" || return 1
     log_info "installed ${BINDIR}/${_shlib_binexe}"
   done
   rm -rf "${_shlib_tmpdir}"

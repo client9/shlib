@@ -29,6 +29,9 @@ Rename this heading to the release date when cutting a release — see
 - `github_release` returned whatever its `sed` found, so a non-GitHub host or
   an error page yielded a garbage tag (`<!DOCTYPE html> <html lang=`) and a
   baffling 404 later. The result is now validated.
+- The installer used `install(1)` to place binaries. It is not in POSIX and
+  Solaris/illumos ship the SVR4 version with different grammar, so installs
+  failed there entirely.
 - `mktmpdir` trusted `mktemp`'s default mode. `mktemp` is not in POSIX and
   git-bash creates `0755`; the mode is now set explicitly.
 - Internal variables leaked into the caller's shell. Calling `github_release`
@@ -45,6 +48,11 @@ Rename this heading to the release date when cutting a release — see
 - `http_download_fetch`, for FreeBSD. Note `fetch(1)` cannot send arbitrary
   headers; `Accept` is mapped via `HTTP_ACCEPT` and anything else fails
   loudly rather than being silently dropped.
+- **`install_exe`** — copy a file into place and make it executable. Placing a
+  binary portably is a shell primitive, so it belongs in the library rather
+  than inside the installer: `install(1)` is not in POSIX and its grammar
+  differs by platform. It unlinks the destination first, so replacing a binary
+  that is executing cannot hit ETXTBSY.
 - **[docs/API.md](docs/API.md)** — a generated index of every function, plus
   the recognised GOOS/GOARCH values and the non-obvious `uname` mappings
   (including `SunOS` → `illumos`/`solaris`). `make docs` regenerates it and CI
