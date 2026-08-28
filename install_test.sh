@@ -4,7 +4,9 @@
 #   SC1091 - sourced files are generated or path-relative
 #   SC2034 - variables here are consumed by runner.sh
 #   SC2329 - stub functions are invoked indirectly, by execute()
-# shellcheck disable=SC1091,SC2034,SC2329
+#   SC2154 - _shlib_tmpdir is assigned by execute() in runner.sh, and read back
+#            here to assert the temp directory was cleaned up
+# shellcheck disable=SC1091,SC2034,SC2329,SC2154
 . ./assert.sh
 . ./dist/shlib.min.sh
 . ./install/fixtures/config.sh
@@ -185,8 +187,14 @@ test_unpack_override_wins() {
 STUB_MARKER=""
 STUB_VERIFY_RC=0
 STUB_UNPACK_NOOP=""
+STUB_DOWNLOAD_RC=0
 
-http_download() { echo stub >"$1"; }
+http_download() {
+  if [ "$STUB_DOWNLOAD_RC" != "0" ]; then
+    return "$STUB_DOWNLOAD_RC"
+  fi
+  echo stub >"$1"
+}
 
 # Driven by a variable rather than redefined per scenario, for the reasons
 # above.  Empty STUB_UNPACK_NOOP is the ordinary archive path, so every
@@ -297,6 +305,97 @@ test_execute_bare_binary() {
   binary_path() { echo "$1"; }
   STUB_UNPACK_NOOP=""
   rm -rf "$workdir"
+}
+
+# The temp directory must go away on EVERY exit path, not just the happy one.
+#
+# It used to be removed by the last statement of execute, so all six
+# `|| return 1` leaked it -- and a failed install is more likely to be retried
+# than a successful one, so they piled up in TMPDIR.
+test_execute_cleans_up_on_failure() {
+  workdir=$(mktmpdir)
+  BINDIR="$workdir/bin"
+  BINARY=testbin
+  BINARIES=""
+  TARBALL=testbin.tar.gz
+  TARBALL_URL=https://example.invalid/$TARBALL
+  CHECKSUM=""
+  OS=linux
+  STUB_DOWNLOAD_RC=1
+
+  execute >/dev/null 2>&1
+  assertNotEquals "0" "$?" "execute: a failed download aborts"
+  assertFalse "[ -d '$_shlib_tmpdir' ]" \
+    "execute: the temp directory is removed when the download fails"
+
+  STUB_DOWNLOAD_RC=0
+  rm -rf "$workdir"
+}
+
+# and still on the happy path
+test_execute_cleans_up_on_success() {
+  workdir=$(mktmpdir)
+  BINDIR="$workdir/bin"
+  BINARY=testbin
+  BINARIES=""
+  TARBALL=testbin.tar.gz
+  TARBALL_URL=https://example.invalid/$TARBALL
+  CHECKSUM=""
+  OS=linux
+
+  execute >/dev/null 2>&1
+  assertFalse "[ -d '$_shlib_tmpdir' ]" \
+    "execute: the temp directory is removed after a successful install"
+  rm -rf "$workdir"
+}
+
+# The downloader prints its own message ("curl: (22) ... 404") which names
+# neither the project nor the URL, and main.sh then exits silently.
+#
+# stderr goes to a FILE rather than through $(execute 2>&1): execute contains a
+# command substitution, and ksh93 loses a function's stderr when the caller
+# captures it that way.  That is the same trap that split normalize_platforms
+# out of check_platform.
+test_execute_download_failure_names_the_url() {
+  workdir=$(mktmpdir)
+  BINDIR="$workdir/bin"
+  BINARY=testbin
+  BINARIES=""
+  TARBALL=testbin.tar.gz
+  TARBALL_URL=https://example.invalid/$TARBALL
+  CHECKSUM=""
+  OS=linux
+  STUB_DOWNLOAD_RC=1
+
+  execute >/dev/null 2>"$workdir/err"
+  got=$(cat "$workdir/err")
+  case "$got" in
+    *"https://example.invalid/testbin.tar.gz"*)
+      assertTrue "true" "execute: the download error names the URL"
+      ;;
+    *)
+      assertTrue "false" "execute: download error omits the URL: $got"
+      ;;
+  esac
+
+  STUB_DOWNLOAD_RC=0
+  rm -rf "$workdir"
+}
+
+# --- _shlib_squeeze_ws ---------------------------------------------------
+
+# The same folding is needed for PLATFORMS and for BINARIES; it lived in both
+# places verbatim.  Not promoted to the library -- it is about this installer's
+# config vocabulary, not a portable-shell primitive.
+test_squeeze_ws() {
+  assertEquals "a b c" "$(_shlib_squeeze_ws "a b c")" \
+    "_shlib_squeeze_ws: leaves a clean list alone"
+  assertEquals "a b c" "$(_shlib_squeeze_ws "  a   b  c  ")" \
+    "_shlib_squeeze_ws: trims ends and collapses runs of spaces"
+  assertEquals "a b c" "$(_shlib_squeeze_ws "a
+   b	c")" "_shlib_squeeze_ws: folds newlines and tabs"
+  assertEquals "" "$(_shlib_squeeze_ws "")" "_shlib_squeeze_ws: empty in, empty out"
+  assertEquals "" "$(_shlib_squeeze_ws "   ")" "_shlib_squeeze_ws: all-whitespace yields empty"
 }
 
 # --- forge independence --------------------------------------------------
@@ -816,6 +915,7 @@ test_platform_unsupported
 test_platform_message
 test_platform_empty_skips
 test_normalize_platforms
+test_squeeze_ws
 test_archive_name
 test_adjust_defaults_are_noops
 test_adjust_override_wins
@@ -826,5 +926,8 @@ test_execute
 test_execute_verifies_checksum
 test_execute_bad_checksum
 test_execute_bare_binary
+test_execute_cleans_up_on_failure
+test_execute_cleans_up_on_success
+test_execute_download_failure_names_the_url
 test_execute_nested_binary
 test_execute_multiple_binaries

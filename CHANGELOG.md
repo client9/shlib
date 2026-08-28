@@ -15,6 +15,27 @@ sed -n 's/^shlib \(.*\)/\1/p' your-install.sh
 Rename this heading to the release date when cutting a release — see
 [docs/RELEASING.md](docs/RELEASING.md).
 
+### Fixed
+
+- **The installer leaked its temp directory on every failure path.** `execute`
+  removed it as its last statement, so all six `|| return 1` before that point
+  left it behind — and a failed install is more likely to be retried than a
+  successful one, so they accumulated in `TMPDIR`. The body is now
+  `_shlib_execute` and `execute` cleans up around it, whatever the outcome.
+  (Not an `EXIT` trap, which is the idiom `mktmpdir` documents: `assert.sh`
+  installs its own `EXIT` trap to print test totals, and `execute` is called
+  directly by the tests.)
+- **A failed download reported only the downloader's own message.** `curl: (22)
+  The requested URL returned error: 404` names neither the project nor the URL,
+  and the installer then exited silently. It now says:
+
+  ```
+  owner/repo err unable to download https://github.com/owner/repo/releases/download/v1.2.3/asset.tar.gz
+  ```
+
+  which is the information needed when a tag or an `archive_name` does not
+  match the real assets — the most common config mistake.
+
 ### Added
 
 - **`unpack`, a hook for releases that are not archives.** `execute` called

@@ -58,9 +58,37 @@ parse_args() {
 # stderr when that function contains a command substitution and the caller
 # captures it with `$(f 2>&1)`, which silently swallowed the error message.
 normalize_platforms() {
-  PLATFORMS=$(printf '%s' "${PLATFORMS-}" | tr '\t\n' '  ' | tr -s ' ')
-  PLATFORMS=${PLATFORMS# }
-  PLATFORMS=${PLATFORMS% }
+  PLATFORMS=$(_shlib_squeeze_ws "${PLATFORMS-}")
+}
+
+# _shlib_squeeze_ws: fold tabs, newlines and runs of spaces in $1 down to single
+# spaces, and trim both ends.
+#
+# Configs write PLATFORMS and BINARIES as human-readable strings, often spread
+# over several indented lines (see install/examples/hugo.sh).  Both the
+# substring match in check_platform and the peeling loop in execute need
+# single-space separators to work: a double space makes the peel emit an empty
+# token, which becomes an empty binary name and a bogus install path.
+#
+# Kept installer-local rather than promoted to the library.  It is about this
+# installer's config vocabulary, not a portable-shell primitive the way
+# install_exe is, and it has no caller outside this file.
+#
+# Named with the _shlib_ prefix, like _shlib_execute, to mark it as private.
+# The unprefixed names in this file (parse_args, check_platform, execute, ...)
+# are the ones main.sh calls; these two are internal and nothing should
+# override them, unlike the deliberately overridable hooks above.
+#
+# Safe to call from normalize_platforms, which is never captured by a caller.
+# Do NOT call it from check_platform: ksh93 loses a function's stderr when the
+# function contains a command substitution and the caller captures it with
+# `$(f 2>&1)`, which the tests do.  That is why normalize_platforms is a
+# separate function in the first place.
+_shlib_squeeze_ws() {
+  _shlib_ws=$(printf '%s' "${1-}" | tr '\t\n' '  ' | tr -s ' ')
+  _shlib_ws=${_shlib_ws# }
+  _shlib_ws=${_shlib_ws% }
+  echo "${_shlib_ws}"
 }
 
 # check_platform verifies that this project actually publishes something for
@@ -201,10 +229,40 @@ execute() {
   _shlib_tmpdir=$(mktmpdir) || return 1
   log_debug "downloading files into ${_shlib_tmpdir}"
 
-  http_download "${_shlib_tmpdir}/${TARBALL}" "${TARBALL_URL}" || return 1
+  _shlib_execute
+  _shlib_execute_rc=$?
+
+  rm -rf "${_shlib_tmpdir}"
+  return "${_shlib_execute_rc}"
+}
+
+# _shlib_execute: the body of execute, split out so that the temp directory is
+# removed on EVERY exit path.
+#
+# It used to be one function whose `rm -rf` was the last statement, so all six
+# `|| return 1` below leaked the directory -- and a failed install is more
+# likely to be retried than a successful one, so they accumulated.  Verified
+# against a real 404 before the split.
+#
+# An EXIT trap is the idiom mktmpdir documents, but it cannot be used here:
+# assert.sh installs its own EXIT trap to print test totals, and execute is
+# called directly by install_test.sh, so a trap set here would silence the
+# whole test report.
+_shlib_execute() {
+  if ! http_download "${_shlib_tmpdir}/${TARBALL}" "${TARBALL_URL}"; then
+    # The downloader prints its own diagnostic -- "curl: (22) ... 404" -- which
+    # names neither the project nor the URL.  A wrong tag or an archive_name
+    # that does not match the real asset is the most common config mistake, so
+    # say which URL was actually asked for.
+    log_err "unable to download ${TARBALL_URL}"
+    return 1
+  fi
 
   if [ -n "${CHECKSUM-}" ]; then
-    http_download "${_shlib_tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}" || return 1
+    if ! http_download "${_shlib_tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}"; then
+      log_err "unable to download ${CHECKSUM_URL}"
+      return 1
+    fi
     hash_sha256_verify "${_shlib_tmpdir}/${TARBALL}" "${_shlib_tmpdir}/${CHECKSUM}" || return 1
   fi
 
@@ -215,9 +273,16 @@ execute() {
   # Peel the list with parameter expansion rather than `for b in ${BINARIES}`:
   # zsh does not word-split unquoted parameters, so a multi-binary list would
   # be treated as one filename.
-  _shlib_bins=$(printf '%s' "${BINARIES:-$BINARY}" | tr '\t\n' '  ' | tr -s ' ')
-  _shlib_bins=${_shlib_bins# }
-  _shlib_bins=${_shlib_bins% }
+  #
+  # `for b in $(printf '%s' "${BINARIES}")` WOULD work -- zsh does word-split
+  # command substitution, verified on sh, dash, bash, ksh and zsh, and default
+  # IFS folds the tabs and newlines for free, so squeeze_ws would not even be
+  # needed.  It is not used because the results of a substitution are then
+  # pathname-expanded, and that behaviour inverts: a `*` in the list globs
+  # against the cwd on sh/dash/bash/ksh and passes through literally on zsh.
+  # Guarding with `set -f` would cost back the lines it saves.  Do not
+  # "simplify" this loop into that form without restoring the guard.
+  _shlib_bins=$(_shlib_squeeze_ws "${BINARIES:-$BINARY}")
   while [ -n "${_shlib_bins}" ]; do
     case "${_shlib_bins}" in
       *" "*)
@@ -237,5 +302,4 @@ execute() {
     install_exe "${_shlib_tmpdir}/${_shlib_srcpath}" "${BINDIR}/${_shlib_binexe}" || return 1
     log_info "installed ${BINDIR}/${_shlib_binexe}"
   done
-  rm -rf "${_shlib_tmpdir}"
 }

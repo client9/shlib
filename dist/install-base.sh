@@ -480,9 +480,13 @@ parse_args() {
   TAG=${1-}
 }
 normalize_platforms() {
-  PLATFORMS=$(printf '%s' "${PLATFORMS-}" | tr '\t\n' '  ' | tr -s ' ')
-  PLATFORMS=${PLATFORMS# }
-  PLATFORMS=${PLATFORMS% }
+  PLATFORMS=$(_shlib_squeeze_ws "${PLATFORMS-}")
+}
+_shlib_squeeze_ws() {
+  _shlib_ws=$(printf '%s' "${1-}" | tr '\t\n' '  ' | tr -s ' ')
+  _shlib_ws=${_shlib_ws# }
+  _shlib_ws=${_shlib_ws% }
+  echo "${_shlib_ws}"
 }
 check_platform() {
   test -z "${PLATFORMS-}" && return 0
@@ -532,16 +536,26 @@ fi
 execute() {
   _shlib_tmpdir=$(mktmpdir) || return 1
   log_debug "downloading files into ${_shlib_tmpdir}"
-  http_download "${_shlib_tmpdir}/${TARBALL}" "${TARBALL_URL}" || return 1
+  _shlib_execute
+  _shlib_execute_rc=$?
+  rm -rf "${_shlib_tmpdir}"
+  return "${_shlib_execute_rc}"
+}
+_shlib_execute() {
+  if ! http_download "${_shlib_tmpdir}/${TARBALL}" "${TARBALL_URL}"; then
+    log_err "unable to download ${TARBALL_URL}"
+    return 1
+  fi
   if [ -n "${CHECKSUM-}" ]; then
-    http_download "${_shlib_tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}" || return 1
+    if ! http_download "${_shlib_tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}"; then
+      log_err "unable to download ${CHECKSUM_URL}"
+      return 1
+    fi
     hash_sha256_verify "${_shlib_tmpdir}/${TARBALL}" "${_shlib_tmpdir}/${CHECKSUM}" || return 1
   fi
   (cd "${_shlib_tmpdir}" && unpack "${TARBALL}") || return 1
   mkdir -p "${BINDIR}" || return 1
-  _shlib_bins=$(printf '%s' "${BINARIES:-$BINARY}" | tr '\t\n' '  ' | tr -s ' ')
-  _shlib_bins=${_shlib_bins# }
-  _shlib_bins=${_shlib_bins% }
+  _shlib_bins=$(_shlib_squeeze_ws "${BINARIES:-$BINARY}")
   while [ -n "${_shlib_bins}" ]; do
     case "${_shlib_bins}" in
       *" "*)
@@ -560,7 +574,6 @@ execute() {
     install_exe "${_shlib_tmpdir}/${_shlib_srcpath}" "${BINDIR}/${_shlib_binexe}" || return 1
     log_info "installed ${BINDIR}/${_shlib_binexe}"
   done
-  rm -rf "${_shlib_tmpdir}"
 }
 PREFIX="${OWNER}/${REPO}"
 log_prefix() {
