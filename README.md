@@ -62,7 +62,7 @@ Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 **Building a `curl | sh` installer?** See
 [docs/INSTALLERS.md](docs/INSTALLERS.md) — the replacement for the archived
 `godownloader`, with no Go, YAML or template language.
-Worked examples for five real projects are in
+Worked examples for seven real projects are in
 [install/examples/](install/examples/).
 
 Pre-built bundles are committed to this repo and attached to every release:
@@ -136,4 +136,7 @@ Other docs:
 
 * [docs/INSTALLERS.md](docs/INSTALLERS.md) — building a `curl | sh` installer
 * [docs/EMBEDDING.md](docs/EMBEDDING.md) — vendoring shlib without going stale
+* [docs/PORTABILITY.md](docs/PORTABILITY.md) — the shell and platform
+  behaviour behind the code: which shells break which idiom, which systems
+  ship pre-POSIX tools, and how to rehearse a platform you cannot boot
 * [docs/RELEASING.md](docs/RELEASING.md) — cutting a release
