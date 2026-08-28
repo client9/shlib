@@ -10,14 +10,17 @@
 #   - a VARIANT dimension that is neither OS nor arch.  Hugo publishes plain,
 #     `extended`, `withdeploy` and `extended_withdeploy` builds; because
 #     archive_name is a shell function, that is one more expansion rather than
-#     a new config concept.
+#     a new config concept.  The variants cover far fewer platforms than the
+#     plain build, so PLATFORMS is COMPUTED from the variant -- it is an
+#     ordinary shell variable, so that costs nothing.
 #   - macOS is published only as a .pkg, never a tarball, so darwin is
 #     deliberately absent from PLATFORMS.  A mac user gets "no binary
 #     published for darwin/arm64" instead of a 404 on a URL that never existed.
 #
 # Note the underscore/hyphen split: hugo_<version>_<os>-<arch>.
 #
-# Verified against v0.165.0.
+# Verified against v0.165.0 by listing the release's 36 assets and resolving
+# every PLATFORMS entry, in every variant, against that list.
 
 # Config fragments are consumed by the other concatenated parts, which the
 # linter cannot see when checking one file alone.
@@ -30,20 +33,35 @@ BINDIR=${BINDIR:-./bin}
 
 # Which build to install.  Set to "_extended", "_withdeploy" or
 # "_extended_withdeploy" for those variants; empty for the plain build.
-# Only linux/amd64, linux/arm64 and windows/amd64 have variant builds.
 HUGO_VARIANT=${HUGO_VARIANT:-}
 
+# These lists are in `uname_arch` spelling, NOT GOARCH: check_platform runs
+# before adjust_arch, so it sees armv7, not the "arm" that names the file.
+#
 # darwin is absent on purpose: hugo ships macOS as a .pkg only.
 #
-# Listed in canonical GOOS/GOARCH terms, because check_platform runs before
-# adjust_arch folds armv6/armv7 into arm.
-PLATFORMS="dragonfly/amd64
-           freebsd/amd64
-           linux/amd64 linux/arm64 linux/armv6 linux/armv7
-           netbsd/amd64
-           openbsd/amd64
-           solaris/amd64
-           windows/amd64 windows/arm64"
+# linux/armv6 is absent on purpose too.  Hugo publishes ONE arm build and it is
+# GOARM=7 -- `go version -m hugo` out of hugo_0.165.0_linux-arm.tar.gz reports
+# `build GOARM=7`.  A GOARM=7 binary dies with SIGILL on ARMv6 hardware (Pi 1,
+# Pi Zero, Pi Zero W), so listing armv6 would trade a clear "no binary
+# published" for an install that only fails when the user runs it.
+#
+# The variants are built for far fewer platforms than the plain build, so the
+# list depends on HUGO_VARIANT.  Without that, `HUGO_VARIANT=_extended` on
+# FreeBSD would pass check_platform and then 404 -- precisely what PLATFORMS
+# exists to prevent.
+if [ -n "${HUGO_VARIANT}" ]; then
+  PLATFORMS="linux/amd64 linux/arm64
+             windows/amd64"
+else
+  PLATFORMS="dragonfly/amd64
+             freebsd/amd64
+             linux/amd64 linux/arm64 linux/armv7
+             netbsd/amd64
+             openbsd/amd64
+             solaris/amd64
+             windows/amd64 windows/arm64"
+fi
 
 adjust_format() {
   case ${OS} in
@@ -51,10 +69,12 @@ adjust_format() {
   esac
 }
 
-# hugo publishes a single "arm" build; uname_arch is more specific
+# hugo publishes a single "arm" build; uname_arch is more specific.  Only
+# armv7 can reach here -- PLATFORMS turns armv5 and armv6 away first, because
+# that build is GOARM=7.
 adjust_arch() {
   case ${ARCH} in
-    armv5 | armv6 | armv7) ARCH=arm ;;
+    armv7) ARCH=arm ;;
   esac
 }
 

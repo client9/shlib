@@ -474,6 +474,78 @@ test_example_hugo_variant() {
     "example hugo.sh: HUGO_VARIANT selects the extended build"
 }
 
+# Hugo publishes ONE linux-arm build and it is GOARM=7 (confirmed with
+# `go version -m` on the 0.165.0 asset).  A GOARM=7 binary dies with SIGILL on
+# ARMv6 hardware, so armv6 must be refused up front rather than installed and
+# left to fail at run time.
+test_example_hugo_no_armv6() {
+  got=$(sh -c '. ./install/examples/hugo.sh
+    . ./dist/shlib.min.sh
+    . ./install/runner.sh
+    PLATFORM=linux/armv6
+    normalize_platforms
+    check_platform 2>&1 >/dev/null' | head -1)
+  case "$got" in
+    *"no binary published for linux/armv6"*)
+      assertTrue "true" "example hugo.sh: armv6 refused (the arm build is GOARM=7)"
+      ;;
+    *)
+      assertTrue "false" "example hugo.sh: armv6 was not refused [$got]"
+      ;;
+  esac
+
+  # armv7 is the one that must still work
+  got=$(sh -c '. ./install/examples/hugo.sh
+    . ./dist/shlib.min.sh
+    . ./install/runner.sh
+    PLATFORM=linux/armv7
+    normalize_platforms
+    check_platform >/dev/null 2>&1; echo $?')
+  assertEquals "0" "$got" "example hugo.sh: armv7 is still accepted"
+}
+
+# The variant builds cover far fewer platforms than the plain build, so
+# PLATFORMS is computed from HUGO_VARIANT.  Without that, an extended install
+# on FreeBSD passes check_platform and then 404s.
+test_example_hugo_variant_platforms() {
+  got=$(sh -c 'HUGO_VARIANT=_extended
+    . ./install/examples/hugo.sh
+    . ./dist/shlib.min.sh
+    . ./install/runner.sh
+    PLATFORM=freebsd/amd64
+    normalize_platforms
+    check_platform 2>&1 >/dev/null' | head -1)
+  case "$got" in
+    *"no binary published for freebsd/amd64"*)
+      assertTrue "true" "example hugo.sh: extended build refused on freebsd"
+      ;;
+    *)
+      assertTrue "false" "example hugo.sh: extended freebsd was not refused [$got]"
+      ;;
+  esac
+
+  # freebsd IS published for the plain build, so it must still pass there
+  got=$(sh -c '. ./install/examples/hugo.sh
+    . ./dist/shlib.min.sh
+    . ./install/runner.sh
+    PLATFORM=freebsd/amd64
+    normalize_platforms
+    check_platform >/dev/null 2>&1; echo $?')
+  assertEquals "0" "$got" "example hugo.sh: plain build still accepted on freebsd"
+
+  # and the three platforms that do have variant builds must pass
+  for p in linux/amd64 linux/arm64 windows/amd64; do
+    got=$(sh -c 'HUGO_VARIANT=_extended_withdeploy
+      . ./install/examples/hugo.sh
+      . ./dist/shlib.min.sh
+      . ./install/runner.sh
+      PLATFORM='"$p"'
+      normalize_platforms
+      check_platform >/dev/null 2>&1; echo $?')
+    assertEquals "0" "$got" "example hugo.sh: variant build accepted on $p"
+  done
+}
+
 # hugo publishes macOS as a .pkg only, so darwin must be refused rather than
 # producing a 404 on a tarball that never existed
 test_example_hugo_no_darwin() {
@@ -500,6 +572,8 @@ test_example_golangci
 test_example_hugo
 test_example_hugo_variant
 test_example_hugo_no_darwin
+test_example_hugo_no_armv6
+test_example_hugo_variant_platforms
 test_examples_assemble
 # archives that wrap their contents in a directory, e.g.
 #   golangci-lint-2.13.1-darwin-arm64/golangci-lint
