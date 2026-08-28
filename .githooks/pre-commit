@@ -1,0 +1,70 @@
+#!/bin/sh
+#
+# pre-commit: the fast, offline half of CI
+#
+# Enable with `make hooks`, which points core.hooksPath here.  .git/hooks is
+# not tracked by git, so a hook installed there is lost on the next clone.
+#
+# What this deliberately does NOT run:
+#
+#   make test  needs the network (http_download_test.sh fetches real URLs) and
+#              fails offline.  A hook that blocks commits on a train is a hook
+#              people disable.  CI runs it across every shell anyway.
+#
+#   make fmt   rewrites files mid-commit, changing what you are committing out
+#              from under you.  `make lint` already fails on unformatted files
+#              and tells you to run it yourself.
+#
+# Caveat: this checks the WORKING TREE, not precisely what is staged.  An
+# unstaged edit can mask a problem that CI then catches.  Fixing that properly
+# means stashing mid-hook, which risks losing work; the trade is deliberate.
+#
+# Skip once with:  git commit --no-verify
+set -e
+
+cd "$(git rev-parse --show-toplevel)"
+
+fail=0
+
+# --- generated files must match their sources ----------------------------
+#
+# Cheap (about 0.1s) and the mistake most easily made: edit a library file,
+# forget `make dist`, and the `generated` CI job goes red after the push.
+if ! make dist docs >/tmp/shlib-precommit-gen.$$ 2>&1; then
+  echo "pre-commit: 'make dist docs' failed:" >&2
+  # drop the generators' progress lines so the actual error is visible
+  grep -vE '^\./scripts/|info dist ' /tmp/shlib-precommit-gen.$$ | sed 's/^/    /' >&2
+  rm -f /tmp/shlib-precommit-gen.$$
+  fail=1
+elif rm -f /tmp/shlib-precommit-gen.$$ && ! git diff --quiet -- dist docs/API.md; then
+  echo "pre-commit: generated files are out of date:" >&2
+  git diff --name-only -- dist docs/API.md | sed 's/^/    /' >&2
+  echo "  they have been regenerated; stage them with:" >&2
+  echo "    git add dist docs/API.md" >&2
+  fail=1
+fi
+
+# --- lint ----------------------------------------------------------------
+#
+# Needs ./bin/shellcheck.  Warn rather than block if it is missing: refusing
+# someone's first commit on a fresh clone because they have not downloaded a
+# linter is hostile, and CI is the real enforcement.
+if [ -x ./bin/shellcheck ] && [ -x ./bin/shfmt ]; then
+  if ! make lint >/tmp/shlib-precommit-lint.$$ 2>&1; then
+    echo "pre-commit: 'make lint' failed:" >&2
+    grep -vE '^(ShellCheck|version:|license:|==)' /tmp/shlib-precommit-lint.$$ | sed 's/^/    /' >&2
+    echo "  formatting problems are fixed by: make fmt" >&2
+    fail=1
+  fi
+  rm -f /tmp/shlib-precommit-lint.$$
+else
+  echo "pre-commit: skipping lint - run 'make tools' to install shellcheck and shfmt" >&2
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo "" >&2
+  echo "pre-commit: commit aborted (use --no-verify to override)" >&2
+  exit 1
+fi
+
+exit 0

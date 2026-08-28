@@ -17,6 +17,8 @@ Tags are the version with a `v` prefix: `v2026.08.27`.
 - Push access to `client9/shlib`.
 - Nothing to install locally — `make tools` fetches pinned `shellcheck` and
   `shfmt` into `./bin` if you want to lint before pushing.
+- `make hooks` enables a pre-commit hook that runs lint and the generated-file
+  check, so a stale `dist/` or `docs/API.md` is caught before the push.
 - Work on `master`. Releases are cut from `master`.
 
 ---
