@@ -278,6 +278,51 @@ test_github_release_rejects_html() {
   assertEquals "v1.2.3-rc1+build.5" "$got" "github_release: accepts a legitimate odd tag"
 }
 
+# github_release failed on Solaris returning an empty tag, and the cause was
+# not reproducible anywhere else.  These check each stage of the pipeline
+# separately so the next run says which one breaks, instead of only that the
+# whole thing did.
+#
+# Note the rejects-HTML assertion above expects rc=1, so it passes on ANY
+# failure -- it cannot distinguish "correctly rejected" from "broken".
+test_github_release_stages() {
+  _json='{"tag_name":"v1.2.3-rc1+build.5"}'
+
+  # 1. tr flattening.  Solaris tr was suspected, but normalize_platforms uses
+  #    the same escapes on a string containing "linux" and passes there.
+  # echo appends a newline, which tr turns into a trailing space -- so compare
+  # the property that matters rather than the exact string: an SVR4 tr that
+  # treats '\n' as the two characters backslash and n would translate every
+  # 'n', mangling "tag_name" into "tag_ ame".
+  _flat=$(echo "$_json" | tr -s '\n' ' ')
+  case "$_flat" in
+    *'"tag_name":"'*) assertTrue "true" "github_release stage 1: tr leaves tag_name intact" ;;
+    *) assertTrue "false" "github_release stage 1: tr mangled the JSON [$_flat]" ;;
+  esac
+
+  # 2. sed extraction
+  _tag=$(printf '%s' "$_flat" | sed 's/.*"tag_name":"//' | sed 's/".*//')
+  assertEquals "v1.2.3-rc1+build.5" "$_tag" "github_release stage 2: sed extracts the tag"
+
+  # 3. the validation case.  Character ranges are collation-dependent, so a
+  #    non-C locale is the remaining suspect.
+  case "$_tag" in
+    *[!A-Za-z0-9._+-]* | "")
+      assertTrue "false" "github_release stage 3: validation rejected '$_tag' (LC_ALL=${LC_ALL:-unset} LANG=${LANG:-unset})"
+      ;;
+    *)
+      assertTrue "true" "github_release stage 3: validation accepts the tag"
+      ;;
+  esac
+
+  # 4. the whole function, with the network stubbed out
+  _got=$(sh -c '. ./dist/shlib.min.sh
+    http_copy() { printf "{\"tag_name\":\"v1.2.3-rc1+build.5\"}"; }
+    github_release owner/repo 2>/dev/null')
+  assertEquals "v1.2.3-rc1+build.5" "$_got" "github_release stage 4: end to end"
+}
+
+test_github_release_stages
 test_github_release_rejects_html
 test_download_base_override
 test_download_base_defaults_to_github

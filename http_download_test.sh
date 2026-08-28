@@ -14,6 +14,20 @@ if ! is_command curl && ! is_command wget && ! is_command fetch; then
   exit 0
 fi
 
+# count_entries DIR -- number of entries in DIR
+#
+# `ls -A` is POSIX and works everywhere. The alternatives do not:
+#   find -mindepth   a GNU extension; Solaris find rejects it
+#   for f in DIR/*   zsh treats an unmatched glob as an error (NOMATCH),
+#                    where POSIX shells pass the pattern through
+#
+# SC2012 warns about parsing ls output, but this only counts lines, so odd
+# filenames cannot mislead it.
+# shellcheck disable=SC2012
+count_entries() {
+  ls -A "$1" 2>/dev/null | wc -l | tr -d ' '
+}
+
 # test normal 200
 test1() {
   http_download /dev/null https://raw.githubusercontent.com/client9/shlib/master/README.md
@@ -44,14 +58,14 @@ test4() {
 # the old version returned before removing its temp file on the error path
 test5() {
   d=$(mktmpdir)
-  before=$(find "$d" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')
+  before=$(count_entries "$d")
   # subshell + plain assignment: a prefix assignment on a function call is
   # not portably visible inside the function
   (
     TMPDIR="$d"
     http_copy https://raw.githubusercontent.com/client9/shlib/master/does_not_exist
   ) >/dev/null 2>&1
-  after=$(find "$d" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')
+  after=$(count_entries "$d")
   assertEquals "$before" "$after" "test5: no temp file left behind after a failed fetch"
   rm -rf "$d"
 }

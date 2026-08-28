@@ -73,13 +73,29 @@ test_bundle_matches_sources() {
 
 # every function defined in a source file must survive into the bundle
 test_no_function_lost() {
-  missing=""
+  # Deliberately avoids `case` inside $( ): bash 3.2 -- /bin/sh on macOS --
+  # reads the pattern's closing ")" as the end of the command substitution and
+  # fails to parse.  The balanced-paren form "(pattern)" fixes that, but shfmt
+  # normalises it straight back out again.
+  #
+  # `while read` from a REDIRECT rather than a pipe, so the loop runs in this
+  # shell and the accumulated variable survives.
+  #
+  # sed, not `grep -oE`: Solaris ships the SVR4 grep, which has neither.
+  _tmpd=$(mktmpdir)
   for f in ./*.sh; do
-    case "$f" in ./*_test.sh | ./assert.sh) continue ;; esac
-    for fn in $(grep -oE '^[a-z_][a-z0-9_]*\(\)' "$f" | tr -d '()'); do
-      grep -q "^${fn}()" ./dist/shlib.min.sh || missing="$missing $fn"
-    done
+    case "$f" in
+      ./*_test.sh | ./assert.sh) continue ;;
+    esac
+    sed -n 's/^\([a-z_][a-z0-9_]*\)().*/\1/p' "$f" >>"$_tmpd/fns"
   done
+
+  missing=""
+  while read -r fn; do
+    grep -q "^${fn}()" ./dist/shlib.min.sh || missing="$missing $fn"
+  done <"$_tmpd/fns"
+  rm -rf "$_tmpd"
+
   assertEquals "" "$missing" "no function lost in minification"
 }
 

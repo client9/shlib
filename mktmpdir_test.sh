@@ -5,6 +5,20 @@
 . ./uname_os.sh
 . ./mktmpdir.sh
 
+# count_entries DIR -- number of entries in DIR
+#
+# `ls -A` is POSIX and works everywhere. The alternatives do not:
+#   find -mindepth   a GNU extension; Solaris find rejects it
+#   for f in DIR/*   zsh treats an unmatched glob as an error (NOMATCH),
+#                    where POSIX shells pass the pattern through
+#
+# SC2012 warns about parsing ls output, but this only counts lines, so odd
+# filenames cannot mislead it.
+# shellcheck disable=SC2012
+count_entries() {
+  ls -A "$1" 2>/dev/null | wc -l | tr -d ' '
+}
+
 # each call must return a NEW, private directory.  The old implementation
 # returned $TMPDIR verbatim when it was set, so two calls collided and the
 # directory was shared with every other process on the box.
@@ -23,7 +37,7 @@ test2() {
 
 test3() {
   d=$(mktmpdir)
-  got=$(find "$d" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')
+  got=$(count_entries "$d")
   assertEquals "0" "$got" "test3: new directory is empty"
   rmdir "$d" 2>/dev/null
 }
