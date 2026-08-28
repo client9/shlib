@@ -38,6 +38,10 @@ lint: $(SHFMT) ## run shellcheck and check formatting
 fmt: $(SHFMT) ## reformat shell scripts
 	$(SHFMT) -ci -p -i 2 -w *.sh scripts/*.sh install/*.sh
 
+hooks: ## install the git pre-commit hook (points core.hooksPath at .githooks)
+	git config core.hooksPath .githooks
+	@echo "pre-commit hook enabled; disable with: git config --unset core.hooksPath"
+
 docs: ## regenerate docs/API.md from the source comments
 	./scripts/mkapi.sh
 
@@ -60,4 +64,4 @@ help:
 	}' $(MAKEFILE_LIST)
 
 .DEFAULT_GOAL = help
-.PHONY: help test test-all lint fmt dist docs tools clean
+.PHONY: help test test-all lint fmt dist docs hooks tools clean
