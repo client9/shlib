@@ -385,6 +385,26 @@ check_example() {
   assertEquals "$5 $6" "$_got" "example $_cfg: $3/$4"
 }
 
+# check_example_path <cfg> <tag> <os> <arch> <expected tarball> <expected path>
+#
+# Like check_example, but for a project that publishes no checksum file, and it
+# pins binary_path too -- shellcheck's differs between the unix tarballs and
+# the windows zip.  TAG is set as well as VERSION because these filenames carry
+# the tag verbatim.  The `.exe` suffixing mirrors execute() in runner.sh.
+check_example_path() {
+  _cfg=$1
+  _got=$(sh -c '. ./install/examples/'"$_cfg"'
+    . ./dist/shlib.min.sh
+    . ./install/runner.sh
+    TAG='"$2"'; VERSION=${TAG#v}; OS='"$3"'; ARCH='"$4"'
+    adjust_format; adjust_os; adjust_arch
+    NAME=$(archive_name)
+    b=$BINARY
+    if [ "$OS" = windows ]; then b="${b}.exe"; fi
+    echo "${NAME}.${FORMAT} $(binary_path "$b")"')
+  assertEquals "$5 $6" "$_got" "example $_cfg: $3/$4"
+}
+
 # securego/gosec v2.29.0 -- canonical spellings, tar.gz everywhere
 test_example_gosec() {
   check_example gosec.sh 2.29.0 darwin arm64 \
@@ -439,6 +459,24 @@ test_example_golangci() {
     golangci-lint-2.13.1-illumos-amd64.tar.gz golangci-lint-2.13.1-checksums.txt
   check_example golangci-lint.sh 2.13.1 linux loong64 \
     golangci-lint-2.13.1-linux-loong64.tar.gz golangci-lint-2.13.1-checksums.txt
+}
+
+# koalaman/shellcheck v0.11.0 -- a non-Go project: raw kernel arch spellings,
+# the tag rather than the version, dot separators, and a windows zip shaped
+# unlike every other asset
+test_example_shellcheck() {
+  check_example_path shellcheck.sh v0.11.0 darwin arm64 \
+    shellcheck-v0.11.0.darwin.aarch64.tar.gz shellcheck-v0.11.0/shellcheck
+  check_example_path shellcheck.sh v0.11.0 linux amd64 \
+    shellcheck-v0.11.0.linux.x86_64.tar.gz shellcheck-v0.11.0/shellcheck
+  check_example_path shellcheck.sh v0.11.0 linux armv6 \
+    shellcheck-v0.11.0.linux.armv6hf.tar.gz shellcheck-v0.11.0/shellcheck
+  # riscv64 is not remapped -- the project and uname_arch agree on that one
+  check_example_path shellcheck.sh v0.11.0 linux riscv64 \
+    shellcheck-v0.11.0.linux.riscv64.tar.gz shellcheck-v0.11.0/shellcheck
+  # the windows zip carries no os/arch, and the exe sits at the root
+  check_example_path shellcheck.sh v0.11.0 windows amd64 \
+    shellcheck-v0.11.0.zip shellcheck.exe
 }
 
 # gohugoio/hugo v0.165.0 -- BSDs, Solaris, and build variants
@@ -586,6 +624,7 @@ test_example_gosec
 test_example_hydra
 test_example_task
 test_example_golangci
+test_example_shellcheck
 test_example_hugo
 test_example_hugo_variant
 test_example_hugo_no_darwin

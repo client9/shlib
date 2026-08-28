@@ -1,6 +1,6 @@
 # Example configs
 
-Five real projects, each with a different release-naming scheme. Every one is
+Six real projects, each with a different release-naming scheme. Every one is
 tested against the actual asset names from the release noted, and every one
 installs successfully today.
 
@@ -15,6 +15,7 @@ Full guide: [../../docs/INSTALLERS.md](../../docs/INSTALLERS.md).
 | [`task.sh`](task.sh) | **no version in the archive name** — which a `{name}_{version}_{os}_{arch}` template cannot express — plus folding `armv6`/`armv7` back to `arm` |
 | [`golangci-lint.sh`](golangci-lint.sh) | 27 platforms, and the binary is **nested in a versioned directory** inside the archive |
 | [`hugo.sh`](hugo.sh) | the BSD family, Solaris and illumos, **build variants** (`extended`, `withdeploy`), a `PLATFORMS` list that is *computed*, and two platforms deliberately refused |
+| [`shellcheck.sh`](shellcheck.sh) | **not a Go project** — raw `x86_64`/`aarch64` asset names mapped back, `${TAG}` rather than `${VERSION}`, and a windows zip shaped unlike every other asset |
 
 ## The same thing, concretely
 
@@ -25,9 +26,10 @@ Full guide: [../../docs/INSTALLERS.md](../../docs/INSTALLERS.md).
 | `task.sh` | `task_darwin_arm64.tar.gz` | `adjust_arch` `adjust_format` |
 | `golangci-lint.sh` | `golangci-lint-2.13.1-darwin-arm64.tar.gz` | `adjust_format` `binary_path` |
 | `hugo.sh` | `hugo_0.165.0_netbsd-amd64.tar.gz` | `adjust_format` `adjust_os` `adjust_arch` |
+| `shellcheck.sh` | `shellcheck-v0.11.0.linux.x86_64.tar.gz` | `adjust_format` `adjust_arch` `archive_name` `binary_path` |
 
 Verified against gosec v2.29.0, hydra v26.2.0, task v3.53.1,
-golangci-lint v2.13.1 and hugo v0.165.0.
+golangci-lint v2.13.1, hugo v0.165.0 and shellcheck v0.11.0.
 
 ## Try one
 
@@ -42,7 +44,8 @@ sh install.sh -b ./bin v2.22.0   # or pin a tag
 Start from `gosec.sh`. If your archive names use different spellings than
 `uname_os`/`uname_arch` produce, look at `hydra.sh`. If the binary is not at the
 root of the archive, look at `golangci-lint.sh`. If you publish more than one
-build of the same thing, look at `hugo.sh`.
+build of the same thing, look at `hugo.sh`. If you are not a Go project and
+your assets are named `x86_64`/`aarch64`, look at `shellcheck.sh`.
 
 `task.sh` is the one worth reading if you are coming from godownloader: its
 archives carry no version at all, so there is no template string that produces

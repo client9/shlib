@@ -65,9 +65,10 @@ complete set, including `BINARIES` for multi-binary archives.
 
 ## Worked examples
 
-Five real projects, each with a different naming scheme — from "no hooks at
-all" through renamed arch spellings, archives with no version in the name, and
-a binary nested inside a versioned directory.
+Six real projects, each with a different naming scheme — from "no hooks at
+all" through renamed arch spellings, archives with no version in the name, a
+binary nested inside a versioned directory, and a non-Go project whose assets
+use the raw `uname -m` spellings.
 
 **[install/examples/](../install/examples/)** — the table of what each one
 shows, and which to copy.

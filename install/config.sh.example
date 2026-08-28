@@ -74,8 +74,9 @@ checksum_name() {
 # Optional: several binaries in one archive.  Defaults to $BINARY.
 # BINARIES="gosec gosec-helper"
 
-# Optional overrides, for projects whose filenames do not use the canonical
-# GOOS/GOARCH spellings.  Delete any you do not need.
+# Optional overrides, for projects whose filenames spell the platform
+# differently than uname_os/uname_arch do -- `x86_64` instead of `amd64`,
+# `macOS` instead of `darwin`.  Delete any you do not need.
 #
 # adjust_format() { case ${OS} in windows) FORMAT=zip ;; esac; }
 # adjust_os()     { case ${OS} in darwin) OS=macos ;; esac; }
