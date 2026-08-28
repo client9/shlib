@@ -1,0 +1,112 @@
+name: openbsd
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # this repo goes quiet for long stretches; a monthly build catches bit-rot
+  # in the things we do not control (release URLs, runner images).  Offset
+  # from the other VM workflows so four QEMU boots do not start at once.
+  schedule:
+    - cron: '17 14 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# OpenBSD is the strictest test of http_download's ftp(1) branch.
+#
+# Base ships neither curl nor wget nor fetch -- the only downloader is ftp(1),
+# which despite its name does HTTP and HTTPS auto-fetch.  OpenBSD's ftp also
+# has no -H, so it cannot send request headers at all; the library probes for
+# that rather than trusting `uname -s`, and this leg is where that probe meets
+# the real binary.
+#
+# /bin/sh here is OpenBSD's pdksh-derived ksh, which no other leg covers.
+jobs:
+  test:
+    name: ${{ matrix.release }}
+    # GitHub has no OpenBSD runner; vmactions boots one under QEMU on the
+    # normal x86_64 Linux runner and mounts the checkout into the VM.
+    #
+    # Third-party action, pinned to the v1 major tag for low maintenance; pin
+    # to a full commit SHA instead if you want the stricter supply-chain
+    # posture.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        release: ['7.9', '7.8']
+    steps:
+      - uses: actions/checkout@v7
+      - name: test on OpenBSD ${{ matrix.release }}
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          # Nothing is installed.  A stock box is the point: any package that
+          # dragged in curl would silently stop this leg exercising ftp(1).
+          # `run` is always executed with sh whatever the login shell is.
+          run: |
+            # Diagnostics first.  These have not all been observed on a real
+            # OpenBSD runner, only inferred from the man pages.
+            uname -a
+            for c in sh ksh bash gmake make curl wget fetch ftp openssl \
+                     install cp chmod sha256sum sha512sum md5sum shasum \
+                     md5 sha256 cksum tar unzip zip zstd; do
+              printf '%-10s %s\n' "$c" "$(command -v "$c" 2>/dev/null || echo MISSING)"
+            done
+
+            # Assert the premise of this leg.
+            for c in curl wget fetch; do
+              if command -v "$c" >/dev/null 2>&1; then
+                echo "::error::$c is installed; this leg is meant to run without it"
+                exit 1
+              fi
+            done
+            command -v ftp >/dev/null 2>&1 || { echo "::error::ftp(1) missing"; exit 1; }
+
+            # http_download_ftp decides whether it can send headers by asking
+            # the binary: -Z is not a valid option, so ftp prints its usage
+            # line and exits without touching the network.  OpenBSD's usage
+            # must NOT advertise -H.  If this ever changes the library would
+            # start passing a flag that does not exist.
+            echo "== ftp -Z usage =="
+            ftp -Z </dev/null 2>&1 | head -4
+            if ftp -Z </dev/null 2>&1 | grep '\[-H ' >/dev/null 2>&1; then
+              echo "::error::OpenBSD ftp advertises -H; http_download_ftp's probe is out of date"
+              exit 1
+            fi
+
+            # The mapping assertion runs BEFORE the suite, so a failure later
+            # still leaves the result in the log.  Needs no tooling.
+            . ./echoerr.sh; . ./log.sh
+            . ./uname_os.sh; . ./uname_os_check.sh
+            os=$(uname_os)
+            echo "uname_os -> $os"
+            if [ "$os" != "openbsd" ]; then
+              echo "::error::expected 'openbsd', got '$os'"
+              exit 1
+            fi
+            uname_os_check || exit 1
+
+            # A documented limitation, pinned so it cannot change silently:
+            # github_release needs an Accept header, ftp(1) here cannot send
+            # one, so resolving "latest" fails -- with a clear message rather
+            # than a garbage tag.  Plain release downloads still work, which
+            # is what the http_download tests below cover for real.
+            . ./is_command.sh; . ./mktmpdir.sh
+            . ./http_download.sh; . ./github_release.sh
+            echo "== github_release on a headerless downloader =="
+            if github_release client9/shlib 2>&1; then
+              echo "::error::github_release unexpectedly succeeded without an Accept header"
+              exit 1
+            fi
+
+            # Run the suite directly rather than through make: the Makefile is
+            # GNU-only (.DEFAULT_GOAL, MAKEFILE_LIST) and gmake is not in base.
+            # /bin/sh is OpenBSD ksh, so there is no second shell to add here.
+            err=0
+            for t in *_test.sh; do
+              if sh "$t"; then :; else err=1; fi
+            done
+            exit $err

@@ -26,6 +26,8 @@ Rename this heading to the release date when cutting a release — see
 - `http_download` had no `fetch` branch, so it failed outright on stock
   FreeBSD, which ships neither curl nor wget. `github_release` and the whole
   installer were unusable there.
+- Same gap on OpenBSD and NetBSD, which ship neither curl, wget *nor* fetch.
+  Their base downloader is `ftp(1)`, now a branch of its own — see below.
 - `github_release` returned an empty tag on Solaris. `tr` converted `echo`'s
   trailing newline to a space, leaving `sed` an unterminated final line, which
   SVR4 sed drops. Only surfaced once there was a Solaris CI leg.
@@ -51,6 +53,23 @@ Rename this heading to the release date when cutting a release — see
 - `http_download_fetch`, for FreeBSD. Note `fetch(1)` cannot send arbitrary
   headers; `Accept` is mapped via `HTTP_ACCEPT` and anything else fails
   loudly rather than being silently dropped.
+- `http_download_ftp`, for OpenBSD and NetBSD, whose only base downloader is
+  `ftp(1)` — which despite the name does HTTP and HTTPS. Two different
+  programs answer to that name and they differ in the one way that matters:
+  NetBSD's tnftp has `-H` for arbitrary request headers, OpenBSD's ftp has no
+  header support at all. The branch probes the binary's own usage line rather
+  than trusting `uname -s`, and fails loudly where a header cannot be sent.
+  So on OpenBSD, plain release downloads work but `github_release`'s `latest`
+  lookup — which needs `Accept: application/json` — reports that clearly
+  instead of returning a garbage tag. Dispatch order is curl, wget, fetch,
+  ftp; `ftp` is last because a Linux box may carry a legacy client that
+  cannot fetch a URL at all.
+- **OpenBSD, NetBSD and DragonFly CI**, under QEMU via `vmactions`. Beyond the
+  full suite these assert that curl, wget and (on the first two) fetch are
+  absent, that `uname -s` maps to `openbsd` / `netbsd` / `dragonfly`, and that
+  the `ftp -H` probe agrees with the real binary on each. NetBSD and DragonFly
+  additionally resolve a live `github_release` end to end, which is the only
+  proof that what those downloaders send is what GitHub accepts.
 - **`install_exe`** — copy a file into place and make it executable. Placing a
   binary portably is a shell primitive, so it belongs in the library rather
   than inside the installer: `install(1)` is not in POSIX and its grammar

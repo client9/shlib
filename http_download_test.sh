@@ -7,10 +7,13 @@
 
 # Every test here needs to actually fetch something.  Skip rather than fail on
 # a machine with no downloader at all -- that is a real state (a stripped
-# container), and distinct from FreeBSD, which has fetch but neither curl nor
-# wget.
-if ! is_command curl && ! is_command wget && ! is_command fetch; then
-  assert_skip "no downloader available (curl, wget or fetch)"
+# container), and distinct from FreeBSD and DragonFly, which have fetch but
+# neither curl nor wget, or OpenBSD and NetBSD, which have only ftp(1).
+#
+# This list mirrors http_download's own dispatch: anything it will try, this
+# file expects to work.
+if ! is_command curl && ! is_command wget && ! is_command fetch && ! is_command ftp; then
+  assert_skip "no downloader available (curl, wget, fetch or ftp)"
   exit 0
 fi
 

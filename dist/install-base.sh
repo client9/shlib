@@ -1,5 +1,5 @@
 cat /dev/null <<EOF
-shlib 2026.08.27.1
+shlib 2026.08.28
 https://github.com/client9/shlib
 EOF
 cat /dev/null <<EOF
@@ -226,6 +226,21 @@ http_download_fetch() {
   log_crit "http_download fetch cannot send '${_shlib_header%%:*}' headers; install curl or wget"
   return 1
 }
+http_download_ftp() {
+  _shlib_local_file=$1
+  _shlib_source_url=$2
+  _shlib_header=$3
+  if [ -z "$_shlib_header" ]; then
+    ftp -V -o "$_shlib_local_file" "$_shlib_source_url"
+    return
+  fi
+  if ftp -Z </dev/null 2>&1 | grep '\[-H ' >/dev/null 2>&1; then
+    ftp -V -H "$_shlib_header" -o "$_shlib_local_file" "$_shlib_source_url"
+    return
+  fi
+  log_crit "http_download ftp cannot send '${_shlib_header%%:*}' headers; install curl or wget"
+  return 1
+}
 http_download() {
   log_debug "http_download $2"
   if is_command curl; then
@@ -237,8 +252,11 @@ http_download() {
   elif is_command fetch; then
     http_download_fetch "$@"
     return
+  elif is_command ftp; then
+    http_download_ftp "$@"
+    return
   fi
-  log_crit "http_download unable to find curl, wget or fetch"
+  log_crit "http_download unable to find curl, wget, fetch or ftp"
   return 1
 }
 http_copy() {

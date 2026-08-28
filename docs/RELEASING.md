@@ -25,22 +25,31 @@ Tags are the version with a `v` prefix: `v2026.08.27`.
 
 ## Step 1 — check that `master` is green
 
-All five CI workflows must be passing on the commit you intend to tag:
+All ten CI workflows must be passing on the commit you intend to tag:
 
 | workflow | covers |
 | -------- | ------ |
 | `lint` | shellcheck (sh, bash, dash, ksh), `scripts/`, `dist/`, shfmt — **and the `dist` sync job** |
 | `linux` | dash, bash, ksh93, mksh, yash, posh, busybox ash |
 | `macos` | sh, bash 3.2, ksh, zsh, dash |
-| `freebsd` | FreeBSD 14.4 and 15.1 under QEMU |
 | `alpine` | busybox ash on musl |
+| `freebsd` | FreeBSD 14.4 and 15.1 under QEMU |
+| `openbsd` | OpenBSD 7.9 and 7.8 under QEMU |
+| `netbsd` | NetBSD 11.0 and 10.1 under QEMU |
+| `dragonflybsd` | DragonFly 6.4.2 under QEMU |
+| `sunos` | Solaris 11.4 and OmniOS under QEMU |
+| `windows` | git bash and msys2 |
 
 ```sh
-gh run list --branch master --limit 10
+gh run list --branch master --limit 15
 ```
 
 Do not tag on top of a red build. The release workflow re-runs `make test`, but
-only on Linux — it will not catch a break that only shows up on FreeBSD or macOS.
+only on Linux — it will not catch a break that only shows up on a BSD, Solaris,
+Windows or macOS.
+
+The QEMU legs are the slow ones; give them time before concluding master is
+green.
 
 ## Step 2 — bump `VERSION`
 

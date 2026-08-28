@@ -5,14 +5,17 @@ portable functions for posix shell environments
 [![linux](https://github.com/client9/shlib/actions/workflows/linux.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/linux.yml)
 [![macos](https://github.com/client9/shlib/actions/workflows/macos.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/macos.yml)
 [![freebsd](https://github.com/client9/shlib/actions/workflows/freebsd.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/freebsd.yml)
+[![openbsd](https://github.com/client9/shlib/actions/workflows/openbsd.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/openbsd.yml)
+[![netbsd](https://github.com/client9/shlib/actions/workflows/netbsd.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/netbsd.yml)
+[![dragonflybsd](https://github.com/client9/shlib/actions/workflows/dragonflybsd.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/dragonflybsd.yml)
 [![sunos](https://github.com/client9/shlib/actions/workflows/sunos.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/sunos.yml)
 [![alpine](https://github.com/client9/shlib/actions/workflows/alpine.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/alpine.yml)
 [![windows](https://github.com/client9/shlib/actions/workflows/windows.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/windows.yml)
 
 Every push is tested against each shell below.  A GitHub Actions badge covers
 a whole workflow, so the badges are grouped by platform; the per-shell result
-for a given run is in the Actions tab.  FreeBSD runs in a QEMU VM, since
-GitHub provides no FreeBSD runner.
+for a given run is in the Actions tab.  The BSDs and Solaris run in QEMU VMs,
+since GitHub provides no runner for any of them.
 
 | platform        | shells tested                                        |
 | --------------- | ---------------------------------------------------- |
@@ -20,13 +23,22 @@ GitHub provides no FreeBSD runner.
 | Alpine (musl)   | `busybox ash`                                        |
 | macOS           | `sh` `bash 3.2` `ksh` `zsh` `dash`                   |
 | FreeBSD 14, 15  | `sh` `dash` `bash` `ksh93` `mksh` `yash` `zsh`       |
+| OpenBSD 7.9, 7.8 | `sh` (OpenBSD ksh)                                  |
+| NetBSD 11.0, 10.1 | `sh` `ksh`                                          |
+| DragonFly 6.4   | `sh`                                                 |
 | Solaris 11.4, OmniOS | `sh`                                             |
 | Windows         | `git bash` `msys2`                                   |
 
-Every one of those runs the whole test suite, not a subset. The Solaris and
-OmniOS legs additionally assert that `SunOS` resolves to `solaris` and
-`illumos` respectively -- both systems report that ancient name, and telling
-them apart has been the most bug-prone mapping in this library.
+Every one of those runs the whole test suite, not a subset. Several legs also
+assert something the suite alone cannot:
+
+- Solaris and OmniOS, that `SunOS` resolves to `solaris` and `illumos`
+  respectively -- both systems report that ancient name, and telling them
+  apart has been the most bug-prone mapping in this library.
+- FreeBSD, OpenBSD, NetBSD and DragonFly, that curl and wget really are
+  absent. They are the only legs that exercise `http_download`'s `fetch(1)`
+  and `ftp(1)` branches, and a dependency quietly installing curl would stop
+  that without anything going red.
 
 The library **recognises** a wider set than it can practically test: 17
 operating systems and 16 architectures. See

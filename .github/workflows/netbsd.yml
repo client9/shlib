@@ -1,0 +1,118 @@
+name: netbsd
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # this repo goes quiet for long stretches; a monthly build catches bit-rot
+  # in the things we do not control (release URLs, runner images).  Offset
+  # from the other VM workflows so four QEMU boots do not start at once.
+  schedule:
+    - cron: '17 15 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# NetBSD is the other half of the ftp(1) story.
+#
+# Base ships neither curl nor wget nor fetch, so ftp(1) is the only downloader
+# -- but here it is tnftp, which unlike OpenBSD's ftp does have -H.  So this is
+# the leg where http_download's ftp branch sends a real request header, and
+# where github_release (which needs `Accept: application/json`) can be checked
+# end to end against the live GitHub URL an installer would use.
+#
+# NetBSD also gives two shells for free: /bin/sh is ash-derived and /bin/ksh
+# is pdksh, and neither is the same binary as the other.
+jobs:
+  test:
+    name: ${{ matrix.release }}
+    # GitHub has no NetBSD runner; vmactions boots one under QEMU on the
+    # normal x86_64 Linux runner and mounts the checkout into the VM.
+    #
+    # Third-party action, pinned to the v1 major tag for low maintenance; pin
+    # to a full commit SHA instead if you want the stricter supply-chain
+    # posture.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        release: ['11.0', '10.1']
+    steps:
+      - uses: actions/checkout@v7
+      - name: test on NetBSD ${{ matrix.release }}
+        uses: vmactions/netbsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          # Nothing is installed.  A stock box is the point: any package that
+          # dragged in curl would silently stop this leg exercising ftp(1).
+          # `run` is always executed with sh whatever the login shell is.
+          run: |
+            # Diagnostics first.  These have not all been observed on a real
+            # NetBSD runner, only inferred from the man pages.
+            uname -a
+            for c in sh ksh bash gmake make curl wget fetch ftp openssl \
+                     install cp chmod sha256sum sha512sum md5sum shasum \
+                     md5 sha256 cksum tar unzip zip zstd; do
+              printf '%-10s %s\n' "$c" "$(command -v "$c" 2>/dev/null || echo MISSING)"
+            done
+
+            # Assert the premise of this leg.
+            for c in curl wget fetch; do
+              if command -v "$c" >/dev/null 2>&1; then
+                echo "::error::$c is installed; this leg is meant to run without it"
+                exit 1
+              fi
+            done
+            command -v ftp >/dev/null 2>&1 || { echo "::error::ftp(1) missing"; exit 1; }
+
+            # http_download_ftp decides whether it can send headers by asking
+            # the binary: -Z is not a valid option, so ftp prints its usage
+            # line and exits without touching the network.  tnftp's usage must
+            # advertise -H, or the library silently loses header support here.
+            echo "== ftp -Z usage =="
+            ftp -Z </dev/null 2>&1 | head -4
+            if ftp -Z </dev/null 2>&1 | grep '\[-H ' >/dev/null 2>&1; then :; else
+              echo "::error::NetBSD ftp does not advertise -H; http_download_ftp cannot send headers"
+              exit 1
+            fi
+
+            # The mapping assertion runs BEFORE the suite, so a failure later
+            # still leaves the result in the log.  Needs no tooling.
+            . ./echoerr.sh; . ./log.sh
+            . ./uname_os.sh; . ./uname_os_check.sh
+            os=$(uname_os)
+            echo "uname_os -> $os"
+            if [ "$os" != "netbsd" ]; then
+              echo "::error::expected 'netbsd', got '$os'"
+              exit 1
+            fi
+            uname_os_check || exit 1
+
+            # End to end over ftp -H, against the live URL an installer uses.
+            # The stubbed unit tests prove the flag is passed; only this
+            # proves GitHub accepts what tnftp sends.
+            . ./is_command.sh; . ./mktmpdir.sh
+            . ./http_download.sh; . ./github_release.sh
+            echo "== github_release over ftp -H =="
+            tag=$(github_release client9/shlib) || {
+              echo "::error::github_release failed; ftp -H did not deliver the Accept header"
+              exit 1
+            }
+            echo "github_release -> $tag"
+            case "$tag" in
+              v20[0-9][0-9].*) ;;
+              *) echo "::error::github_release returned '$tag', not a CalVer tag"; exit 1 ;;
+            esac
+
+            # Run the suite directly rather than through make: the Makefile is
+            # GNU-only (.DEFAULT_GOAL, MAKEFILE_LIST) and gmake is not in base.
+            err=0
+            for s in sh ksh; do
+              command -v "$s" >/dev/null 2>&1 || continue
+              echo "== suite under $s =="
+              for t in *_test.sh; do
+                if "$s" "$t"; then :; else err=1; fi
+              done
+            done
+            exit $err

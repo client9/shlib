@@ -1,0 +1,102 @@
+name: dragonflybsd
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # this repo goes quiet for long stretches; a monthly build catches bit-rot
+  # in the things we do not control (release URLs, runner images).  Offset
+  # from the other VM workflows so four QEMU boots do not start at once.
+  schedule:
+    - cron: '17 16 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# DragonFly is the lowest-risk of the BSD legs and exists mostly to keep the
+# GOOS mapping honest: `uname -s` reports "DragonFly", which lowercases
+# straight to the GOOS `dragonfly` with no fixup, and until now nothing
+# checked that on a real machine.
+#
+# Being FreeBSD-derived it has fetch(1) in base, so it goes down the same
+# http_download branch the freebsd leg covers rather than the ftp(1) branch
+# OpenBSD and NetBSD exercise.  Base also has tnftp, which is why the
+# assertion below is that fetch WINS -- the dispatch order matters here.
+#
+# One release only: nothing about this leg is version-sensitive, and each
+# leg is a QEMU boot.
+jobs:
+  test:
+    name: ${{ matrix.release }}
+    # GitHub has no DragonFly runner; vmactions boots one under QEMU on the
+    # normal x86_64 Linux runner and mounts the checkout into the VM.
+    #
+    # Third-party action, pinned to the v1 major tag for low maintenance; pin
+    # to a full commit SHA instead if you want the stricter supply-chain
+    # posture.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        release: ['6.4.2']
+    steps:
+      - uses: actions/checkout@v7
+      - name: test on DragonFly BSD ${{ matrix.release }}
+        uses: vmactions/dragonflybsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          # Nothing is installed.  A stock box is the point: any package that
+          # dragged in curl would silently stop this leg exercising fetch(1).
+          # `run` is always executed with sh whatever the login shell is.
+          run: |
+            # Diagnostics first.  These have not all been observed on a real
+            # DragonFly runner, only inferred from the man pages.
+            uname -a
+            for c in sh ksh bash gmake make curl wget fetch ftp openssl \
+                     install cp chmod sha256sum sha512sum md5sum shasum \
+                     md5 sha256 cksum tar unzip zip zstd; do
+              printf '%-10s %s\n' "$c" "$(command -v "$c" 2>/dev/null || echo MISSING)"
+            done
+
+            # Assert the premise of this leg.
+            for c in curl wget; do
+              if command -v "$c" >/dev/null 2>&1; then
+                echo "::error::$c is installed; this leg is meant to run without it"
+                exit 1
+              fi
+            done
+            command -v fetch >/dev/null 2>&1 || { echo "::error::fetch(1) missing"; exit 1; }
+            echo "downloader: $(command -v fetch)"
+
+            # The mapping assertion runs BEFORE the suite, so a failure later
+            # still leaves the result in the log.  Needs no tooling.
+            . ./echoerr.sh; . ./log.sh
+            . ./uname_os.sh; . ./uname_os_check.sh
+            os=$(uname_os)
+            echo "uname_os -> $os"
+            if [ "$os" != "dragonfly" ]; then
+              echo "::error::expected 'dragonfly', got '$os'"
+              exit 1
+            fi
+            uname_os_check || exit 1
+
+            # fetch and tnftp both exist here, and only fetch can express the
+            # Accept header github_release needs.  So this doubles as a check
+            # that http_download's dispatch prefers fetch over ftp.
+            . ./is_command.sh; . ./mktmpdir.sh
+            . ./http_download.sh; . ./github_release.sh
+            echo "== github_release over fetch =="
+            tag=$(github_release client9/shlib) || {
+              echo "::error::github_release failed; did dispatch pick ftp over fetch?"
+              exit 1
+            }
+            echo "github_release -> $tag"
+
+            # Run the suite directly rather than through make: the Makefile is
+            # GNU-only (.DEFAULT_GOAL, MAKEFILE_LIST) and gmake is not in base.
+            err=0
+            for t in *_test.sh; do
+              if sh "$t"; then :; else err=1; fi
+            done
+            exit $err

@@ -1,5 +1,5 @@
 cat /dev/null <<EOF
-shlib 2026.08.27.1
+shlib 2026.08.28
 https://github.com/client9/shlib
 EOF
 #!/bin/sh
@@ -420,6 +420,52 @@ http_download_fetch() {
   return 1
 }
 
+# http_download_ftp: download a URL to a local file using BSD ftp(1)
+#
+# OpenBSD and NetBSD ship neither curl nor wget in base.  Their base
+# downloader is ftp(1), which despite the name does HTTP and HTTPS
+# "auto-fetch", so without this branch http_download fails outright on a stock
+# box -- the same gap FreeBSD had before http_download_fetch.
+#
+# Two different programs answer to the name `ftp`:
+#
+#   OpenBSD ftp   getopt "46AaCc:dD:EeN:gik:Mmno:pP:r:S:s:TtU:uvVw:"
+#                 no -H, so it cannot send request headers at all
+#   tnftp         (NetBSD, and DragonFly, which also has fetch)
+#                 getopt ":46Aab:defgH:iN:no:P:pq:Rr:s:T:tu:Vvx:"
+#                 -H sends an arbitrary header, repeatable
+#
+# -o and -V are common to both: write to a named file, and stay quiet.  Both
+# follow HTTP redirects, which release downloads require (OpenBSD caps it at
+# 10).  -M, the OpenBSD flag for "no progress meter", does NOT exist in tnftp,
+# so -V is the only portable way to keep the output quiet.
+#
+# Header support is probed rather than assumed, because it is a property of
+# the binary and not of `uname -s`.  -Z is not a valid option in either
+# program, so it prints the usage line and exits without touching the network.
+# </dev/null keeps an unrelated ftp from dropping into its interactive loop:
+# the netkit and inetutils clients on Linux have no auto-fetch at all, and
+# neither -o nor -V, so they exit on the option before doing anything
+# surprising.
+http_download_ftp() {
+  _shlib_local_file=$1
+  _shlib_source_url=$2
+  _shlib_header=$3
+
+  if [ -z "$_shlib_header" ]; then
+    ftp -V -o "$_shlib_local_file" "$_shlib_source_url"
+    return
+  fi
+
+  if ftp -Z </dev/null 2>&1 | grep '\[-H ' >/dev/null 2>&1; then
+    ftp -V -H "$_shlib_header" -o "$_shlib_local_file" "$_shlib_source_url"
+    return
+  fi
+
+  log_crit "http_download ftp cannot send '${_shlib_header%%:*}' headers; install curl or wget"
+  return 1
+}
+
 # http_download: download a URL to a local file, using whichever downloader exists
 #
 # http_download [local-file] [url] [optional extra header]
@@ -436,11 +482,17 @@ http_download() {
     http_download_wget "$@"
     return
   elif is_command fetch; then
-    # FreeBSD base ships fetch but neither curl nor wget
+    # FreeBSD and DragonFly base ship fetch but neither curl nor wget
     http_download_fetch "$@"
     return
+  elif is_command ftp; then
+    # OpenBSD and NetBSD base ship neither; their downloader is ftp(1), which
+    # also speaks HTTP.  Last, because a Linux box may carry a legacy ftp
+    # client that cannot fetch a URL at all.
+    http_download_ftp "$@"
+    return
   fi
-  log_crit "http_download unable to find curl, wget or fetch"
+  log_crit "http_download unable to find curl, wget, fetch or ftp"
   return 1
 }
 
