@@ -5,6 +5,15 @@
 . ./mktmpdir.sh
 . ./assert.sh
 
+# Every test here needs to actually fetch something.  Skip rather than fail on
+# a machine with no downloader at all -- that is a real state (a stripped
+# container), and distinct from FreeBSD, which has fetch but neither curl nor
+# wget.
+if ! is_command curl && ! is_command wget && ! is_command fetch; then
+  assert_skip "no downloader available (curl, wget or fetch)"
+  exit 0
+fi
+
 # test normal 200
 test1() {
   http_download /dev/null https://raw.githubusercontent.com/client9/shlib/master/README.md

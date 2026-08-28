@@ -82,11 +82,22 @@ test_dispatch_falls_through_to_fetch() {
   rm -rf "$d"
 }
 
-# and curl still wins when it is present
+# curl still wins when it is present.
+#
+# It is not present everywhere: the FreeBSD CI leg deliberately installs
+# neither curl nor wget, because base ships neither and that is what makes it
+# exercise the fetch branch.  Asserting a preference there is meaningless --
+# test_dispatch_falls_through_to_fetch already covers that case.
 test_dispatch_prefers_curl() {
+  if ! command -v curl >/dev/null 2>&1; then
+    assert_skip "dispatch: no curl installed (as on stock FreeBSD); nothing to prefer"
+    return 0
+  fi
   d=$(mktmpdir)
   STUB_FETCH_ARGS=""
-  http_download "$d/f" https://raw.githubusercontent.com/client9/shlib/master/fixtures/sample1.txt >/dev/null 2>&1
+  # an unresolvable host: curl failing is fine, the assertion is only that
+  # dispatch never reached fetch.  Avoids a network dependency too.
+  http_download "$d/f" https://example.invalid/x >/dev/null 2>&1
   assertEquals "" "$STUB_FETCH_ARGS" "dispatch: curl is preferred over fetch when available"
   rm -rf "$d"
 }
