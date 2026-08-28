@@ -20,13 +20,16 @@ GitHub provides no FreeBSD runner.
 | Alpine (musl)   | `busybox ash`                                        |
 | macOS           | `sh` `bash 3.2` `ksh` `zsh` `dash`                   |
 | FreeBSD 14, 15  | `sh` `dash` `bash` `ksh93` `mksh` `yash` `zsh`       |
-| Solaris, illumos | `sh` — chiefly the `SunOS` mapping                   |
+| Solaris 11.4, OmniOS | `sh`                                             |
 | Windows         | `git bash` `msys2`                                   |
 
-That table is what CI *runs*. The library **recognises** a wider set than it
-can practically test: 17 operating systems -- including `solaris` and
-`illumos` -- and 16 architectures. `SunOS` is translated to `illumos` or
-`solaris` as appropriate, since both still report that ancient name. See
+Every one of those runs the whole test suite, not a subset. The Solaris and
+OmniOS legs additionally assert that `SunOS` resolves to `solaris` and
+`illumos` respectively -- both systems report that ancient name, and telling
+them apart has been the most bug-prone mapping in this library.
+
+The library **recognises** a wider set than it can practically test: 17
+operating systems and 16 architectures. See
 [Platforms](docs/API.md#platforms) for the generated lists.
 
 I've sadly written a lot of shell scripts.   Mostly for installers on
