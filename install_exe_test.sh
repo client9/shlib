@@ -4,6 +4,7 @@
 . ./echoerr.sh
 . ./log.sh
 . ./mktmpdir.sh
+. ./uname_os.sh
 . ./install_exe.sh
 
 test_copies_and_makes_executable() {
@@ -21,11 +22,25 @@ test_sets_mode_regardless_of_source() {
   echo 'x' >"$d/src"
   chmod 0600 "$d/src"
   install_exe "$d/src" "$d/dst" >/dev/null 2>&1
-  # ls -l is the portable way to read a mode; these paths are ones we just
-  # created, so the SC2012 filename concerns do not apply
-  # shellcheck disable=SC2012
-  mode=$(ls -l "$d/dst" | cut -c1-10)
-  assertEquals "-rwxr-xr-x" "$mode" "install_exe: destination is 0755 even from a 0600 source"
+
+  # On Windows the mode bits are an emulation over NTFS ACLs and chmod does
+  # not reliably change them -- the same reason mktmpdir_test.sh does not
+  # assert 0700 there.  It does not matter in practice: executability on
+  # Windows comes from the .exe suffix, which execute() appends, not from a
+  # mode bit.  So assert what is meaningful on each platform.
+  case "$(uname_os)" in
+    windows)
+      assert_skip "install_exe: mode bits are emulated on Windows"
+      assertTrue "[ -f '$d/dst' ] && [ -r '$d/dst' ]" "install_exe: destination exists and is readable"
+      ;;
+    *)
+      # ls -l is the portable way to read a mode; these paths are ones we just
+      # created, so the SC2012 filename concerns do not apply
+      # shellcheck disable=SC2012
+      mode=$(ls -l "$d/dst" | cut -c1-10)
+      assertEquals "-rwxr-xr-x" "$mode" "install_exe: destination is 0755 even from a 0600 source"
+      ;;
+  esac
   rm -rf "$d"
 }
 
@@ -52,6 +67,11 @@ test_overwrites_existing() {
 
 # replacing a binary while a copy of it is executing
 test_overwrites_while_running() {
+  # needs to actually execute the copied file, which requires a real x bit
+  if [ "$(uname_os)" = windows ]; then
+    assert_skip "install_exe: cannot exec a shell script without a real x bit on Windows"
+    return 0
+  fi
   d=$(mktmpdir)
   printf '#!/bin/sh\nsleep 2\n' >"$d/src"
   install_exe "$d/src" "$d/dst" >/dev/null 2>&1
