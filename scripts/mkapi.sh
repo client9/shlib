@@ -56,6 +56,24 @@ extract() {
   ' $FILES
 }
 
+# accepted <file>: the case labels of a *_check function, as a code fence
+#
+# the awk/sed programs below are single-quoted on purpose; $1 and \1 belong to
+# them, not to the shell
+# shellcheck disable=SC2016
+accepted() {
+  printf '```\n'
+  grep -oE '^[[:space:]]+[a-z0-9]+\)' "$1" | tr -d ' )' | sort | tr '\n' ' '
+  printf '\n```\n'
+}
+
+# mappings <file>: the `pattern) var="value"` fixups, as a table
+# shellcheck disable=SC2016
+mappings() {
+  printf '| `uname -m` reports | mapped to |\n| --- | --- |\n'
+  sed -n 's/^[[:space:]]*\([a-z0-9*_]*\))[[:space:]]*_shlib_arch="\([a-z0-9]*\)".*/| `\1` | `\2` |/p' "$1"
+}
+
 undocumented=$(extract | awk -F'\t' '$3 == "" { print "  " $1 " (" $2 ")" }')
 if [ -n "$undocumented" ]; then
   echo "mkapi: these functions have no summary comment:" >&2
@@ -83,6 +101,41 @@ HEADER
   extract | sort | awk -F'\t' '{ printf "| [`%s`](../%s) | %s |\n", $1, $2, $3 }'
   echo
   printf '%s functions.\n' "$(extract | wc -l | tr -d ' ')"
+
+  cat <<'PLATHEAD'
+
+## Platforms
+
+`uname_os` and `uname_arch` translate what `uname` reports into Go's GOOS and
+GOARCH names, which are what release artifacts are almost always named after.
+The lists below are extracted from `uname_os_check.sh` and `uname_arch_check.sh`.
+
+### Recognised operating systems
+
+PLATHEAD
+  accepted uname_os_check.sh
+  cat <<'PLATOS'
+
+Most values come straight from a lowercased `uname -s`. These do not:
+
+| `uname -s` reports | mapped to | why |
+| ------------------ | --------- | --- |
+| `MSYS_NT-*`, `MINGW*`, `CYGWIN_NT-*`, `Windows_NT` | `windows` | the Unix-ish environments on Windows each report their own name |
+| `SunOS` with `uname -o` = `illumos` | `illumos` | illumos and Solaris both still report the ancient `SunOS` |
+| `SunOS` otherwise | `solaris` | Oracle Solaris; its `uname` has no `-o`, so the check is silent about it |
+
+`sunos` itself is deliberately never returned -- it is not a GOOS value.
+
+### Recognised architectures
+
+PLATOS
+  accepted uname_arch_check.sh
+  cat <<'PLATARCH'
+
+Mapped from `uname -m`:
+
+PLATARCH
+  mappings uname_arch.sh
 } >"$OUT"
 
 echo "mkapi: wrote $OUT ($(extract | wc -l | tr -d ' ') functions)"

@@ -44,3 +44,46 @@ install script and are covered by [INSTALLERS.md](INSTALLERS.md).
 | [`untar`](../untar.sh) | unpack $1 into the current directory |
 
 31 functions.
+
+## Platforms
+
+`uname_os` and `uname_arch` translate what `uname` reports into Go's GOOS and
+GOARCH names, which are what release artifacts are almost always named after.
+The lists below are extracted from `uname_os_check.sh` and `uname_arch_check.sh`.
+
+### Recognised operating systems
+
+```
+aix android darwin dragonfly freebsd illumos ios js linux midnightbsd nacl netbsd openbsd plan9 solaris wasip1 windows 
+```
+
+Most values come straight from a lowercased `uname -s`. These do not:
+
+| `uname -s` reports | mapped to | why |
+| ------------------ | --------- | --- |
+| `MSYS_NT-*`, `MINGW*`, `CYGWIN_NT-*`, `Windows_NT` | `windows` | the Unix-ish environments on Windows each report their own name |
+| `SunOS` with `uname -o` = `illumos` | `illumos` | illumos and Solaris both still report the ancient `SunOS` |
+| `SunOS` otherwise | `solaris` | Oracle Solaris; its `uname` has no `-o`, so the check is silent about it |
+
+`sunos` itself is deliberately never returned -- it is not a GOOS value.
+
+### Recognised architectures
+
+```
+386 amd64 amd64p32 arm64 armv5 armv6 armv7 loong64 mips mips64 mips64le mipsle ppc64 ppc64le riscv64 s390x 
+```
+
+Mapped from `uname -m`:
+
+| `uname -m` reports | mapped to |
+| --- | --- |
+| `x86_64` | `amd64` |
+| `i86pc` | `amd64` |
+| `x86` | `386` |
+| `i686` | `386` |
+| `i386` | `386` |
+| `aarch64` | `arm64` |
+| `armv5*` | `armv5` |
+| `armv6*` | `armv6` |
+| `armv7*` | `armv7` |
+| `loongarch64` | `loong64` |
