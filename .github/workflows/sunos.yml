@@ -35,8 +35,10 @@ jobs:
         uses: vmactions/solaris-vm@v1
         with:
           release: "11.4"
-          prepare: |
-            pkgutil -y -i gmake curl
+          # Nothing to install: the earlier run showed curl, openssl,
+          # sha256sum and tar are already present.  Avoiding a package step
+          # removes a failure mode that has nothing to do with what this leg
+          # tests.
           run: |
             # Diagnostics first: nothing here has been observed on a real
             # Solaris runner, only assumed.
@@ -60,7 +62,14 @@ jobs:
             fi
             uname_os_check || exit 1
 
-            gmake test TEST_SHELL=/bin/sh
+            # Run the suite directly rather than through make: the Makefile
+            # is GNU-only (.DEFAULT_GOAL, MAKEFILE_LIST) and gmake is not
+            # guaranteed here.  The Makefile is only a runner.
+            err=0
+            for t in *_test.sh; do
+              if sh "$t"; then :; else err=1; fi
+            done
+            exit $err
 
   omnios:
     name: omnios (SunOS reporting illumos)
@@ -71,8 +80,7 @@ jobs:
         uses: vmactions/omnios-vm@v1
         with:
           release: "r151054"
-          prepare: |
-            pkg install developer/build/gnu-make web/curl || true
+          # see the note on the solaris job: no packages needed
           run: |
             echo "uname -s : $(uname -s)"
             echo "uname -o : $(uname -o 2>/dev/null || echo '(unsupported)')"
@@ -92,4 +100,11 @@ jobs:
             fi
             uname_os_check || exit 1
 
-            gmake test TEST_SHELL=/bin/sh
+            # Run the suite directly rather than through make: the Makefile
+            # is GNU-only (.DEFAULT_GOAL, MAKEFILE_LIST) and gmake is not
+            # guaranteed here.  The Makefile is only a runner.
+            err=0
+            for t in *_test.sh; do
+              if sh "$t"; then :; else err=1; fi
+            done
+            exit $err
