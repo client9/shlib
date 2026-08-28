@@ -44,7 +44,7 @@ adjust_os
 adjust_arch
 
 NAME=$(archive_name)
-TARBALL="${NAME}.${FORMAT}"
+TARBALL=$(tarball_name)
 TARBALL_URL="${DOWNLOAD_BASE}/${TAG}/${TARBALL}"
 
 # CHECKSUM is optional; when set, execute() verifies the download against it

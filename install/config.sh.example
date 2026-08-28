@@ -74,6 +74,21 @@ checksum_name() {
 # Optional: several binaries in one archive.  Defaults to $BINARY.
 # BINARIES="gosec gosec-helper"
 
+# Optional: how to extract the download.  Defaults to `untar "$1"`.
+#
+# FORMAT above is a filename SUFFIX -- it is appended to what archive_name
+# returns, so its values are the ones untar recognises (tar.gz, tgz, tar.bz2,
+# tbz, tbz2, tar.xz, txz, tar.zst, tzst, tar, zip).
+#
+# Some projects publish no archive: the asset IS the binary.  Leave FORMAT
+# empty and turn unpacking off.  Whether the download needs extracting is a
+# separate question from what the file is called -- hadolint's windows asset
+# is hadolint-windows-x86_64.exe, a suffix that is not an archive.
+#
+# FORMAT=""
+# unpack() { :; }
+# binary_path() { echo "${TARBALL}"; }
+
 # Optional overrides, for projects whose filenames spell the platform
 # differently than uname_os/uname_arch do -- `x86_64` instead of `amd64`,
 # `macOS` instead of `darwin`.  Delete any you do not need.

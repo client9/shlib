@@ -520,6 +520,12 @@ fi
 if ! command -v binary_path >/dev/null 2>&1; then
   binary_path() { echo "$1"; }
 fi
+if ! command -v unpack >/dev/null 2>&1; then
+  unpack() { untar "$1"; }
+fi
+tarball_name() {
+  echo "${NAME}${FORMAT:+.${FORMAT}}"
+}
 if ! command -v latest_version >/dev/null 2>&1; then
   latest_version() { github_release "${OWNER}/${REPO}" "$1"; }
 fi
@@ -531,7 +537,7 @@ execute() {
     http_download "${_shlib_tmpdir}/${CHECKSUM}" "${CHECKSUM_URL}" || return 1
     hash_sha256_verify "${_shlib_tmpdir}/${TARBALL}" "${_shlib_tmpdir}/${CHECKSUM}" || return 1
   fi
-  (cd "${_shlib_tmpdir}" && untar "${TARBALL}") || return 1
+  (cd "${_shlib_tmpdir}" && unpack "${TARBALL}") || return 1
   mkdir -p "${BINDIR}" || return 1
   _shlib_bins=$(printf '%s' "${BINARIES:-$BINARY}" | tr '\t\n' '  ' | tr -s ' ')
   _shlib_bins=${_shlib_bins# }
@@ -576,7 +582,7 @@ adjust_format
 adjust_os
 adjust_arch
 NAME=$(archive_name)
-TARBALL="${NAME}.${FORMAT}"
+TARBALL=$(tarball_name)
 TARBALL_URL="${DOWNLOAD_BASE}/${TAG}/${TARBALL}"
 if is_command checksum_name; then
   CHECKSUM=$(checksum_name)

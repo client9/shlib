@@ -146,6 +146,36 @@ if ! command -v binary_path >/dev/null 2>&1; then
   binary_path() { echo "$1"; }
 fi
 
+# unpack extracts the downloaded file into the current directory.
+#
+# This is a hook because not every project ships an archive.  A bare-binary
+# release -- hadolint publishes hadolint-linux-x86_64 and nothing else -- has
+# nothing to extract, and untar would refuse it outright.  Those configs do:
+#   unpack() { :; }
+#   binary_path() { echo "${TARBALL}"; }
+#
+# Deliberately SEPARATE from FORMAT.  FORMAT is the filename suffix; whether
+# the download needs unpacking is a different question, and the two do not
+# agree: hadolint's windows asset is hadolint-windows-x86_64.exe -- a non-empty
+# suffix that is still not an archive.  A "FORMAT=binary" sentinel could not
+# express that combination.
+if ! command -v unpack >/dev/null 2>&1; then
+  unpack() { untar "$1"; }
+fi
+
+# tarball_name: NAME plus FORMAT's suffix, when there is one.
+#
+# `${FORMAT:+...}` rather than a bare ".${FORMAT}", so a bare-binary config can
+# leave FORMAT empty without producing a trailing dot.  That form is
+# nounset-safe with FORMAT entirely unset, which matters because an install
+# script is exactly the kind of thing run under `set -eu`.
+#
+# Lives here rather than inline in main.sh so it can be unit tested: runner.sh
+# defines, main.sh runs.
+tarball_name() {
+  echo "${NAME}${FORMAT:+.${FORMAT}}"
+}
+
 # latest_version resolves "newest release" to a tag.
 #
 # This is the one genuinely forge-specific piece.  The default asks GitHub,
@@ -178,7 +208,7 @@ execute() {
     hash_sha256_verify "${_shlib_tmpdir}/${TARBALL}" "${_shlib_tmpdir}/${CHECKSUM}" || return 1
   fi
 
-  (cd "${_shlib_tmpdir}" && untar "${TARBALL}") || return 1
+  (cd "${_shlib_tmpdir}" && unpack "${TARBALL}") || return 1
 
   mkdir -p "${BINDIR}" || return 1
 

@@ -123,6 +123,54 @@ test_adjust_override_wins() {
   adjust_os() { :; }
 }
 
+# --- tarball_name --------------------------------------------------------
+
+# FORMAT is a filename SUFFIX, not a format identifier: it is concatenated onto
+# NAME and never compared against anything.  So it has to tolerate being empty,
+# for a project that publishes bare binaries with no suffix at all.
+test_tarball_name() {
+  NAME=widget_1.2.3_linux_amd64
+  FORMAT=tar.gz
+  assertEquals "widget_1.2.3_linux_amd64.tar.gz" "$(tarball_name)" \
+    "tarball_name: appends FORMAT as a suffix"
+  FORMAT=zip
+  assertEquals "widget_1.2.3_linux_amd64.zip" "$(tarball_name)" \
+    "tarball_name: re-expands after adjust_format changes FORMAT"
+  # a suffix that is not an archive -- hadolint's windows asset
+  FORMAT=exe
+  assertEquals "widget_1.2.3_linux_amd64.exe" "$(tarball_name)" \
+    "tarball_name: a non-archive suffix is just a suffix"
+  # the case this function exists for: no suffix, and NO trailing dot
+  FORMAT=""
+  assertEquals "widget_1.2.3_linux_amd64" "$(tarball_name)" \
+    "tarball_name: empty FORMAT leaves no trailing dot"
+  FORMAT=tar.gz
+}
+
+# --- unpack --------------------------------------------------------------
+
+# These run in a fresh shell rather than redefining functions here: it mirrors
+# the real concatenation order (config first, then the library), and it avoids
+# the ksh93 hazards documented below -- a function redefined inside a subshell
+# is not honoured by the caller, and repeated redefine/`unset -f` crashed it.
+test_unpack_default_is_untar() {
+  got=$(sh -c '. ./install/runner.sh
+    untar() { echo "UNTAR:$1"; }
+    unpack somefile.tar.gz')
+  assertEquals "UNTAR:somefile.tar.gz" "$got" \
+    "unpack: the default hands the file to untar"
+}
+
+# the config is concatenated BEFORE the library, so its definition must win
+test_unpack_override_wins() {
+  got=$(sh -c 'unpack() { echo "MINE:$1"; }
+    . ./install/runner.sh
+    untar() { echo "UNTAR:$1"; }
+    unpack somefile')
+  assertEquals "MINE:somefile" "$got" \
+    "unpack: a config override is not replaced by the default"
+}
+
 # --- execute -------------------------------------------------------------
 
 # Stubs are installed once, at the top level, and their behaviour is driven by
@@ -136,10 +184,32 @@ test_adjust_override_wins() {
 
 STUB_MARKER=""
 STUB_VERIFY_RC=0
+STUB_UNPACK_NOOP=""
 
 http_download() { echo stub >"$1"; }
 
+# Driven by a variable rather than redefined per scenario, for the reasons
+# above.  Empty STUB_UNPACK_NOOP is the ordinary archive path, so every
+# existing execute test below is unaffected.
+unpack() {
+  if [ -n "$STUB_UNPACK_NOOP" ]; then
+    return 0
+  fi
+  untar "$1"
+}
+
+# Mirrors the real untar in one respect that matters here: it REFUSES a file
+# with no recognised archive suffix (untar.sh:36).  Without that, a test for
+# the bare-binary path would pass even if execute() still called untar
+# directly, because a stub that always succeeds hides the whole bug.
 untar() {
+  case "$1" in
+    *.tar.gz | *.tgz | *.tar | *.zip) ;;
+    *)
+      log_err "untar unknown archive format for $1"
+      return 1
+      ;;
+  esac
   echo '#!/bin/sh' >testbin
   chmod +x testbin
 }
@@ -204,6 +274,31 @@ test_execute_bad_checksum() {
   STUB_VERIFY_RC=0
 }
 
+# A bare-binary release: nothing to unpack, and the download itself is the
+# binary.  This is the path hadolint takes -- the whole reason unpack is a hook.
+test_execute_bare_binary() {
+  workdir=$(mktmpdir)
+  BINDIR="$workdir/bin"
+  BINARY=testbin
+  BINARIES=""
+  NAME=testbin-linux-x86_64
+  TARBALL=$NAME
+  TARBALL_URL=https://example.invalid/$TARBALL
+  CHECKSUM=""
+  OS=linux
+  STUB_UNPACK_NOOP=1
+  binary_path() { echo "${TARBALL}"; }
+
+  execute >/dev/null 2>&1
+  assertEquals "0" "$?" "execute: succeeds with no archive to unpack"
+  assertTrue "[ -x '$workdir/bin/testbin' ]" \
+    "execute: the downloaded file is installed as the binary, and is executable"
+
+  binary_path() { echo "$1"; }
+  STUB_UNPACK_NOOP=""
+  rm -rf "$workdir"
+}
+
 # --- forge independence --------------------------------------------------
 
 # Only two seams are GitHub-specific: where artifacts live (DOWNLOAD_BASE,
@@ -230,7 +325,7 @@ CFG
     parse_args
     tag_to_version >/dev/null 2>&1
     NAME=\$(archive_name)
-    echo \"\${DOWNLOAD_BASE}/\${TAG}/\${NAME}.\${FORMAT}\"")
+    echo \"\${DOWNLOAD_BASE}/\${TAG}/\$(tarball_name)\"")
   assertEquals "https://downloads.example.internal/widget/v9.9.9/widget_9.9.9_linux_amd64.tar.gz" \
     "$got" "forge: DOWNLOAD_BASE and latest_version override cleanly"
   rm -rf "$d"
@@ -381,7 +476,8 @@ check_example() {
     . ./install/runner.sh
     VERSION='"$2"'; OS='"$3"'; ARCH='"$4"'
     adjust_format; adjust_os; adjust_arch
-    echo "$(archive_name).${FORMAT} $(checksum_name)"')
+    NAME=$(archive_name)
+    echo "$(tarball_name) $(checksum_name)"')
   assertEquals "$5 $6" "$_got" "example $_cfg: $3/$4"
 }
 
@@ -399,9 +495,10 @@ check_example_path() {
     TAG='"$2"'; VERSION=${TAG#v}; OS='"$3"'; ARCH='"$4"'
     adjust_format; adjust_os; adjust_arch
     NAME=$(archive_name)
+    TARBALL=$(tarball_name)
     b=$BINARY
     if [ "$OS" = windows ]; then b="${b}.exe"; fi
-    echo "${NAME}.${FORMAT} $(binary_path "$b")"')
+    echo "${TARBALL} $(binary_path "$b")"')
   assertEquals "$5 $6" "$_got" "example $_cfg: $3/$4"
 }
 
@@ -477,6 +574,21 @@ test_example_shellcheck() {
   # the windows zip carries no os/arch, and the exe sits at the root
   check_example_path shellcheck.sh v0.11.0 windows amd64 \
     shellcheck-v0.11.0.zip shellcheck.exe
+}
+
+# hadolint/hadolint v2.15.1 -- no archive at all, and a windows .exe that is a
+# suffix without being an archive
+test_example_hadolint() {
+  check_example_path hadolint.sh v2.15.1 linux amd64 \
+    hadolint-linux-x86_64 hadolint-linux-x86_64
+  # arm64 passes through: hadolint uses the raw x86_64 but Go's arm64
+  check_example_path hadolint.sh v2.15.1 linux arm64 \
+    hadolint-linux-arm64 hadolint-linux-arm64
+  check_example_path hadolint.sh v2.15.1 darwin arm64 \
+    hadolint-macos-arm64 hadolint-macos-arm64
+  # FORMAT=exe: a non-empty suffix, still not an archive
+  check_example_path hadolint.sh v2.15.1 windows amd64 \
+    hadolint-windows-x86_64.exe hadolint-windows-x86_64.exe
 }
 
 # gohugoio/hugo v0.165.0 -- BSDs, Solaris, and build variants
@@ -625,6 +737,7 @@ test_example_hydra
 test_example_task
 test_example_golangci
 test_example_shellcheck
+test_example_hadolint
 test_example_hugo
 test_example_hugo_variant
 test_example_hugo_no_darwin
@@ -706,8 +819,12 @@ test_normalize_platforms
 test_archive_name
 test_adjust_defaults_are_noops
 test_adjust_override_wins
+test_tarball_name
+test_unpack_default_is_untar
+test_unpack_override_wins
 test_execute
 test_execute_verifies_checksum
 test_execute_bad_checksum
+test_execute_bare_binary
 test_execute_nested_binary
 test_execute_multiple_binaries

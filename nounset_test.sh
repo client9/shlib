@@ -158,6 +158,10 @@ test_installer_without_optional_config() {
     "check_platform: PLATFORMS unset"
   assertTrue "nounset_ok '. ./install/runner.sh; unset TAG; latest_version() { echo v1; }; RELEASES_URL=x; tag_to_version'" \
     "tag_to_version: TAG unset"
+  # FORMAT is optional: a project publishing bare binaries has no suffix to
+  # append, and may never assign it at all.
+  assertTrue "nounset_ok '. ./install/runner.sh; NAME=widget; unset FORMAT; tarball_name'" \
+    "tarball_name: FORMAT unset"
 }
 
 test_detects_a_violation

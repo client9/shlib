@@ -65,10 +65,10 @@ complete set, including `BINARIES` for multi-binary archives.
 
 ## Worked examples
 
-Six real projects, each with a different naming scheme — from "no hooks at
+Seven real projects, each with a different naming scheme — from "no hooks at
 all" through renamed arch spellings, archives with no version in the name, a
-binary nested inside a versioned directory, and a non-Go project whose assets
-use the raw `uname -m` spellings.
+binary nested inside a versioned directory, a non-Go project whose assets use
+the raw `uname -m` spellings, and a release with no archive at all.
 
 **[install/examples/](../install/examples/)** — the table of what each one
 shows, and which to copy.
@@ -112,6 +112,40 @@ binary_path() { echo "${NAME}/$1"; }
 
 It receives the binary name (with `.exe` already appended on windows) and
 returns the path within the unpacked archive. The default is `echo "$1"`.
+
+### If there is no archive
+
+`FORMAT` is a filename **suffix**, not a format identifier. It is appended to
+whatever `archive_name` returns and is never compared against anything, so the
+values it accepts are exactly the suffixes `untar` recognises:
+
+```
+tar.gz  tgz  tar.bz2  tbz  tbz2  tar.xz  txz  tar.zst  tzst  tar  zip
+```
+
+Some projects publish no archive at all — the release asset *is* the binary.
+Leave `FORMAT` empty and define `unpack`, which by default hands the download
+to `untar`:
+
+```sh
+FORMAT=""
+unpack() { :; }                       # nothing to extract
+binary_path() { echo "${TARBALL}"; }  # the download already is the binary
+```
+
+The bare file arrives without an execute bit, where a tar member would have
+carried one; `install_exe` sets it, so nothing more is needed.
+
+Unpacking is a separate hook rather than a `FORMAT=binary` value because the
+two are genuinely independent. hadolint publishes
+`hadolint-windows-x86_64.exe` — a non-empty suffix that is still not an
+archive — and one field cannot say both:
+
+```sh
+adjust_format() { case ${OS} in windows) FORMAT=exe ;; esac; }
+```
+
+See [`install/examples/hadolint.sh`](../install/examples/hadolint.sh).
 
 ### Several binaries in one archive
 

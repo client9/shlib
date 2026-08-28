@@ -15,6 +15,31 @@ sed -n 's/^shlib \(.*\)/\1/p' your-install.sh
 Rename this heading to the release date when cutting a release — see
 [docs/RELEASING.md](docs/RELEASING.md).
 
+### Added
+
+- **`unpack`, a hook for releases that are not archives.** `execute` called
+  `untar` unconditionally, and `untar` refuses anything without a recognised
+  archive suffix, so a project publishing bare binaries could not be installed
+  at all. Configs now override:
+
+  ```sh
+  FORMAT=""
+  unpack() { :; }
+  binary_path() { echo "${TARBALL}"; }
+  ```
+
+  Existing configs are unaffected — the default is `untar "$1"`, defined behind
+  the same `command -v` guard as `binary_path` and `latest_version`.
+
+  Unpacking is a hook rather than a `FORMAT=binary` value because the two are
+  independent: hadolint's windows asset is `hadolint-windows-x86_64.exe`, a
+  non-empty suffix that is still not an archive, and one field cannot express
+  both. `install/examples/hadolint.sh` is the worked example.
+- `FORMAT` may now be empty. `TARBALL` is built by a new `tarball_name`
+  function so the suffix is omitted rather than leaving a trailing dot, and so
+  the construction can be unit tested — it previously lived inline in
+  `main.sh`, which tests cannot source.
+
 ### Changed
 
 - **The platform names are documented as shlib's own, not Go's.** They still
