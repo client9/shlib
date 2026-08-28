@@ -1,0 +1,95 @@
+name: sunos
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  # this repo goes quiet for long stretches; a monthly build catches bit-rot
+  # in the things we do not control (release URLs, runner images)
+  schedule:
+    - cron: '17 13 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Solaris and illumos both report the ancient "SunOS" from `uname -s`, and
+# uname_os tells them apart with `uname -o`.  That branch has produced more
+# bugs than any other mapping in this library -- a `==` bashism that silently
+# fell through to solaris under any POSIX shell, and a downstream fork that
+# reimplemented it with the same bug -- and until now it had only ever been
+# exercised with a stubbed `uname`.  These two legs run it on the real thing.
+#
+# Both actions boot a QEMU VM on a Linux runner, and both execute `run` with
+# sh regardless of the VM's login shell.
+#
+# `uses:` cannot take a matrix expression, so these are two jobs rather than
+# two legs of one.
+jobs:
+  solaris:
+    name: solaris (SunOS without illumos)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: test on Solaris 11.4
+        uses: vmactions/solaris-vm@v1
+        with:
+          release: "11.4"
+          prepare: |
+            pkgutil -y -i gmake curl
+          run: |
+            # Diagnostics first: nothing here has been observed on a real
+            # Solaris runner, only assumed.
+            echo "uname -s : $(uname -s)"
+            echo "uname -o : $(uname -o 2>/dev/null || echo '(unsupported)')"
+            echo "uname -m : $(uname -m)"
+            for c in sh gmake make curl wget fetch openssl \
+                     sha256sum sha512sum md5sum shasum digest gtar tar; do
+              printf '%-10s %s\n' "$c" "$(command -v "$c" 2>/dev/null || echo MISSING)"
+            done
+
+            # The assertion this leg exists for.  Needs no tooling, so it runs
+            # even if the package install above did not work.
+            . ./echoerr.sh; . ./log.sh
+            . ./uname_os.sh; . ./uname_os_check.sh
+            os=$(uname_os)
+            echo "uname_os -> $os"
+            if [ "$os" != "solaris" ]; then
+              echo "::error::expected 'solaris', got '$os'"
+              exit 1
+            fi
+            uname_os_check || exit 1
+
+            gmake test TEST_SHELL=/bin/sh
+
+  omnios:
+    name: omnios (SunOS reporting illumos)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: test on OmniOS
+        uses: vmactions/omnios-vm@v1
+        with:
+          release: "r151054"
+          prepare: |
+            pkg install developer/build/gnu-make web/curl || true
+          run: |
+            echo "uname -s : $(uname -s)"
+            echo "uname -o : $(uname -o 2>/dev/null || echo '(unsupported)')"
+            echo "uname -m : $(uname -m)"
+            for c in sh gmake make curl wget fetch openssl \
+                     sha256sum sha512sum md5sum shasum digest gtar tar; do
+              printf '%-10s %s\n' "$c" "$(command -v "$c" 2>/dev/null || echo MISSING)"
+            done
+
+            . ./echoerr.sh; . ./log.sh
+            . ./uname_os.sh; . ./uname_os_check.sh
+            os=$(uname_os)
+            echo "uname_os -> $os"
+            if [ "$os" != "illumos" ]; then
+              echo "::error::expected 'illumos', got '$os'"
+              exit 1
+            fi
+            uname_os_check || exit 1
+
+            gmake test TEST_SHELL=/bin/sh

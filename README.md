@@ -5,6 +5,7 @@ portable functions for posix shell environments
 [![linux](https://github.com/client9/shlib/actions/workflows/linux.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/linux.yml)
 [![macos](https://github.com/client9/shlib/actions/workflows/macos.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/macos.yml)
 [![freebsd](https://github.com/client9/shlib/actions/workflows/freebsd.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/freebsd.yml)
+[![sunos](https://github.com/client9/shlib/actions/workflows/sunos.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/sunos.yml)
 [![alpine](https://github.com/client9/shlib/actions/workflows/alpine.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/alpine.yml)
 [![windows](https://github.com/client9/shlib/actions/workflows/windows.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/windows.yml)
 
@@ -19,6 +20,7 @@ GitHub provides no FreeBSD runner.
 | Alpine (musl)   | `busybox ash`                                        |
 | macOS           | `sh` `bash 3.2` `ksh` `zsh` `dash`                   |
 | FreeBSD 14, 15  | `sh` `dash` `bash` `ksh93` `mksh` `yash` `zsh`       |
+| Solaris, illumos | `sh` — chiefly the `SunOS` mapping                   |
 | Windows         | `git bash` `msys2`                                   |
 
 That table is what CI *runs*. The library **recognises** a wider set than it
@@ -45,7 +47,7 @@ Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 **Building a `curl | sh` installer?** See
 [docs/INSTALLERS.md](docs/INSTALLERS.md) — the replacement for the archived
 `godownloader`, with no Go, YAML or template language.
-Worked examples for four real projects are in
+Worked examples for five real projects are in
 [install/examples/](install/examples/).
 
 Pre-built bundles are committed to this repo and attached to every release:

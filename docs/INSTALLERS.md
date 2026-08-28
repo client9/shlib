@@ -65,7 +65,7 @@ complete set, including `BINARIES` for multi-binary archives.
 
 ## Worked examples
 
-Four real projects, each with a different naming scheme — from "no hooks at
+Five real projects, each with a different naming scheme — from "no hooks at
 all" through renamed arch spellings, archives with no version in the name, and
 a binary nested inside a versioned directory.
 

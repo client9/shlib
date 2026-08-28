@@ -395,10 +395,65 @@ test_example_golangci() {
     golangci-lint-2.13.1-linux-loong64.tar.gz golangci-lint-2.13.1-checksums.txt
 }
 
+# gohugoio/hugo v0.165.0 -- BSDs, Solaris, and build variants
+test_example_hugo() {
+  check_example hugo.sh 0.165.0 linux amd64 \
+    hugo_0.165.0_linux-amd64.tar.gz hugo_0.165.0_checksums.txt
+  check_example hugo.sh 0.165.0 windows amd64 \
+    hugo_0.165.0_windows-amd64.zip hugo_0.165.0_checksums.txt
+  # the BSD family and Solaris, which no other example covers
+  check_example hugo.sh 0.165.0 netbsd amd64 \
+    hugo_0.165.0_netbsd-amd64.tar.gz hugo_0.165.0_checksums.txt
+  check_example hugo.sh 0.165.0 openbsd amd64 \
+    hugo_0.165.0_openbsd-amd64.tar.gz hugo_0.165.0_checksums.txt
+  check_example hugo.sh 0.165.0 dragonfly amd64 \
+    hugo_0.165.0_dragonfly-amd64.tar.gz hugo_0.165.0_checksums.txt
+  check_example hugo.sh 0.165.0 solaris amd64 \
+    hugo_0.165.0_solaris-amd64.tar.gz hugo_0.165.0_checksums.txt
+  # armv7 folds to the single "arm" build
+  check_example hugo.sh 0.165.0 linux armv7 \
+    hugo_0.165.0_linux-arm.tar.gz hugo_0.165.0_checksums.txt
+}
+
+# a variant is neither OS nor arch; archive_name being a shell function means
+# it needs no new config concept
+test_example_hugo_variant() {
+  got=$(sh -c '. ./install/examples/hugo.sh
+    . ./dist/shlib.min.sh
+    . ./install/runner.sh
+    VERSION=0.165.0; OS=linux; ARCH=arm64; HUGO_VARIANT=_extended
+    adjust_format; adjust_os; adjust_arch
+    echo "$(archive_name).${FORMAT}"')
+  assertEquals "hugo_extended_0.165.0_linux-arm64.tar.gz" "$got" \
+    "example hugo.sh: HUGO_VARIANT selects the extended build"
+}
+
+# hugo publishes macOS as a .pkg only, so darwin must be refused rather than
+# producing a 404 on a tarball that never existed
+test_example_hugo_no_darwin() {
+  got=$(sh -c '. ./install/examples/hugo.sh
+    . ./dist/shlib.min.sh
+    . ./install/runner.sh
+    PLATFORM=darwin/arm64
+    normalize_platforms
+    check_platform 2>&1 >/dev/null' | head -1)
+  case "$got" in
+    *"no binary published for darwin/arm64"*)
+      assertTrue "true" "example hugo.sh: darwin is refused with a real message"
+      ;;
+    *)
+      assertTrue "false" "example hugo.sh: unexpected darwin message [$got]"
+      ;;
+  esac
+}
+
 test_example_gosec
 test_example_hydra
 test_example_task
 test_example_golangci
+test_example_hugo
+test_example_hugo_variant
+test_example_hugo_no_darwin
 test_examples_assemble
 # archives that wrap their contents in a directory, e.g.
 #   golangci-lint-2.13.1-darwin-arm64/golangci-lint

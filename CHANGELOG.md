@@ -40,7 +40,7 @@ Rename this heading to the release date when cutting a release — see
 - **`install/`** — a replacement for the archived
   [godownloader](https://github.com/goreleaser/godownloader). An install script
   is `config.sh` + `dist/install-base.sh` concatenated: no Go, no YAML, no
-  template language. See [docs/INSTALLERS.md](docs/INSTALLERS.md) and four
+  template language. See [docs/INSTALLERS.md](docs/INSTALLERS.md) and five
   worked [examples](install/examples/).
 - `http_download_fetch`, for FreeBSD. Note `fetch(1)` cannot send arbitrary
   headers; `Accept` is mapped via `HTTP_ACCEPT` and anything else fails
@@ -49,6 +49,10 @@ Rename this heading to the release date when cutting a release — see
   the recognised GOOS/GOARCH values and the non-obvious `uname` mappings
   (including `SunOS` → `illumos`/`solaris`). `make docs` regenerates it and CI
   fails if it drifts.
+- Solaris and illumos CI (`vmactions/solaris-vm`, `vmactions/omnios-vm`),
+  running the `SunOS` → `solaris`/`illumos` branch on real systems. That branch
+  has caused more bugs than any other mapping here and had only ever been
+  tested with a stubbed `uname`.
 - Windows CI (git-bash and MSYS2), verifying that `MINGW64_NT-*` and
   `MSYS_NT-*` really do map to `windows` — previously only ever tested with a
   stubbed `uname`.
