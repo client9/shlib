@@ -7,6 +7,8 @@
 # Three things this shows that the other examples do not:
 #
 #   - the BSD family and Solaris: dragonfly, freebsd, netbsd, openbsd, solaris
+#     -- plus illumos, which hugo does not publish for and which is mapped
+#     onto the solaris build (see adjust_os)
 #   - a VARIANT dimension that is neither OS nor arch.  Hugo publishes plain,
 #     `extended`, `withdeploy` and `extended_withdeploy` builds; because
 #     archive_name is a shell function, that is one more expansion rather than
@@ -46,16 +48,22 @@ HUGO_VARIANT=${HUGO_VARIANT:-}
 # Pi Zero, Pi Zero W), so listing armv6 would trade a clear "no binary
 # published" for an install that only fails when the user runs it.
 #
+# illumos IS listed even though hugo publishes no illumos asset: adjust_os
+# maps it onto the solaris build.  Listed here in the uname_os spelling for
+# the same reason as the arches -- check_platform runs before adjust_os.
+#
 # The variants are built for far fewer platforms than the plain build, so the
 # list depends on HUGO_VARIANT.  Without that, `HUGO_VARIANT=_extended` on
 # FreeBSD would pass check_platform and then 404 -- precisely what PLATFORMS
-# exists to prevent.
+# exists to prevent.  No variant is built for solaris, so illumos is absent
+# from that list too.
 if [ -n "${HUGO_VARIANT}" ]; then
   PLATFORMS="linux/amd64 linux/arm64
              windows/amd64"
 else
   PLATFORMS="dragonfly/amd64
              freebsd/amd64
+             illumos/amd64
              linux/amd64 linux/arm64 linux/armv7
              netbsd/amd64
              openbsd/amd64
@@ -66,6 +74,23 @@ fi
 adjust_format() {
   case ${OS} in
     windows) FORMAT=zip ;;
+  esac
+}
+
+# illumos runs the solaris build.
+#
+# Go treats solaris and illumos as separate GOOS values, but hugo publishes
+# only solaris-amd64, and that binary is an ordinary dynamically linked
+# Solaris executable: interpreter /lib/amd64/ld.so.1, NEEDED libsendfile.so,
+# libsocket.so, libc.so, and no versioned symbol requirements -- all of which
+# illumos provides.
+#
+# That is an argument, not a proof, so the OmniOS CI leg installs hugo through
+# this very config and then executes the result.  If illumos ever diverges,
+# that leg goes red rather than a user getting a binary that will not run.
+adjust_os() {
+  case ${OS} in
+    illumos) OS=solaris ;;
   esac
 }
 

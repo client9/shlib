@@ -107,4 +107,40 @@ jobs:
             for t in *_test.sh; do
               if sh "$t"; then :; else err=1; fi
             done
+
+            # The illumos mapping in install/examples/hugo.sh, proved rather
+            # than argued.
+            #
+            # Hugo publishes solaris-amd64 and nothing for illumos, and the
+            # example config maps illumos onto that build.  Whether that is
+            # legitimate is a claim about the ABI, not about shell, so no
+            # amount of unit testing settles it -- the only honest check is to
+            # install the thing here and run it.  This is also the only leg
+            # that can: illumos exists nowhere else in CI.
+            #
+            # Pinned to an explicit tag, not "latest": this tests the illumos
+            # ABI, not hugo's release cadence, and a moving version would make
+            # a failure ambiguous.  It does couple this leg to that release
+            # staying downloadable, which is the price of an end-to-end check.
+            #
+            # Sets err= rather than exiting, so a failure here cannot hide the
+            # suite result above, or the other way round.
+            echo "== hugo install on illumos (proves the illumos -> solaris map) =="
+            hugodir=./hugo-illumos-check
+            rm -rf "$hugodir"
+            mkdir -p "$hugodir"
+            cat install/examples/hugo.sh dist/install-base.sh >"$hugodir/install.sh"
+            if sh "$hugodir/install.sh" -b "$hugodir/bin" v0.165.0; then
+              if "$hugodir/bin/hugo" version; then
+                echo "hugo runs on illumos; the solaris build is compatible"
+              else
+                echo "::error::hugo installed but will not execute on illumos -- the illumos->solaris mapping in install/examples/hugo.sh is wrong and should be removed"
+                err=1
+              fi
+            else
+              echo "::error::the hugo installer failed on illumos"
+              err=1
+            fi
+            rm -rf "$hugodir"
+
             exit $err

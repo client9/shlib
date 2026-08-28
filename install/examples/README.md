@@ -14,7 +14,7 @@ Full guide: [../../docs/INSTALLERS.md](../../docs/INSTALLERS.md).
 | [`hydra.sh`](hydra.sh) | renamed OS and arch (`darwin`→`macOS`, `amd64`→`64bit`), a hyphen instead of an underscore, and `.zip` on windows |
 | [`task.sh`](task.sh) | **no version in the archive name** — which a `{name}_{version}_{os}_{arch}` template cannot express — plus folding `armv6`/`armv7` back to `arm` |
 | [`golangci-lint.sh`](golangci-lint.sh) | 27 platforms, and the binary is **nested in a versioned directory** inside the archive |
-| [`hugo.sh`](hugo.sh) | the BSD family and Solaris, **build variants** (`extended`, `withdeploy`), and a platform that is deliberately unsupported |
+| [`hugo.sh`](hugo.sh) | the BSD family, Solaris and illumos, **build variants** (`extended`, `withdeploy`), a `PLATFORMS` list that is *computed*, and two platforms deliberately refused |
 
 ## The same thing, concretely
 
@@ -24,7 +24,7 @@ Full guide: [../../docs/INSTALLERS.md](../../docs/INSTALLERS.md).
 | `hydra.sh` | `hydra_26.2.0-macOS_arm64.tar.gz` | `adjust_os` `adjust_arch` `adjust_format` |
 | `task.sh` | `task_darwin_arm64.tar.gz` | `adjust_arch` `adjust_format` |
 | `golangci-lint.sh` | `golangci-lint-2.13.1-darwin-arm64.tar.gz` | `adjust_format` `binary_path` |
-| `hugo.sh` | `hugo_0.165.0_netbsd-amd64.tar.gz` | `adjust_format` `adjust_arch` |
+| `hugo.sh` | `hugo_0.165.0_netbsd-amd64.tar.gz` | `adjust_format` `adjust_os` `adjust_arch` |
 
 Verified against gosec v2.29.0, hydra v26.2.0, task v3.53.1,
 golangci-lint v2.13.1 and hugo v0.165.0.
@@ -48,12 +48,28 @@ build of the same thing, look at `hugo.sh`.
 archives carry no version at all, so there is no template string that produces
 the right name. As a shell function it is a one-liner.
 
-`hugo.sh` is worth reading for two other reasons. It has a **variant**
-dimension -- plain, `extended`, `withdeploy` -- which is neither OS nor arch,
-and needs no new config concept because `archive_name` is just shell. And it
-deliberately omits `darwin` from `PLATFORMS`, because hugo publishes macOS as
-a `.pkg` only. A mac user gets *"no binary published for darwin/arm64"* rather
-than a 404 on a tarball that never existed.
+`hugo.sh` is worth reading for three other reasons.
+
+It has a **variant** dimension -- plain, `extended`, `withdeploy` -- which is
+neither OS nor arch, and needs no new config concept because `archive_name` is
+just shell. The variants are built for only three of the ten platforms the
+plain build covers, so `PLATFORMS` is **computed** from the variant. It is an
+ordinary shell variable; there is nothing stopping you deriving it.
+
+It shows `PLATFORMS` used to **refuse** things, which is half its value:
+
+- `darwin` is omitted because hugo ships macOS as a `.pkg` only. A mac user
+  gets *"no binary published for darwin/arm64"* rather than a 404 on a tarball
+  that never existed.
+- `linux/armv6` is omitted because hugo's single `linux-arm` build is
+  `GOARM=7` (`go version -m` on the asset says so). An ARMv6 device would
+  otherwise get a clean install and a `SIGILL` the first time it ran.
+
+And it maps `illumos` onto the `solaris` build, because hugo publishes no
+illumos asset. That is a claim about the ABI rather than about naming, so the
+OmniOS CI leg installs hugo through this exact config and executes the result
+-- see `.github/workflows/sunos.yml`. If illumos ever diverges, that leg goes
+red instead of a user getting a binary that will not start.
 
 ## These are tests, not just documentation
 

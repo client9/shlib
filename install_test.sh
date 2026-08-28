@@ -459,6 +459,11 @@ test_example_hugo() {
   # armv7 folds to the single "arm" build
   check_example hugo.sh 0.165.0 linux armv7 \
     hugo_0.165.0_linux-arm.tar.gz hugo_0.165.0_checksums.txt
+  # hugo publishes no illumos asset; adjust_os folds it onto the solaris
+  # build.  That the resulting binary actually RUNS on illumos is not
+  # provable here -- the OmniOS CI leg installs and executes it.
+  check_example hugo.sh 0.165.0 illumos amd64 \
+    hugo_0.165.0_solaris-amd64.tar.gz hugo_0.165.0_checksums.txt
 }
 
 # a variant is neither OS nor arch; archive_name being a shell function means
@@ -546,6 +551,18 @@ test_example_hugo_variant_platforms() {
   done
 }
 
+# illumos must reach check_platform under its own name -- check_platform runs
+# before adjust_os, so listing only solaris/amd64 would refuse it.
+test_example_hugo_illumos_accepted() {
+  got=$(sh -c '. ./install/examples/hugo.sh
+    . ./dist/shlib.min.sh
+    . ./install/runner.sh
+    PLATFORM=illumos/amd64
+    normalize_platforms
+    check_platform >/dev/null 2>&1; echo $?')
+  assertEquals "0" "$got" "example hugo.sh: illumos/amd64 is accepted"
+}
+
 # hugo publishes macOS as a .pkg only, so darwin must be refused rather than
 # producing a 404 on a tarball that never existed
 test_example_hugo_no_darwin() {
@@ -573,6 +590,7 @@ test_example_hugo
 test_example_hugo_variant
 test_example_hugo_no_darwin
 test_example_hugo_no_armv6
+test_example_hugo_illumos_accepted
 test_example_hugo_variant_platforms
 test_examples_assemble
 # archives that wrap their contents in a directory, e.g.
