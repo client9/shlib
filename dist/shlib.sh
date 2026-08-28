@@ -447,6 +447,22 @@ http_download_fetch() {
 # the netkit and inetutils clients on Linux have no auto-fetch at all, and
 # neither -o nor -V, so they exit on the option before doing anything
 # surprising.
+#
+# ACCEPT IS REFUSED EVEN WHERE -H EXISTS.  tnftp writes its own
+# "Accept: */*" into every request and only then appends the -H headers
+# (usr.bin/ftp/fetch.c, print_get), and nothing suppresses it.  GitHub honours
+# the first Accept it sees, so `-H "Accept: application/json"` produced a
+# request carrying both and came back with the HTML release page -- which
+# github_release then parsed into "<!DOCTYPE html> <html lang=" as the tag.
+# Verified against the live endpoint: application/json alone returns JSON,
+# and "*/*" ahead of it returns HTML, as does every q-value arrangement
+# ("application/json, */*;q=0" included).  Refusing is the only honest answer:
+# the header is deliverable but not effective, and a silently wrong body is
+# worse than a clear failure.
+#
+# fetch(1) does NOT have this problem -- HTTP_ACCEPT replaces its Accept
+# rather than adding to it -- which is why http_download_fetch supports the
+# header and this does not.
 http_download_ftp() {
   _shlib_local_file=$1
   _shlib_source_url=$2
@@ -456,6 +472,15 @@ http_download_ftp() {
     ftp -V -o "$_shlib_local_file" "$_shlib_source_url"
     return
   fi
+
+  # see the note above: -H can carry Accept, but tnftp's own "Accept: */*"
+  # gets there first and wins, so the response is not the one asked for
+  case "$_shlib_header" in
+    [Aa]ccept:*)
+      log_crit "http_download ftp cannot override the Accept header; install curl or wget"
+      return 1
+      ;;
+  esac
 
   if ftp -Z </dev/null 2>&1 | grep '\[-H ' >/dev/null 2>&1; then
     ftp -V -H "$_shlib_header" -o "$_shlib_local_file" "$_shlib_source_url"

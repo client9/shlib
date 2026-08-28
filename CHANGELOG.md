@@ -69,20 +69,28 @@ Rename this heading to the release date when cutting a release — see
   NetBSD's tnftp has `-H` for arbitrary request headers, OpenBSD's ftp has no
   header support at all. The branch probes the binary's own usage line rather
   than trusting `uname -s`, and fails loudly where a header cannot be sent.
-  So on OpenBSD, plain release downloads work but `github_release`'s `latest`
-  lookup — which needs `Accept: application/json` — reports that clearly
-  instead of returning a garbage tag. Dispatch order is curl, wget, fetch,
-  ftp; `ftp` is last because a Linux box may carry a legacy client that
-  cannot fetch a URL at all.
+  Dispatch order is curl, wget, fetch, ftp; `ftp` is last because a Linux box
+  may carry a legacy client that cannot fetch a URL at all.
+
+  `Accept` is refused on this branch even where `-H` exists. tnftp writes its
+  own `Accept: */*` ahead of any `-H` header and nothing suppresses it, so the
+  caller's Accept is delivered but never wins — GitHub answered with the HTML
+  release page. Refusing beats returning the wrong representation.
+  `fetch(1)` is unaffected: `HTTP_ACCEPT` replaces its Accept rather than
+  adding to it.
+
+  **Net effect for OpenBSD and NetBSD users:** downloading a release artifact
+  and its checksum file works, so an installer pinned to an explicit tag is
+  fine. Resolving `latest` through `github_release` does not, and says so.
 - **OpenBSD, NetBSD and DragonFly CI**, under QEMU via `vmactions`. Beyond the
   full suite these assert that `uname -s` maps to `openbsd` / `netbsd` /
   `dragonfly`, and that the `ftp -H` probe agrees with the real binary on each
   — in opposite directions, so either usage line changing is caught. OpenBSD
   and NetBSD also assert curl, wget and fetch really are absent, since there
-  the absence is what makes the `ftp(1)` branch run. NetBSD resolves a live
-  `github_release` over `ftp -H`, and DragonFly calls `http_download_fetch`
-  directly; those are the only proof that what these downloaders send is what
-  GitHub accepts.
+  the absence is what makes the `ftp(1)` branch run. NetBSD downloads over
+  `ftp -H` for real and pins the Accept refusal; DragonFly calls
+  `http_download_fetch` directly, including with an Accept header, which is
+  the only proof that what these downloaders send is what GitHub accepts.
 - `nounset_test.sh`, which runs every documented call form under `set -u`.
 - **`install_exe`** — copy a file into place and make it executable. Placing a
   binary portably is a shell primitive, so it belongs in the library rather

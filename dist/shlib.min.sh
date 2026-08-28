@@ -234,6 +234,12 @@ http_download_ftp() {
     ftp -V -o "$_shlib_local_file" "$_shlib_source_url"
     return
   fi
+  case "$_shlib_header" in
+    [Aa]ccept:*)
+      log_crit "http_download ftp cannot override the Accept header; install curl or wget"
+      return 1
+      ;;
+  esac
   if ftp -Z </dev/null 2>&1 | grep '\[-H ' >/dev/null 2>&1; then
     ftp -V -H "$_shlib_header" -o "$_shlib_local_file" "$_shlib_source_url"
     return

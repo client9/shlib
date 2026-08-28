@@ -112,7 +112,7 @@ jobs:
             # limitation being documented.  A negative assertion is worth
             # little unless it pins the reason.
             case "$out" in
-              *"cannot send"*) ;;
+              *"ftp cannot"*) ;;
               *)
                 echo "::error::github_release failed, but not with the header message"
                 exit 1

@@ -18,9 +18,16 @@ permissions:
 #
 # Base ships neither curl nor wget nor fetch, so ftp(1) is the only downloader
 # -- but here it is tnftp, which unlike OpenBSD's ftp does have -H.  So this is
-# the leg where http_download's ftp branch sends a real request header, and
-# where github_release (which needs `Accept: application/json`) can be checked
-# end to end against the live GitHub URL an installer would use.
+# the leg where http_download's ftp branch sends a real request header.
+#
+# It cannot send a useful *Accept* header, though, and that is worth being
+# precise about because the first version of this leg asserted the opposite
+# and failed.  tnftp writes its own "Accept: */*" into every request before
+# appending the -H headers, GitHub answers the first Accept it sees, and the
+# reply was the HTML release page -- which github_release duly rejected as a
+# garbage tag.  So the library refuses Accept on this branch, and this leg
+# now pins BOTH halves: an ordinary header really does reach the server, and
+# an Accept header is refused rather than silently ineffective.
 #
 # NetBSD also gives two shells for free: /bin/sh is ash-derived and /bin/ksh
 # is pdksh, and neither is the same binary as the other.
@@ -94,20 +101,50 @@ jobs:
             fi
             uname_os_check || exit 1
 
-            # End to end over ftp -H, against the live URL an installer uses.
-            # The stubbed unit tests prove the flag is passed; only this
-            # proves GitHub accepts what tnftp sends.
             . ./is_command.sh; . ./mktmpdir.sh
             . ./http_download.sh; . ./github_release.sh
-            echo "== github_release over ftp -H =="
-            tag=$(github_release client9/shlib) || {
-              echo "::error::github_release failed; ftp -H did not deliver the Accept header"
+            d=$(mktmpdir)
+
+            # A plain download over ftp(1), which is all an installer needs to
+            # fetch a release artifact and its checksum file.
+            echo "== http_download_ftp, no header =="
+            http_download_ftp "$d/plain" \
+              https://raw.githubusercontent.com/client9/shlib/master/fixtures/sample1.txt || {
+              echo "::error::http_download_ftp failed on a plain download"
               exit 1
             }
-            echo "github_release -> $tag"
-            case "$tag" in
-              v20[0-9][0-9].*) ;;
-              *) echo "::error::github_release returned '$tag', not a CalVer tag"; exit 1 ;;
+            echo "got: $(cat "$d/plain")"
+
+            # An ordinary custom header over -H.  The stubbed unit tests prove
+            # the flag is passed; this proves the real binary accepts it and
+            # still completes the request -- the path github_api takes when
+            # GITHUB_TOKEN is set.
+            echo "== http_download_ftp, custom header over -H =="
+            http_download_ftp "$d/hdr" \
+              https://raw.githubusercontent.com/client9/shlib/master/fixtures/sample1.txt \
+              "X-Shlib-Test: 1" || {
+              echo "::error::http_download_ftp failed with a custom -H header"
+              exit 1
+            }
+            echo "got: $(cat "$d/hdr")"
+            rm -rf "$d"
+
+            # Accept is refused, deliberately.  tnftp's own "Accept: */*" wins,
+            # so delivering the caller's Accept would return the wrong
+            # representation -- which is exactly what broke this leg the first
+            # time.  Pin the reason, not just the failure.
+            echo "== github_release cannot negotiate content type here =="
+            if out=$(github_release client9/shlib 2>&1); then
+              echo "::error::github_release unexpectedly succeeded; can tnftp override Accept now?"
+              exit 1
+            fi
+            echo "$out"
+            case "$out" in
+              *"ftp cannot"*) ;;
+              *)
+                echo "::error::github_release failed, but not with the Accept message"
+                exit 1
+                ;;
             esac
 
             # Run the suite directly rather than through make: the Makefile is
