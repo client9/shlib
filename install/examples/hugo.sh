@@ -88,6 +88,10 @@ adjust_format() {
 # That is an argument, not a proof, so the OmniOS CI leg installs hugo through
 # this very config and then executes the result.  If illumos ever diverges,
 # that leg goes red rather than a user getting a binary that will not run.
+#
+# Confirmed on OmniOS r151054, 2026-08-28: the install resolved
+# "0.165.0 for illumos/amd64", fetched hugo_0.165.0_solaris-amd64.tar.gz, and
+# the binary ran -- reporting itself as "hugo v0.165.0 solaris/amd64".
 adjust_os() {
   case ${OS} in
     illumos) OS=solaris ;;
