@@ -112,9 +112,23 @@ test_unwritable_destination_fails() {
   echo x >"$d/src"
   mkdir "$d/ro"
   chmod 0500 "$d/ro"
-  # root ignores the permission bits, so only assert where it is meaningful
-  if [ -w "$d/ro" ]; then
-    assert_skip "install_exe: running as root, permission check is meaningless"
+
+  # root ignores the permission bits, so only assert where it is meaningful.
+  #
+  # The guard PROBES the capability rather than asking `test -w`, because the
+  # two disagree.  NetBSD's test(1) deliberately does not use access(2): it
+  # stats the file and reads st_mode directly, and for root it treats "any of
+  # the three write bits set" as writable (bin/test/test.c, test_access).
+  # Mode 0500 has no write bit at all, so `[ -w ]` says no while root writes
+  # happily -- the assertion then ran as root and failed.  Linux, macOS and
+  # FreeBSD use access()/eaccess(), where root gets a plain yes, which is why
+  # every other leg skipped correctly and only NetBSD went red.
+  #
+  # touch is an external POSIX utility, so a redirection failure here cannot
+  # take the shell down the way a redirect onto the special builtin `:` can.
+  if touch "$d/ro/probe" 2>/dev/null; then
+    rm -f "$d/ro/probe"
+    assert_skip "install_exe: this process can write to a 0500 directory (root?); check is meaningless"
   else
     assertFalse "install_exe '$d/src' '$d/ro/dst'" "install_exe: unwritable destination fails"
   fi
