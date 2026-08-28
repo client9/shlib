@@ -275,7 +275,8 @@ github_release() {
   _shlib_giturl="https://github.com/${_shlib_owner_repo}/releases/${_shlib_version}"
   _shlib_json=$(http_copy "$_shlib_giturl" "Accept:application/json")
   test -z "$_shlib_json" && return 1
-  _shlib_version=$(echo "$_shlib_json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
+  _shlib_flat=$(echo "$_shlib_json" | tr -s '\n' ' ')
+  _shlib_version=$(printf '%s\n' "$_shlib_flat" | sed 's/.*"tag_name":"//' | sed 's/".*//')
   test -z "$_shlib_version" && return 1
   case "$_shlib_version" in
     *[!A-Za-z0-9._+-]* | "")

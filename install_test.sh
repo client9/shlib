@@ -300,8 +300,9 @@ test_github_release_stages() {
     *) assertTrue "false" "github_release stage 1: tr mangled the JSON [$_flat]" ;;
   esac
 
-  # 2. sed extraction
-  _tag=$(printf '%s' "$_flat" | sed 's/.*"tag_name":"//' | sed 's/".*//')
+  # 2. sed extraction.  printf '%s\n', not '%s': SVR4 sed (Solaris) drops a
+  #    final line with no terminator, which is exactly what broke here.
+  _tag=$(printf '%s\n' "$_flat" | sed 's/.*"tag_name":"//' | sed 's/".*//')
   assertEquals "v1.2.3-rc1+build.5" "$_tag" "github_release stage 2: sed extracts the tag"
 
   # 3. the validation case.  Character ranges are collation-dependent, so a

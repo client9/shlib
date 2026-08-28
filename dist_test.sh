@@ -125,8 +125,14 @@ test_no_variable_leak() {
     varnames >"$1/after"
   ' _ "$workdir"
 
-  # grep -Fxv -f, not comm: fewer assumptions about what is installed
-  leaked=$(grep -Fxv -f "$workdir/before" "$workdir/after" | grep -v "^_shlib_" | tr "\n" " ")
+  # Lines present in "after" but not "before".
+  #
+  # Not `grep -Fxv -f`: Solaris ships the SVR4 grep, which has none of -F, -x
+  # or -f.  Listing "before" twice makes anything from it appear at least
+  # twice, so `uniq -u` leaves only what is new -- using just sort and uniq,
+  # which are everywhere.
+  leaked=$(cat "$workdir/before" "$workdir/before" "$workdir/after" |
+    sort | uniq -u | grep -v "^_shlib_" | tr "\n" " ")
   rm -rf "$workdir"
   assertEquals "" "$leaked" "library leaves no unprefixed lowercase globals behind"
 }

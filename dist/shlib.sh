@@ -522,7 +522,12 @@ github_release() {
   _shlib_giturl="https://github.com/${_shlib_owner_repo}/releases/${_shlib_version}"
   _shlib_json=$(http_copy "$_shlib_giturl" "Accept:application/json")
   test -z "$_shlib_json" && return 1
-  _shlib_version=$(echo "$_shlib_json" | tr -s '\n' ' ' | sed 's/.*"tag_name":"//' | sed 's/".*//')
+  # `echo | tr -s '\n' ' '` converts the trailing newline to a space, leaving
+  # sed with an unterminated final line.  SVR4 sed -- Solaris -- silently drops
+  # that line and yields nothing, where BSD and GNU sed process it.  printf
+  # '%s\n' puts the terminator back.
+  _shlib_flat=$(echo "$_shlib_json" | tr -s '\n' ' ')
+  _shlib_version=$(printf '%s\n' "$_shlib_flat" | sed 's/.*"tag_name":"//' | sed 's/".*//')
   test -z "$_shlib_version" && return 1
 
   # The sed above extracts whatever it finds, so a non-GitHub forge -- or an

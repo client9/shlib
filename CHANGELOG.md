@@ -26,6 +26,9 @@ Rename this heading to the release date when cutting a release — see
 - `http_download` had no `fetch` branch, so it failed outright on stock
   FreeBSD, which ships neither curl nor wget. `github_release` and the whole
   installer were unusable there.
+- `github_release` returned an empty tag on Solaris. `tr` converted `echo`'s
+  trailing newline to a space, leaving `sed` an unterminated final line, which
+  SVR4 sed drops. Only surfaced once there was a Solaris CI leg.
 - `github_release` returned whatever its `sed` found, so a non-GitHub host or
   an error page yielded a garbage tag (`<!DOCTYPE html> <html lang=`) and a
   baffling 404 later. The result is now validated.
