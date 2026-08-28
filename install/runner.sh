@@ -153,13 +153,25 @@ tag_to_version() {
 # somehow unavailable the test would fail open (status 127 -> `!` -> true) and
 # silently overwrite the project's hook.  `command -v` is a shell builtin and
 # is always there.
-if ! command -v adjust_format >/dev/null 2>&1; then
+#
+# The test compares its OUTPUT to the name rather than just its exit status,
+# because the question is "did the config define a FUNCTION", not "does a
+# command by this name exist".  `command -v` prints the bare name for a
+# function or builtin and an absolute path for an external program, so the
+# comparison tells them apart.
+#
+# This is not hypothetical: Solaris and illumos ship /usr/bin/unpack (the
+# companion to pack/pcat).  An exit-status test found it, concluded the hook
+# was already defined, skipped the default -- and every install on those
+# systems then ran /usr/bin/unpack instead of untar, failing with
+# "unpack: <file>: cannot open".  Caught by the omnios CI leg.
+if [ "$(command -v adjust_format 2>/dev/null)" != "adjust_format" ]; then
   adjust_format() { :; }
 fi
-if ! command -v adjust_os >/dev/null 2>&1; then
+if [ "$(command -v adjust_os 2>/dev/null)" != "adjust_os" ]; then
   adjust_os() { :; }
 fi
-if ! command -v adjust_arch >/dev/null 2>&1; then
+if [ "$(command -v adjust_arch 2>/dev/null)" != "adjust_arch" ]; then
   adjust_arch() { :; }
 fi
 
@@ -170,7 +182,7 @@ fi
 #   golangci-lint-2.13.1-darwin-arm64/golangci-lint
 # Those configs define:
 #   binary_path() { echo "${NAME}/$1"; }
-if ! command -v binary_path >/dev/null 2>&1; then
+if [ "$(command -v binary_path 2>/dev/null)" != "binary_path" ]; then
   binary_path() { echo "$1"; }
 fi
 
@@ -187,7 +199,7 @@ fi
 # agree: hadolint's windows asset is hadolint-windows-x86_64.exe -- a non-empty
 # suffix that is still not an archive.  A "FORMAT=binary" sentinel could not
 # express that combination.
-if ! command -v unpack >/dev/null 2>&1; then
+if [ "$(command -v unpack 2>/dev/null)" != "unpack" ]; then
   unpack() { untar "$1"; }
 fi
 
@@ -219,7 +231,7 @@ tarball_name() {
 #
 # shlib deliberately does not try to know other forges' APIs -- that is the
 # project's own knowledge, and every variation would arrive here as a bug.
-if ! command -v latest_version >/dev/null 2>&1; then
+if [ "$(command -v latest_version 2>/dev/null)" != "latest_version" ]; then
   latest_version() { github_release "${OWNER}/${REPO}" "$1"; }
 fi
 

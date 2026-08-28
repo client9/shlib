@@ -512,25 +512,25 @@ tag_to_version() {
   TAG="$_shlib_realtag"
   VERSION=${TAG#v}
 }
-if ! command -v adjust_format >/dev/null 2>&1; then
+if [ "$(command -v adjust_format 2>/dev/null)" != "adjust_format" ]; then
   adjust_format() { :; }
 fi
-if ! command -v adjust_os >/dev/null 2>&1; then
+if [ "$(command -v adjust_os 2>/dev/null)" != "adjust_os" ]; then
   adjust_os() { :; }
 fi
-if ! command -v adjust_arch >/dev/null 2>&1; then
+if [ "$(command -v adjust_arch 2>/dev/null)" != "adjust_arch" ]; then
   adjust_arch() { :; }
 fi
-if ! command -v binary_path >/dev/null 2>&1; then
+if [ "$(command -v binary_path 2>/dev/null)" != "binary_path" ]; then
   binary_path() { echo "$1"; }
 fi
-if ! command -v unpack >/dev/null 2>&1; then
+if [ "$(command -v unpack 2>/dev/null)" != "unpack" ]; then
   unpack() { untar "$1"; }
 fi
 tarball_name() {
   echo "${NAME}${FORMAT:+.${FORMAT}}"
 }
-if ! command -v latest_version >/dev/null 2>&1; then
+if [ "$(command -v latest_version 2>/dev/null)" != "latest_version" ]; then
   latest_version() { github_release "${OWNER}/${REPO}" "$1"; }
 fi
 execute() {
@@ -597,7 +597,7 @@ adjust_arch
 NAME=$(archive_name)
 TARBALL=$(tarball_name)
 TARBALL_URL="${DOWNLOAD_BASE}/${TAG}/${TARBALL}"
-if is_command checksum_name; then
+if [ "$(command -v checksum_name 2>/dev/null)" = "checksum_name" ]; then
   CHECKSUM=$(checksum_name)
   CHECKSUM_URL="${DOWNLOAD_BASE}/${TAG}/${CHECKSUM}"
 fi

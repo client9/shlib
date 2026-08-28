@@ -173,6 +173,33 @@ test_unpack_override_wins() {
     "unpack: a config override is not replaced by the default"
 }
 
+# Solaris and illumos ship /usr/bin/unpack, the companion to pack/pcat.  A
+# guard that only checked `command -v`'s exit status found it, concluded the
+# hook was already defined, and skipped the default -- so every install on
+# those systems ran /usr/bin/unpack instead of untar.  The guard compares
+# command -v's OUTPUT to the name, which distinguishes a function from an
+# external program.
+test_hook_guard_ignores_an_external_command() {
+  d=$(mktmpdir)
+  printf '#!/bin/sh\necho EXTERNAL\n' >"$d/unpack"
+  chmod +x "$d/unpack"
+
+  got=$(PATH="$d:$PATH" sh -c '. ./install/runner.sh
+    untar() { echo "UNTAR:$1"; }
+    unpack somefile.tar.gz')
+  assertEquals "UNTAR:somefile.tar.gz" "$got" \
+    "hook guard: an external command named unpack does not suppress the default"
+
+  # ... and a real config hook still wins over both
+  got=$(PATH="$d:$PATH" sh -c 'unpack() { echo "MINE:$1"; }
+    . ./install/runner.sh
+    untar() { echo "UNTAR:$1"; }
+    unpack somefile.tar.gz')
+  assertEquals "MINE:somefile.tar.gz" "$got" \
+    "hook guard: a config hook still wins when an external command shares its name"
+  rm -rf "$d"
+}
+
 # --- execute -------------------------------------------------------------
 
 # Stubs are installed once, at the top level, and their behaviour is driven by
@@ -189,11 +216,16 @@ STUB_VERIFY_RC=0
 STUB_UNPACK_NOOP=""
 STUB_DOWNLOAD_RC=0
 
+# Writes a shebang rather than arbitrary text.  For the bare-binary case the
+# downloaded file IS the installed binary, and on Windows `[ -x ]` is not a
+# mode-bit test: msys2 decides executability from the content (a #! line) or a
+# .exe suffix, so `chmod 0755` on a file containing "stub" leaves it
+# non-executable and the assertion fails there and nowhere else.
 http_download() {
   if [ "$STUB_DOWNLOAD_RC" != "0" ]; then
     return "$STUB_DOWNLOAD_RC"
   fi
-  echo stub >"$1"
+  echo '#!/bin/sh' >"$1"
 }
 
 # Driven by a variable rather than redefined per scenario, for the reasons
@@ -922,6 +954,7 @@ test_adjust_override_wins
 test_tarball_name
 test_unpack_default_is_untar
 test_unpack_override_wins
+test_hook_guard_ignores_an_external_command
 test_execute
 test_execute_verifies_checksum
 test_execute_bad_checksum

@@ -17,6 +17,16 @@ Rename this heading to the release date when cutting a release — see
 
 ### Fixed
 
+- **`unpack` collided with a real command on Solaris and illumos.** The hook
+  guards asked `command -v NAME` and looked only at its exit status, which
+  answers "does a command by this name exist", not "did the config define a
+  function". Solaris and illumos ship `/usr/bin/unpack` (the companion to
+  `pack`/`pcat`), so the guard found it, skipped defining the default, and
+  every install on those systems ran `/usr/bin/unpack` instead of `untar`,
+  failing with `unpack: <file>: cannot open`. The guards now compare
+  `command -v`'s *output* to the name — it prints the bare name for a function
+  or builtin and an absolute path for an external program. Applies to all six
+  hooks and to `checksum_name` in `main.sh`.
 - **The installer leaked its temp directory on every failure path.** `execute`
   removed it as its last statement, so all six `|| return 1` before that point
   left it behind — and a failed install is more likely to be retried than a

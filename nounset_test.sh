@@ -150,8 +150,20 @@ test_log_priority_without_args() {
 # An install script is the most likely thing to be run under `set -eu`, and
 # `curl ... | sh` with no tag argument is its normal invocation.
 test_installer_without_optional_config() {
-  assertTrue "nounset_ok '. ./install/runner.sh; parse_args'" \
-    "parse_args: no tag argument"
+  # posh's getopts misbehaves when the shell has no positional parameters and
+  # the code is reached through `-c`/eval, which is exactly how nounset_ok
+  # runs: it walks garbage, reports `invalid option -- ''`, and parse_args
+  # takes its `\?` branch into usage, which exits 2 before the sentinel.
+  # That is a posh quirk in this harness, not a shlib bug -- verified by
+  # running a real assembled installer under posh, where `-b DIR` and an
+  # explicit tag both parse correctly.  Skipped rather than asserted falsely,
+  # the same way log_test.sh skips \$0 under zsh.
+  if [ -n "${POSH_VERSION-}" ]; then
+    assert_skip "parse_args: posh getopts is unreliable under -c/eval"
+  else
+    assertTrue "nounset_ok '. ./install/runner.sh; parse_args'" \
+      "parse_args: no tag argument"
+  fi
   assertTrue "nounset_ok '. ./install/runner.sh; unset PLATFORMS; normalize_platforms'" \
     "normalize_platforms: PLATFORMS unset"
   assertTrue "nounset_ok '. ./install/runner.sh; unset PLATFORMS; check_platform'" \

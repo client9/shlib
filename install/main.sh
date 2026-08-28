@@ -47,8 +47,10 @@ NAME=$(archive_name)
 TARBALL=$(tarball_name)
 TARBALL_URL="${DOWNLOAD_BASE}/${TAG}/${TARBALL}"
 
-# CHECKSUM is optional; when set, execute() verifies the download against it
-if is_command checksum_name; then
+# CHECKSUM is optional; when set, execute() verifies the download against it.
+# Tests for a FUNCTION the config defined, not merely for a command of that
+# name -- see the note on the hook guards in runner.sh.
+if [ "$(command -v checksum_name 2>/dev/null)" = "checksum_name" ]; then
   CHECKSUM=$(checksum_name)
   CHECKSUM_URL="${DOWNLOAD_BASE}/${TAG}/${CHECKSUM}"
 fi
