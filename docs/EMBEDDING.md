@@ -30,10 +30,10 @@ curl -sSfL -o vendor/shlib.min.sh \
 ```
 
 **2. Pin to a release** if you need reproducible builds. Releases are dated
-(`v2026.08.26`) and carry `checksums.txt`:
+(`v2026.08.28`) and carry `checksums.txt`:
 
 ```sh
-tag=v2026.08.26
+tag=v2026.08.28
 base=https://github.com/client9/shlib/releases/download/$tag
 curl -sSfL -o vendor/shlib.min.sh   "$base/shlib.min.sh"
 curl -sSfL -o vendor/checksums.txt  "$base/checksums.txt"
@@ -72,7 +72,7 @@ Each bundle starts with a marker that survives comment-stripping:
 
 ```sh
 cat /dev/null <<EOF
-shlib 2026.08.26
+shlib 2026.08.28
 https://github.com/client9/shlib
 EOF
 ```

@@ -144,12 +144,32 @@ gh release view "v$(cat VERSION)"
 curl -sSfL https://github.com/client9/shlib/releases/latest/download/checksums.txt
 ```
 
-Check that all three assets are attached, and that the version marker in the
+Check that all four assets are attached -- `shlib.sh`, `shlib.min.sh`,
+`install-base.sh` and `checksums.txt` -- and that the version marker in the
 published bundle is right:
 
 ```sh
 curl -sSfL https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.min.sh \
   | sed -n 's/^shlib \(.*\)/\1/p'
+```
+
+Worth doing once per release, since a published artifact cannot be rewritten:
+confirm the assets match their own `checksums.txt`, and match the tagged tree.
+
+```sh
+tmp=$(mktemp -d) && cd "$tmp"
+for f in shlib.sh shlib.min.sh install-base.sh checksums.txt; do
+  curl -sSfL -O "https://github.com/client9/shlib/releases/download/v$(cat VERSION)/$f"
+done
+sha256sum -c checksums.txt        # or: shasum -a 256 -c checksums.txt
+```
+
+A functional check is stronger than a checksum, and cheap -- v2026.08.27
+shipped a bundle whose checksums were perfectly valid and whose `uname_os` was
+broken:
+
+```sh
+sh -c 'uname() { echo Windows_NT; }; . ./shlib.min.sh; uname_os'   # -> windows
 ```
 
 ---

@@ -15,7 +15,7 @@ sed -n 's/^shlib \(.*\)/\1/p' your-install.sh
 Rename this heading to the release date when cutting a release — see
 [docs/RELEASING.md](docs/RELEASING.md).
 
-## 2026.08.26
+## 2026.08.28
 
 ### Fixed
 
