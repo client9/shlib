@@ -30,7 +30,8 @@ uname_arch_check
 OS=$(uname_os)
 ARCH=$(uname_arch)
 
-# upstream shellcheck publishes x86_64/aarch64, not GOARCH names
+# upstream shellcheck publishes x86_64/aarch64, not the names uname_arch
+# returns -- the same round-trip an installer does with adjust_arch
 case "$ARCH" in
   amd64) sc_arch="x86_64" ;;
   arm64) sc_arch="aarch64" ;;

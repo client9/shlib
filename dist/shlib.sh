@@ -101,12 +101,14 @@ log_crit() {
 }
 #!/bin/sh
 
-# uname_os: convert `uname -s` into a standard golang GOOS value
+# uname_os: convert `uname -s` into shlib's canonical OS name
 #
-# golang types are used since they cover
-# most platforms and are standardized while raw uname values vary
-# wildly.  See complete list of values by running
-# "go tool dist list"
+# Raw `uname -s` values vary wildly; the canonical names are the ones
+# release artifacts are almost always named after.  The set is the one
+# Go uses for GOOS -- that is where the convention came from, and
+# staying compatible with it is worth doing -- but it is shlib's set,
+# and it deviates where reality does.  See `uname_os_check` for the
+# full list and the rule for adding to it.
 #
 # ## EXAMPLE
 #
@@ -138,9 +140,16 @@ uname_os() {
   # other fixups here
   echo "$_shlib_os"
 }
-# uname_arch: convert `uname -m` into a standard golang GOARCH value
+# uname_arch: convert `uname -m` into shlib's canonical architecture name
 #
-# Converts back into standardized golang OS types.
+# The canonical names are the ones release artifacts are almost always
+# named after (`amd64`, `arm64`), not the raw `uname -m` string.  The
+# set is the one Go uses for GOARCH -- that is where the convention
+# came from -- but it is shlib's set; notably ARM is spelled out by
+# version rather than folded into `arm` the way Go does.
+#
+# A project whose assets use the raw kernel spellings (`x86_64`,
+# `aarch64`) maps back with the installer's `adjust_arch` hook.
 #
 # See also `uname_arch_check` for a self-check
 #
@@ -179,11 +188,18 @@ uname_arch() {
   esac
   echo "${_shlib_arch}"
 }
-# uname_os_check: self-check that uname_os produced a valid GOOS
+# uname_os_check: self-check that uname_os produced a recognized OS name
 #
-# This checks that uname_os is working correctly.  If
-# the conversion from `uname -s` to golang GOOS isn't
-# done correctly it will error.
+# This checks that uname_os is working correctly: if the conversion
+# from `uname -s` to a canonical name is not done correctly it errors.
+# It is a check on the mapping, not on compatibility with any one
+# toolchain.
+#
+# A name is recognized when a real system's `uname -s` maps to it AND
+# it is the spelling projects use when naming release artifacts for
+# that platform.  Names are not admitted because Go added them, nor
+# dropped because Go removed them; that is why this list is not
+# identical to `go tool dist list`.
 #
 uname_os_check() {
   _shlib_os=$(uname_os)
@@ -194,7 +210,7 @@ uname_os_check() {
     freebsd) return 0 ;;
     linux) return 0 ;;
     android) return 0 ;;
-    # midnightbsd is not a GOOS; accepted for MidnightBSD downstream (PR #33)
+    # never a GOOS; MidnightBSD reports it and names artifacts for it (PR #33)
     midnightbsd) return 0 ;;
     # nacl was dropped from Go in 1.14; kept so that existing callers do
     # not start failing.
@@ -209,15 +225,19 @@ uname_os_check() {
     wasip1) return 0 ;;
     windows) return 0 ;;
   esac
-  log_crit "uname_os_check '$(uname -s)' got converted to '$_shlib_os' which is not a GOOS value"
+  log_crit "uname_os_check '$(uname -s)' got converted to '$_shlib_os' which is not a recognized OS name"
   return 1
 }
-# uname_arch_check: self-check that uname_arch produced a valid GOARCH
+# uname_arch_check: self-check that uname_arch produced a recognized architecture name
 #
-# supported names can be found
-# around here: https://github.com/golang/go/blob/master/src/cmd/dist/build.go#L1094
-# or by running `go tool dist list`
-# Except instead of `arm`, this checks for `armv5`, `armv6`, armv7`
+# A check on the mapping, not on compatibility with any one toolchain.
+# The set matches Go's GOARCH names, which is where the convention
+# came from, except that ARM is spelled `armv5`, `armv6`, `armv7`
+# rather than Go's `arm` plus a separate `GOARM`.
+#
+# Go's own list, for reference, is around here:
+# https://github.com/golang/go/blob/master/src/cmd/dist/build.go#L1094
+# or `go tool dist list`
 #
 uname_arch_check() {
   _shlib_arch=$(uname_arch)
@@ -241,7 +261,7 @@ uname_arch_check() {
     # existing callers do not start failing.
     amd64p32) return 0 ;;
   esac
-  log_crit "uname_arch_check '$(uname -m)' got converted to '$_shlib_arch' which is not a GOARCH value"
+  log_crit "uname_arch_check '$(uname -m)' got converted to '$_shlib_arch' which is not a recognized architecture name"
   return 1
 }
 # mktmpdir: create a fresh, private temporary directory and echo its path

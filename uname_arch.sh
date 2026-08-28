@@ -1,6 +1,13 @@
-# uname_arch: convert `uname -m` into a standard golang GOARCH value
+# uname_arch: convert `uname -m` into shlib's canonical architecture name
 #
-# Converts back into standardized golang OS types.
+# The canonical names are the ones release artifacts are almost always
+# named after (`amd64`, `arm64`), not the raw `uname -m` string.  The
+# set is the one Go uses for GOARCH -- that is where the convention
+# came from -- but it is shlib's set; notably ARM is spelled out by
+# version rather than folded into `arm` the way Go does.
+#
+# A project whose assets use the raw kernel spellings (`x86_64`,
+# `aarch64`) maps back with the installer's `adjust_arch` hook.
 #
 # See also `uname_arch_check` for a self-check
 #

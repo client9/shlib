@@ -29,7 +29,7 @@ unstub_uname() {
   unset -f uname 2>/dev/null
 }
 
-# check_os <uname -s> <expected GOOS> [uname -o]
+# check_os <uname -s> <expected canonical name> [uname -o]
 check_os() {
   stub_uname "$1" "$3"
   got=$(uname_os)
@@ -56,7 +56,8 @@ test_unix() {
   check_os AIX aix
   # MidnightBSD is a FreeBSD derivative; reported as a bug against a stale
   # vendored copy of this library that predated commit 7f68437 (2021-01-09).
-  # See the note in uname_os_check.sh: midnightbsd is not actually a GOOS.
+  # See the note in uname_os_check.sh: midnightbsd is not a GOOS, and is
+  # recognized anyway.
   check_os MidnightBSD midnightbsd
 }
 
@@ -86,12 +87,12 @@ test_checker() {
   check_accepted SunOS illumos
   check_accepted MidnightBSD
   check_accepted SunOS
-  # the checker must reject something that is not a GOOS
+  # the checker must reject a name it does not recognize
   stub_uname NotAnOS
   uname_os_check >/dev/null 2>&1
   rc=$?
   unstub_uname
-  assertNotEquals "0" "$rc" "uname_os_check rejects a non-GOOS value"
+  assertNotEquals "0" "$rc" "uname_os_check rejects an unrecognized OS name"
 }
 
 # and the real machine must still self-check

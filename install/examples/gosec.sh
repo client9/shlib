@@ -1,7 +1,7 @@
 # securego/gosec -- the simple case
 #
 # Assets look like:  gosec_2.29.0_darwin_arm64.tar.gz
-# Canonical GOOS/GOARCH spellings throughout, tar.gz on every platform
+# Named exactly as uname_os/uname_arch spell them, tar.gz on every platform
 # including windows, so no adjust_* hooks are needed at all.
 #
 # Verified against v2.29.0.

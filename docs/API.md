@@ -39,18 +39,23 @@ install script and are covered by [INSTALLERS.md](INSTALLERS.md).
 | [`log_set_priority`](../log.sh) | set the log priority |
 | [`log_tag`](../log.sh) | map a syslog priority number to its name |
 | [`mktmpdir`](../mktmpdir.sh) | create a fresh, private temporary directory and echo its path |
-| [`uname_arch`](../uname_arch.sh) | convert `uname -m` into a standard golang GOARCH value |
-| [`uname_arch_check`](../uname_arch_check.sh) | self-check that uname_arch produced a valid GOARCH |
-| [`uname_os`](../uname_os.sh) | convert `uname -s` into a standard golang GOOS value |
-| [`uname_os_check`](../uname_os_check.sh) | self-check that uname_os produced a valid GOOS |
+| [`uname_arch`](../uname_arch.sh) | convert `uname -m` into shlib's canonical architecture name |
+| [`uname_arch_check`](../uname_arch_check.sh) | self-check that uname_arch produced a recognized architecture name |
+| [`uname_os`](../uname_os.sh) | convert `uname -s` into shlib's canonical OS name |
+| [`uname_os_check`](../uname_os_check.sh) | self-check that uname_os produced a recognized OS name |
 | [`untar`](../untar.sh) | unpack $1 into the current directory |
 
 33 functions.
 
 ## Platforms
 
-`uname_os` and `uname_arch` translate what `uname` reports into Go's GOOS and
-GOARCH names, which are what release artifacts are almost always named after.
+`uname_os` and `uname_arch` translate what `uname` reports into shlib's
+canonical platform names -- the spellings release artifacts are almost always
+named after.  That set is the one Go uses for GOOS and GOARCH, which is where
+the convention came from and why it is worth staying compatible with, but it
+is shlib's set and it deviates where reality does: see [How a name gets
+added](#how-a-name-gets-added).
+
 The lists below are extracted from `uname_os_check.sh` and `uname_arch_check.sh`.
 
 ### Recognised operating systems
@@ -67,7 +72,8 @@ Most values come straight from a lowercased `uname -s`. These do not:
 | `SunOS` with `uname -o` = `illumos` | `illumos` | illumos and Solaris both still report the ancient `SunOS` |
 | `SunOS` otherwise | `solaris` | Oracle Solaris; its `uname` has no `-o`, so the check is silent about it |
 
-`sunos` itself is deliberately never returned -- it is not a GOOS value.
+`sunos` itself is deliberately never returned -- no project names an
+artifact for it.
 
 ### Recognised architectures
 
@@ -89,3 +95,28 @@ Mapped from `uname -m`:
 | `armv6*` | `armv6` |
 | `armv7*` | `armv7` |
 | `loongarch64` | `loong64` |
+
+## How a name gets added
+
+A name is recognised when both of these hold:
+
+1. some real system's `uname` maps to it, and
+2. it is the spelling projects use when naming release artifacts for that
+   platform.
+
+Nothing is admitted because Go added it, and nothing is dropped because Go
+removed it. That rule is why the set is not identical to `go tool dist list`:
+
+| name | how it differs from Go |
+| ---- | ---------------------- |
+| `midnightbsd` | never a GOOS; MidnightBSD reports it and names artifacts for it (PR #33) |
+| `armv5` `armv6` `armv7` | Go spells all three `arm` and puts the version in `GOARM`; artifacts do not |
+| `nacl` `amd64p32` | dropped from Go in 1.14; kept so existing callers do not start failing |
+
+`sunos` is the reverse case: it satisfies (1) but not (2), so `uname_os`
+resolves it to `solaris` or `illumos` and never returns it.
+
+Projects whose assets use the raw kernel spellings -- `x86_64` rather than
+`amd64`, `aarch64` rather than `arm64` -- map back with the installer's
+`adjust_os` / `adjust_arch` hooks, documented in
+[INSTALLERS.md](INSTALLERS.md).

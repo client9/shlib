@@ -99,7 +99,7 @@ Bug reports and pull requests are welcome:
 shlib's own error messages are deliberately generic:
 
 ```
-uname_os_check 'MidnightBSD' got converted to 'midnightbsd' which is not a GOOS value
+uname_os_check 'Haiku' got converted to 'haiku' which is not a recognized OS name
 ```
 
 They used to end with "Please file bug at https://github.com/client9/shlib",
@@ -115,7 +115,7 @@ Two things worth handling yourself, because shlib cannot know them:
   only means the detection worked. If you ship no Windows build, say so plainly
   rather than letting the download 404.
 - **Which architectures your release actually has.** `uname_arch_check` validates
-  against Go's GOARCH list, not against your release assets.
+  against shlib's list of recognized names, not against your release assets.
 
 ---
 

@@ -15,6 +15,28 @@ sed -n 's/^shlib \(.*\)/\1/p' your-install.sh
 Rename this heading to the release date when cutting a release — see
 [docs/RELEASING.md](docs/RELEASING.md).
 
+### Changed
+
+- **The platform names are documented as shlib's own, not Go's.** They still
+  match GOOS/GOARCH — that is where the artifact-naming convention came from,
+  and compatibility with it is deliberate — but Go is now provenance rather
+  than authority. `docs/API.md` gains a *How a name gets added* section stating
+  the rule (a real `uname` maps to it, and projects name artifacts that way),
+  which is what the three long-standing deviations already follow:
+  `midnightbsd`, `armv5`/`armv6`/`armv7`, and the retained `nacl`/`amd64p32`.
+  No mapping, no accepted value, and no return value changed.
+- The self-check error messages no longer say *GOOS* / *GOARCH*, which meant
+  nothing to anyone installing a non-Go binary:
+
+  ```
+  uname_os_check 'Haiku' got converted to 'haiku' which is not a recognized OS name
+  uname_arch_check 'sparc64' got converted to 'sparc64' which is not a recognized architecture name
+  ```
+
+  Anything matching on the old `not a GOOS value` text — the phrase is a useful
+  fingerprint for stale vendored copies — should note that it now identifies a
+  copy predating this release.
+
 ## 2026.08.28
 
 ### Fixed

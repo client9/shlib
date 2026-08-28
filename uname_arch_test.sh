@@ -14,7 +14,7 @@ unstub_uname() {
   unset -f uname 2>/dev/null
 }
 
-# check_arch <uname -m> <expected GOARCH>
+# check_arch <uname -m> <expected canonical name>
 check_arch() {
   stub_uname "$1"
   got=$(uname_arch)
@@ -67,7 +67,7 @@ test_checker() {
   uname_arch_check >/dev/null 2>&1
   rc=$?
   unstub_uname
-  assertNotEquals "0" "$rc" "uname_arch_check rejects a non-GOARCH value"
+  assertNotEquals "0" "$rc" "uname_arch_check rejects an unrecognized architecture name"
 }
 
 # the real machine must still self-check

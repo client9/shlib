@@ -10,7 +10,7 @@ Full guide: [../../docs/INSTALLERS.md](../../docs/INSTALLERS.md).
 
 | example | what it shows |
 | ------- | ------------- |
-| [`gosec.sh`](gosec.sh) | the simple case — canonical GOOS/GOARCH, `tar.gz` everywhere, no hooks at all |
+| [`gosec.sh`](gosec.sh) | the simple case — assets named exactly as `uname_os`/`uname_arch` spell them, `tar.gz` everywhere, no hooks at all |
 | [`hydra.sh`](hydra.sh) | renamed OS and arch (`darwin`→`macOS`, `amd64`→`64bit`), a hyphen instead of an underscore, and `.zip` on windows |
 | [`task.sh`](task.sh) | **no version in the archive name** — which a `{name}_{version}_{os}_{arch}` template cannot express — plus folding `armv6`/`armv7` back to `arm` |
 | [`golangci-lint.sh`](golangci-lint.sh) | 27 platforms, and the binary is **nested in a versioned directory** inside the archive |

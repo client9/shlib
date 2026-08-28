@@ -1,8 +1,15 @@
-# uname_os_check: self-check that uname_os produced a valid GOOS
+# uname_os_check: self-check that uname_os produced a recognized OS name
 #
-# This checks that uname_os is working correctly.  If
-# the conversion from `uname -s` to golang GOOS isn't
-# done correctly it will error.
+# This checks that uname_os is working correctly: if the conversion
+# from `uname -s` to a canonical name is not done correctly it errors.
+# It is a check on the mapping, not on compatibility with any one
+# toolchain.
+#
+# A name is recognized when a real system's `uname -s` maps to it AND
+# it is the spelling projects use when naming release artifacts for
+# that platform.  Names are not admitted because Go added them, nor
+# dropped because Go removed them; that is why this list is not
+# identical to `go tool dist list`.
 #
 uname_os_check() {
   _shlib_os=$(uname_os)
@@ -13,7 +20,7 @@ uname_os_check() {
     freebsd) return 0 ;;
     linux) return 0 ;;
     android) return 0 ;;
-    # midnightbsd is not a GOOS; accepted for MidnightBSD downstream (PR #33)
+    # never a GOOS; MidnightBSD reports it and names artifacts for it (PR #33)
     midnightbsd) return 0 ;;
     # nacl was dropped from Go in 1.14; kept so that existing callers do
     # not start failing.
@@ -28,6 +35,6 @@ uname_os_check() {
     wasip1) return 0 ;;
     windows) return 0 ;;
   esac
-  log_crit "uname_os_check '$(uname -s)' got converted to '$_shlib_os' which is not a GOOS value"
+  log_crit "uname_os_check '$(uname -s)' got converted to '$_shlib_os' which is not a recognized OS name"
   return 1
 }

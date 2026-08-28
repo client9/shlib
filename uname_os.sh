@@ -1,11 +1,13 @@
 #!/bin/sh
 
-# uname_os: convert `uname -s` into a standard golang GOOS value
+# uname_os: convert `uname -s` into shlib's canonical OS name
 #
-# golang types are used since they cover
-# most platforms and are standardized while raw uname values vary
-# wildly.  See complete list of values by running
-# "go tool dist list"
+# Raw `uname -s` values vary wildly; the canonical names are the ones
+# release artifacts are almost always named after.  The set is the one
+# Go uses for GOOS -- that is where the convention came from, and
+# staying compatible with it is worth doing -- but it is shlib's set,
+# and it deviates where reality does.  See `uname_os_check` for the
+# full list and the rule for adding to it.
 #
 # ## EXAMPLE
 #
