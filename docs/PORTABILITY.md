@@ -7,7 +7,7 @@ a bug report to find; none of it is speculative.
 This is a **lookup table for when something is red on one platform and green
 everywhere else**, so it is grouped by the shell or system that surprises you
 rather than by the shlib function involved. The project's own conventions,
-architecture and open work live in [CLAUDE.md](../CLAUDE.md).
+architecture and open work live in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 Two habits that make this file shorter over time:
 
@@ -222,7 +222,7 @@ Two habits that make this file shorter over time:
   `latest` lookup cannot work and says so. Plain release downloads — the
   artifact and its checksum file — are unaffected, so an installer pinned to
   an explicit tag works fine. Closing the gap is open work; see
-  [Resolving `latest` without content negotiation](../CLAUDE.md#1-resolving-latest-without-content-negotiation).
+  [Resolving `latest` without content negotiation](../CONTRIBUTING.md#1-resolving-latest-without-content-negotiation).
 
 ## Rehearsing a platform without the platform
 

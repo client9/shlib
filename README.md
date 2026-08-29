@@ -51,6 +51,10 @@ Really shell code should only be used for boot-strapping to something sane.  Unt
 
 However acknowledgement (and pull requests) are appreciated.  You can optionally include [license.sh](license.sh) so the next person knows where to find them.
 
+**Changing shlib itself?** Read [CONTRIBUTING.md](CONTRIBUTING.md) — the
+conventions, the test and CI layout, what is deliberate rather than broken,
+and where help is wanted.
+
 ## Usage
 
 **Embedding this in an install script?** Read
@@ -140,3 +144,4 @@ Other docs:
   behaviour behind the code: which shells break which idiom, which systems
   ship pre-POSIX tools, and how to rehearse a platform you cannot boot
 * [docs/RELEASING.md](docs/RELEASING.md) — cutting a release
+* [CONTRIBUTING.md](CONTRIBUTING.md) — changing shlib itself
