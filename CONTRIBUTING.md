@@ -19,13 +19,23 @@ platform behaviour, [docs/INSTALLERS.md](docs/INSTALLERS.md) for building a
 
 ## What this is
 
-`shlib` is a set of portable POSIX shell functions, mostly for install scripts
-that run on unknown machines. Each function lives in its own `<name>.sh` file
-and is meant to be **concatenated into somebody else's script**, not sourced as
-a dependency. A `curl ... | sh` installer cannot have dependencies, so the code
-has to travel with it.
+`shlib` is a set of portable shell functions for `curl | sh` installers --
+detect the platform, download a file, verify a checksum, unpack an archive,
+place a binary. Each function lives in its own `<name>.sh` file and is meant to
+be **concatenated into somebody else's script**, not sourced as a dependency.
+A `curl ... | sh` installer cannot have dependencies, so the code has to travel
+with it.
 
 That single fact drives almost every design decision here.
+
+The code is written in POSIX `sh`, but that is the **constraint, not the
+claim**. POSIX describes neither where this has to run nor what it has to
+defend against: Solaris and illumos ship *pre*-POSIX tools, Windows via git
+bash is not a POSIX environment at all, and several shells in the matrix are
+not POSIX shells by default. Writing to the smallest common subset is how the
+functions reach those places -- see [Conventions](#conventions) for the rule
+and [docs/PORTABILITY.md](docs/PORTABILITY.md) for where reality falls short
+of the standard.
 
 **Shell- and platform-specific gotchas live in
 [docs/PORTABILITY.md](docs/PORTABILITY.md)**, not here: which shells break
@@ -213,10 +223,13 @@ Notes below are about how the legs are *built*. What each platform actually
 does differently -- the reason a leg goes red -- is in
 [docs/PORTABILITY.md](docs/PORTABILITY.md).
 
-- Windows is not a POSIX target and shlib does not claim to run there. The leg
-  exists because a git-bash user's report is what surfaced a stale-copy bug, and
-  the `uname` mapping was previously only tested with a stubbed `uname`. WSL is
-  deliberately excluded: it reports `Linux` and the linux workflow covers it.
+- **Windows is supported through git bash and msys2**, where the full suite
+  runs and the `uname` mapping is asserted against the real thing. It is not a
+  POSIX environment, and native `cmd`/PowerShell is not a target. The leg
+  exists because a git-bash user's report is what surfaced a stale-copy bug,
+  and the `uname` mapping had previously only been tested with a stubbed
+  `uname`. WSL is deliberately excluded: it reports `Linux`, so the linux
+  workflow already covers it.
 - The `sunos` legs assert the `uname_os` result **before** running the suite, so
   a failure later still leaves the mapping result in the log. Both legs now run
   the full suite; they install no packages and use no `gmake`, which removed a

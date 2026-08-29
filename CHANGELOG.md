@@ -73,6 +73,22 @@ Rename this heading to the release date when cutting a release — see
 
 ### Changed
 
+- **Reframed what shlib says it is.** It described itself as "portable posix
+  shell functions", which undersold it in both directions: POSIX describes
+  neither where the code runs (Windows via git bash is not a POSIX
+  environment; Solaris and illumos ship *pre*-POSIX tools) nor what it
+  provides (install-script primitives — detect the platform, download, verify,
+  unpack, place a binary). POSIX `sh` is the constraint that makes those
+  travel, not the product. The preamble in `license.sh`, which ships in every
+  vendored copy, now reads:
+
+  ```
+  https://github.com/client9/shlib - portable shell functions for install scripts
+  ```
+
+  The `POSIX sh only` coding rule is unchanged. Documentation also stopped
+  claiming shlib "does not claim to run" on Windows, which contradicted a
+  Windows CI leg that runs the full suite.
 - **The platform names are documented as shlib's own, not Go's.** They still
   match GOOS/GOARCH — that is where the artifact-naming convention came from,
   and compatibility with it is deliberate — but Go is now provenance rather

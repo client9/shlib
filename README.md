@@ -1,5 +1,5 @@
 # shlib
-portable functions for posix shell environments
+portable shell functions for `curl | sh` installers
 
 [![lint](https://github.com/client9/shlib/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/lint.yml)
 [![linux](https://github.com/client9/shlib/actions/workflows/linux.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/linux.yml)
