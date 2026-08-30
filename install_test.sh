@@ -8,7 +8,7 @@
 #            here to assert the temp directory was cleaned up
 # shellcheck disable=SC1091,SC2034,SC2329,SC2154
 . ./assert.sh
-. ./dist/shlib.min.sh
+. ./dist/shlib.sh
 . ./install/fixtures/config.sh
 . ./install/runner.sh
 
@@ -450,7 +450,7 @@ latest_version() { test -n "$1" && echo "$1" || echo "v9.9.9"; }
 archive_name() { echo "${BINARY}_${VERSION}_${OS}_${ARCH}"; }
 CFG
   got=$(sh -c ". '$d/config.sh'
-    . ./dist/shlib.min.sh
+    . ./dist/shlib.sh
     . ./install/runner.sh
     OS=linux; ARCH=amd64; PLATFORM=linux/amd64
     parse_args
@@ -476,7 +476,7 @@ test_download_base_defaults_to_github() {
 # the log line must not claim GitHub when latest_version points elsewhere
 test_no_github_in_log_when_overridden() {
   d=$(mktmpdir)
-  got=$(sh -c '. ./dist/shlib.min.sh
+  got=$(sh -c '. ./dist/shlib.sh
     . ./install/runner.sh
     OWNER=x; REPO=y
     latest_version() { echo v1.0.0; }
@@ -493,12 +493,12 @@ test_no_github_in_log_when_overridden() {
 # return whatever sed found, so a Forgejo instance yielded
 # "<!DOCTYPE html> <html lang=" as the version and a baffling 404 downstream.
 test_github_release_rejects_html() {
-  got=$(sh -c '. ./dist/shlib.min.sh
+  got=$(sh -c '. ./dist/shlib.sh
     http_copy() { printf "<!DOCTYPE html>\n<html lang=\"en\">\n"; }
     github_release owner/repo 2>/dev/null; echo "rc=$?"' | tail -1)
   assertEquals "rc=1" "$got" "github_release: rejects an HTML response"
 
-  got=$(sh -c '. ./dist/shlib.min.sh
+  got=$(sh -c '. ./dist/shlib.sh
     http_copy() { printf "{\"tag_name\":\"v1.2.3-rc1+build.5\"}"; }
     github_release owner/repo 2>/dev/null')
   assertEquals "v1.2.3-rc1+build.5" "$got" "github_release: accepts a legitimate odd tag"
@@ -543,7 +543,7 @@ test_github_release_stages() {
   esac
 
   # 4. the whole function, with the network stubbed out
-  _got=$(sh -c '. ./dist/shlib.min.sh
+  _got=$(sh -c '. ./dist/shlib.sh
     http_copy() { printf "{\"tag_name\":\"v1.2.3-rc1+build.5\"}"; }
     github_release owner/repo 2>/dev/null')
   assertEquals "v1.2.3-rc1+build.5" "$_got" "github_release stage 4: end to end"
@@ -581,7 +581,7 @@ CFG
   assertTrue "sh -n '$d/install.sh'" "assembled: parses"
 
   # the config's adjust_os must survive; runner.sh only fills in absent hooks
-  got=$(sh -c ". '$d/config.sh'; . ./dist/shlib.min.sh; . ./install/runner.sh; OS=linux; adjust_os; echo \$OS")
+  got=$(sh -c ". '$d/config.sh'; . ./dist/shlib.sh; . ./install/runner.sh; OS=linux; adjust_os; echo \$OS")
   assertEquals "Linux" "$got" "assembled: config hook is not clobbered by the default"
 
   # main.sh runs the flow, so it must be last
@@ -603,7 +603,7 @@ CFG
 check_example() {
   _cfg=$1
   _got=$(sh -c '. ./install/examples/'"$_cfg"'
-    . ./dist/shlib.min.sh
+    . ./dist/shlib.sh
     . ./install/runner.sh
     VERSION='"$2"'; OS='"$3"'; ARCH='"$4"'
     adjust_format; adjust_os; adjust_arch
@@ -621,7 +621,7 @@ check_example() {
 check_example_path() {
   _cfg=$1
   _got=$(sh -c '. ./install/examples/'"$_cfg"'
-    . ./dist/shlib.min.sh
+    . ./dist/shlib.sh
     . ./install/runner.sh
     TAG='"$2"'; VERSION=${TAG#v}; OS='"$3"'; ARCH='"$4"'
     adjust_format; adjust_os; adjust_arch
@@ -751,7 +751,7 @@ test_example_hugo() {
 # it needs no new config concept
 test_example_hugo_variant() {
   got=$(sh -c '. ./install/examples/hugo.sh
-    . ./dist/shlib.min.sh
+    . ./dist/shlib.sh
     . ./install/runner.sh
     VERSION=0.165.0; OS=linux; ARCH=arm64; HUGO_VARIANT=_extended
     adjust_format; adjust_os; adjust_arch
@@ -766,7 +766,7 @@ test_example_hugo_variant() {
 # left to fail at run time.
 test_example_hugo_no_armv6() {
   got=$(sh -c '. ./install/examples/hugo.sh
-    . ./dist/shlib.min.sh
+    . ./dist/shlib.sh
     . ./install/runner.sh
     PLATFORM=linux/armv6
     normalize_platforms
@@ -782,7 +782,7 @@ test_example_hugo_no_armv6() {
 
   # armv7 is the one that must still work
   got=$(sh -c '. ./install/examples/hugo.sh
-    . ./dist/shlib.min.sh
+    . ./dist/shlib.sh
     . ./install/runner.sh
     PLATFORM=linux/armv7
     normalize_platforms
@@ -796,7 +796,7 @@ test_example_hugo_no_armv6() {
 test_example_hugo_variant_platforms() {
   got=$(sh -c 'HUGO_VARIANT=_extended
     . ./install/examples/hugo.sh
-    . ./dist/shlib.min.sh
+    . ./dist/shlib.sh
     . ./install/runner.sh
     PLATFORM=freebsd/amd64
     normalize_platforms
@@ -812,7 +812,7 @@ test_example_hugo_variant_platforms() {
 
   # freebsd IS published for the plain build, so it must still pass there
   got=$(sh -c '. ./install/examples/hugo.sh
-    . ./dist/shlib.min.sh
+    . ./dist/shlib.sh
     . ./install/runner.sh
     PLATFORM=freebsd/amd64
     normalize_platforms
@@ -823,7 +823,7 @@ test_example_hugo_variant_platforms() {
   for p in linux/amd64 linux/arm64 windows/amd64; do
     got=$(sh -c 'HUGO_VARIANT=_extended_withdeploy
       . ./install/examples/hugo.sh
-      . ./dist/shlib.min.sh
+      . ./dist/shlib.sh
       . ./install/runner.sh
       PLATFORM='"$p"'
       normalize_platforms
@@ -836,7 +836,7 @@ test_example_hugo_variant_platforms() {
 # before adjust_os, so listing only solaris/amd64 would refuse it.
 test_example_hugo_illumos_accepted() {
   got=$(sh -c '. ./install/examples/hugo.sh
-    . ./dist/shlib.min.sh
+    . ./dist/shlib.sh
     . ./install/runner.sh
     PLATFORM=illumos/amd64
     normalize_platforms
@@ -848,7 +848,7 @@ test_example_hugo_illumos_accepted() {
 # producing a 404 on a tarball that never existed
 test_example_hugo_no_darwin() {
   got=$(sh -c '. ./install/examples/hugo.sh
-    . ./dist/shlib.min.sh
+    . ./dist/shlib.sh
     . ./install/runner.sh
     PLATFORM=darwin/arm64
     normalize_platforms

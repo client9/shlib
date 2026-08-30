@@ -3,9 +3,9 @@
 # dist.sh: build the concatenated shlib bundles into ./dist
 #
 # Produces:
-#   dist/shlib.sh       full bundle, comments intact
-#   dist/shlib.min.sh   comments stripped, for embedding in install scripts
-#   dist/checksums.txt  sha256 of both
+#   dist/shlib.sh        the function library, comments intact
+#   dist/install-base.sh shlib + the installer flow; prepend a config
+#   dist/checksums.txt   sha256 of both
 #
 # These are committed to the repo so that consumers can fetch a stable raw URL
 # at build time instead of hand-vendoring a copy that goes stale.  Because they
@@ -70,9 +70,14 @@ fi
 
 mkdir -p "$DISTDIR"
 
-# The version marker lives in a `cat /dev/null <<EOF` heredoc, not a '#'
-# comment, so that it survives the comment-stripping pipeline below.  This is
-# the same trick license.sh uses to keep attribution in stripped bundles.
+# The version marker lives in a `cat /dev/null <<EOF` heredoc rather than a '#'
+# comment.  That began as a way to survive comment stripping, which no longer
+# happens -- it stays because the documented way to date a vendored copy is
+#
+#   sed -n 's/^shlib \(.*\)/\1/p' their-install.sh
+#
+# and that pattern must keep matching copies already in the wild.  license.sh
+# uses the same trick for the same reason.
 emit_preamble() {
   echo "cat /dev/null <<EOF"
   echo "shlib ${VERSION}"
@@ -89,15 +94,23 @@ emit_bundle() {
 
 emit_bundle >"${DISTDIR}/shlib.sh"
 
-# Strip whole-line comments only.
+# NOTHING IS STRIPPED.  There used to be a `shlib.min.sh` built by piping the
+# bundle through `grep -v '^[[:space:]]*#'`, and it was a bad trade:
 #
-# The old idiom `grep -v '^#' | grep -v ' #'` also deleted any CODE line with a
-# trailing comment.  That silently removed `win*) os="windows" ;; # ...` from
-# uname_os and both `gitrepo=` assignments from git_clone_or_update, so the
-# minified bundle behaved differently from the sources it was built from.
-# Trailing comments are kept: stripping them safely needs quote and heredoc
-# awareness, and the few bytes are not worth the risk.
-emit_bundle | grep -v '^[[:space:]]*#' | tr -s '\n' >"${DISTDIR}/shlib.min.sh"
+#   - It shipped a silently broken release.  The original idiom also filtered
+#     ` #`, which deleted CODE lines carrying trailing comments -- v2026.08.27
+#     went out with valid checksums and no `win*) os="windows"` mapping, and
+#     no `gitrepo=` assignments in git_clone_or_update.
+#   - Even the fixed version constrains what the library may contain: any
+#     embedded awk, sed or python carrying a whole-line `#` would be silently
+#     gutted.
+#   - It bought about 10 KB gzipped, once, at install time.  GitHub raw serves
+#     gzip; the TLS handshake costs more than the difference.
+#   - A `curl | sh` script that people are told to read before running is more
+#     useful WITH its comments.
+#
+# So the bundles carry their comments, and the only transformation here is
+# concatenation.
 
 # install-base.sh: everything a downstream install script needs except its own
 # config.  Consumers do:  cat config.sh install-base.sh > install.sh
@@ -110,17 +123,17 @@ emit_bundle | grep -v '^[[:space:]]*#' | tr -s '\n' >"${DISTDIR}/shlib.min.sh"
   cat $FILES
   cat install/runner.sh
   cat install/main.sh
-} | grep -v '^[[:space:]]*#' | tr -s '\n' >"${DISTDIR}/install-base.sh"
+} >"${DISTDIR}/install-base.sh"
 
 # checksums, computed with our own hash_sha256
 (
   cd "$DISTDIR"
-  for f in shlib.sh shlib.min.sh install-base.sh; do
+  for f in shlib.sh install-base.sh; do
     echo "$(hash_sha256 "$f")  $f"
   done
 ) >"${DISTDIR}/checksums.txt"
 
 log_info "dist shlib ${VERSION}"
-for f in shlib.sh shlib.min.sh install-base.sh; do
+for f in shlib.sh install-base.sh; do
   log_info "dist ${DISTDIR}/${f} ($(wc -l <"${DISTDIR}/${f}" | tr -d ' ') lines)"
 done

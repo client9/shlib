@@ -85,12 +85,12 @@ version number is worse than no changelog, so do not skip it.
 make dist
 ```
 
-Writes `dist/shlib.sh`, `dist/shlib.min.sh`, and `dist/checksums.txt`, each
+Writes `dist/shlib.sh`, `dist/install-base.sh`, and `dist/checksums.txt`, each
 stamped with the new version. These files are **committed to the repo**, so that
 consumers can fetch a stable raw URL:
 
 ```
-https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.min.sh
+https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.sh
 ```
 
 ## Step 4 — verify locally
@@ -102,7 +102,7 @@ make test-all                    # ... under every shell installed locally
 git diff --exit-code dist/       # must be clean AFTER `make dist`
 ```
 
-`dist_test.sh` sources `dist/shlib.min.sh` and exercises it directly, so the
+`dist_test.sh` sources `dist/shlib.sh` and exercises it directly, so the
 artifact you are about to publish is tested, not just the sources it came from.
 
 ## Step 5 — commit
@@ -132,7 +132,7 @@ Pushing the tag triggers `.github/workflows/release.yml`, which:
 3. re-runs `make dist` and fails if `dist/` is not in sync;
 4. runs `make test`;
 5. publishes the release with `gh release create --generate-notes`, attaching
-   `shlib.sh`, `shlib.min.sh`, and `checksums.txt`.
+   `shlib.sh`, `install-base.sh`, and `checksums.txt`.
 
 It uses the preinstalled `gh` CLI rather than a third-party release action, to
 keep the supply chain short.
@@ -144,12 +144,12 @@ gh release view "v$(cat VERSION)"
 curl -sSfL https://github.com/client9/shlib/releases/latest/download/checksums.txt
 ```
 
-Check that all four assets are attached -- `shlib.sh`, `shlib.min.sh`,
+Check that all three assets are attached -- `shlib.sh`,
 `install-base.sh` and `checksums.txt` -- and that the version marker in the
 published bundle is right:
 
 ```sh
-curl -sSfL https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.min.sh \
+curl -sSfL https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.sh \
   | sed -n 's/^shlib \(.*\)/\1/p'
 ```
 
@@ -158,7 +158,7 @@ confirm the assets match their own `checksums.txt`, and match the tagged tree.
 
 ```sh
 tmp=$(mktemp -d) && cd "$tmp"
-for f in shlib.sh shlib.min.sh install-base.sh checksums.txt; do
+for f in shlib.sh install-base.sh checksums.txt; do
   curl -sSfL -O "https://github.com/client9/shlib/releases/download/v$(cat VERSION)/$f"
 done
 sha256sum -c checksums.txt        # or: shasum -a 256 -c checksums.txt
@@ -169,7 +169,7 @@ shipped a bundle whose checksums were perfectly valid and whose `uname_os` was
 broken:
 
 ```sh
-sh -c 'uname() { echo Windows_NT; }; . ./shlib.min.sh; uname_os'   # -> windows
+sh -c 'uname() { echo Windows_NT; }; . ./shlib.sh; uname_os'   # -> windows
 ```
 
 ---

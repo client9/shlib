@@ -15,6 +15,22 @@ sed -n 's/^shlib \(.*\)/\1/p' your-install.sh
 Rename this heading to the release date when cutting a release — see
 [docs/RELEASING.md](docs/RELEASING.md).
 
+### Removed
+
+- **`dist/shlib.min.sh` is gone, and nothing is minified any more.**
+  `scripts/dist.sh` now only concatenates; `dist/shlib.sh` and
+  `dist/install-base.sh` ship with their comments.
+
+  **If you fetch `dist/shlib.min.sh` from a raw URL, switch to
+  `dist/shlib.sh`** -- the old path no longer exists and will 404.
+
+  Stripping saved about 10 KB gzipped, once, at install time. Against that it
+  shipped v2026.08.27 with valid checksums and missing code (the ` #` filter
+  deleted code lines carrying trailing comments), it constrained what the
+  library could contain -- any embedded awk, sed or python with a whole-line
+  `#` would be gutted -- and it made a `curl | sh` script harder for a
+  cautious user to read before running it.
+
 ### Fixed
 
 - **`unpack` collided with a real command on Solaris and illumos.** The hook

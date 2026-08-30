@@ -16,7 +16,7 @@ Every change to the library regenerates two files, both committed to this repo:
 
 | file | what it is |
 | ---- | ---------- |
-| [`dist/shlib.min.sh`](../dist/shlib.min.sh) | comments stripped — embed this |
+| [`dist/shlib.sh`](../dist/shlib.sh) | just the functions |
 | [`dist/shlib.sh`](../dist/shlib.sh) | full, with comments — easier to read when debugging |
 
 Three ways to get them, in order of preference:
@@ -25,8 +25,8 @@ Three ways to get them, in order of preference:
 points at the newest bundle:
 
 ```sh
-curl -sSfL -o vendor/shlib.min.sh \
-  https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.min.sh
+curl -sSfL -o vendor/shlib.sh \
+  https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.sh
 ```
 
 **2. Pin to a release** if you need reproducible builds. Releases are dated
@@ -35,7 +35,7 @@ curl -sSfL -o vendor/shlib.min.sh \
 ```sh
 tag=v2026.08.28
 base=https://github.com/client9/shlib/releases/download/$tag
-curl -sSfL -o vendor/shlib.min.sh   "$base/shlib.min.sh"
+curl -sSfL -o vendor/shlib.sh       "$base/shlib.sh"
 curl -sSfL -o vendor/checksums.txt  "$base/checksums.txt"
 grep 'shlib\.min\.sh$' vendor/checksums.txt | (cd vendor && sha256sum -c -)
 ```
@@ -54,12 +54,12 @@ whatever step regenerates your install script, so a current copy lands on every
 release:
 
 ```make
-vendor/shlib.min.sh:
+vendor/shlib.sh:
 	mkdir -p vendor
-	curl -sSfL -o $@ https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.min.sh
+	curl -sSfL -o $@ https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.sh
 
-install.sh: vendor/shlib.min.sh install.sh.in
-	cat vendor/shlib.min.sh install.sh.in > $@
+install.sh: vendor/shlib.sh install.sh.in
+	cat vendor/shlib.sh install.sh.in > $@
 ```
 
 If you would rather pin, do it — just make sure *something* prompts you to move
@@ -68,7 +68,7 @@ for you, because a vendored shell file is not a dependency they can see.
 
 ## Keep the version marker
 
-Each bundle starts with a marker that survives comment-stripping:
+Each bundle starts with a version marker:
 
 ```sh
 cat /dev/null <<EOF

@@ -331,21 +331,36 @@ each function, so the source stays the single place documentation is written.
 
 ## Releases and `dist/`
 
-`dist/shlib.sh` (full) and `dist/shlib.min.sh` (comment-stripped) are generated
+`dist/shlib.sh` (the functions) and `dist/install-base.sh` (functions plus the
+installer flow) are generated
 by `scripts/dist.sh` and **committed**, so consumers can fetch a stable raw URL
 at build time instead of hand-vendoring:
 
 ```
-https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.min.sh
+https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.sh
 ```
 
-The version marker lives inside a `cat /dev/null <<EOF` heredoc, not a `#`
-comment, so it survives the `grep -v '^[[:space:]]*#'` stripping pipeline.
+**Nothing is stripped or minified.** `cat` is the only transformation, and
+that is deliberate. There used to be a `dist/shlib.min.sh` built by piping the
+bundle through `grep -v '^[[:space:]]*#'`:
 
-Strip **whole-line comments only**. The original idiom also filtered ` #`, which
-deleted code lines carrying trailing comments -- it silently removed the
-`win*) os="windows"` mapping and both `gitrepo=` assignments from the v2026.08.27
-bundle.
+- It shipped a silently broken release. The original idiom also filtered ` #`,
+  which deleted code lines carrying trailing comments -- v2026.08.27 went out
+  with valid checksums, no `win*) os="windows"` mapping, and no `gitrepo=`
+  assignments in `git_clone_or_update`.
+- Even fixed, it constrained what the library could contain: any embedded awk,
+  sed or python carrying a whole-line `#` would be silently gutted.
+- It bought about 10 KB gzipped, once, at install time. GitHub raw serves
+  gzip; the TLS handshake costs more than the difference.
+- A `curl | sh` script that users are told to read before running is more
+  useful with its comments intact.
+
+Do not reintroduce it.
+
+The version marker still lives inside a `cat /dev/null <<EOF` heredoc rather
+than a `#` comment. That began as a way to survive stripping; it stays because
+`sed -n 's/^shlib \(.*\)/\1/p'` is the documented way to date a vendored copy
+and must keep matching the copies already in the wild.
 
 **The version comes from the `VERSION` file. Do not "improve" this.** Both
 obvious alternatives were tried and both break the `dist` sync job:
