@@ -33,6 +33,12 @@ Rename this heading to the release date when cutting a release — see
 
 ### Fixed
 
+- **`http_last_modified` returned nothing on Solaris and illumos.** It sliced
+  the header with `tail -c 31 | head -c 29`, and POSIX `head` has only `-n` --
+  Solaris ships exactly that, so `head -c` printed its usage line instead. It
+  now matches the field name with `sed`, which is portable and does not depend
+  on the date being exactly 29 characters. Output is unchanged on HTTP/1.1 and
+  HTTP/2 responses alike. The function had no test; it has one now.
 - **`unpack` collided with a real command on Solaris and illumos.** The hook
   guards asked `command -v NAME` and looked only at its exit status, which
   answers "does a command by this name exist", not "did the config define a

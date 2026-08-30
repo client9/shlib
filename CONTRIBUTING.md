@@ -454,10 +454,15 @@ installers matter; a config can already override `latest_version()` today.
 
 ### 2. Untested functions
 
-3 of 33 have no test: `http_last_modified` and `git_clone_or_update`, plus the
-`http_download_curl`/`_wget` branches (exercised indirectly through
-`http_download`, and by `nounset_test.sh`, but never directly for what they
-download). `github_api` now has nounset coverage only.
+`git_clone_or_update` has no test, plus the `http_download_curl`/`_wget`
+branches (exercised indirectly through `http_download`, and by
+`nounset_test.sh`, but never directly for what they download). `github_api`
+has nounset coverage only.
+
+`http_last_modified` was on this list until a `head -c` in it -- a GNU/BSD
+extension Solaris does not have -- shipped for years without anything
+catching it. `http_last_modified_test.sh` stubs `curl` with canned header
+blocks, so it needs no network; that is what had kept the function untested.
 
 ### 3. Possible, not planned
 

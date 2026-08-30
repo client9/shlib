@@ -45,9 +45,12 @@ test_real_accept_header() {
   d=$(mktmpdir)
   http_download_node "$d/j" https://github.com/client9/shlib/releases/latest \
     "Accept: application/json"
-  case "$(head -c 1 "$d/j" 2>/dev/null)" in
+  # `dd`, not `head -c`: POSIX head has only -n, and Solaris ships exactly that
+  # -- `head -c` is a GNU/BSD extension.  It printed its usage line, which then
+  # became the "body" this case matched against.
+  case "$(dd if="$d/j" bs=1 count=1 2>/dev/null)" in
     "{") assertTrue "true" "node: Accept header is honoured (JSON, not HTML)" ;;
-    *) assertTrue "false" "node: Accept ignored; got [$(head -c 40 "$d/j" 2>/dev/null)]" ;;
+    *) assertTrue "false" "node: Accept ignored; got [$(dd if="$d/j" bs=60 count=1 2>/dev/null)]" ;;
   esac
   rm -rf "$d"
 }

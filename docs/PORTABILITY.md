@@ -104,6 +104,17 @@ Two habits that make this file shorter over time:
   difference. Note the linter pushes the other way -- SC2012 objects to `ls`,
   and taking its advice is what broke Solaris.
 
+- **`head -c` does not exist.** POSIX `head` specifies only `-n`, and Solaris
+  ships exactly that; `-c` is a GNU/BSD extension. Instead of failing, SVR4
+  head prints `usage: head [-n #] [-#] [filename...]` on stderr and exits 2,
+  so a pipeline using it silently yields the usage line or nothing at all.
+  `http_last_modified` shipped with `tail -c 31 | head -c 29` for years and
+  returned nothing on Solaris the whole time. Use `dd if=f bs=N count=1` for
+  bytes, or match the text with `sed`.
+
+  Cheap to rehearse without a VM: put a wrapper named `head` early on `PATH`
+  that rejects `-c` the way SVR4 head does, and run the suite under it.
+
 - **SVR4 sed drops a final line with no terminator.** `echo x | tr -s '\n' ' '`
   turns the trailing newline into a space, so sed sees an unterminated line and
   Solaris yields nothing where BSD and GNU yield the answer. This silently
