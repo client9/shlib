@@ -64,6 +64,15 @@ Rename this heading to the release date when cutting a release — see
 
 ### Added
 
+- **`http_download_node`, the same idea for JavaScript runtimes.**
+  `node:22-slim` ships neither curl, wget nor python3 — only node and a perl
+  that cannot do TLS — so it was the one measured image shlib could not fetch
+  anything in. It uses the global `fetch()` (node 18+) rather than the `https`
+  module, which does not follow redirects; every GitHub release download
+  redirects to `objects.githubusercontent.com`. The body is streamed to disk
+  rather than buffered, since release artifacts run to hundreds of megabytes.
+  Accepts either `node` or `nodejs`, the name Debian and Ubuntu used for
+  years. Tried after `python3`, so an image with both is deterministic.
 - **`http_download_python`, a downloader of last resort for container
   images.** Measured: `python:3.12-slim`, `debian:stable-slim`, `ubuntu:24.04`
   and `node:22-slim` ship neither curl nor wget, so installing a tool in any
@@ -81,7 +90,9 @@ Rename this heading to the release date when cutting a release — see
 
   No perl branch: Debian's `perl-base` has neither `IO::Socket::SSL` nor
   `LWP`, and those images carry no `openssl` binary, so perl cannot reach an
-  HTTPS URL. `node:22-slim` — perl and nothing else — stays uncovered.
+  HTTPS URL — it is present exactly where it cannot help. `debian:stable-slim`
+  and `ubuntu:24.04`, which have perl and no other interpreter, stay
+  uncovered by design.
 - **`unpack`, a hook for releases that are not archives.** `execute` called
   `untar` unconditionally, and `untar` refuses anything without a recognised
   archive suffix, so a project publishing bare binaries could not be installed

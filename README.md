@@ -11,7 +11,7 @@ portable shell functions for `curl | sh` installers
 [![sunos](https://github.com/client9/shlib/actions/workflows/sunos.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/sunos.yml)
 [![alpine](https://github.com/client9/shlib/actions/workflows/alpine.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/alpine.yml)
 [![windows](https://github.com/client9/shlib/actions/workflows/windows.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/windows.yml)
-[![python](https://github.com/client9/shlib/actions/workflows/python.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/python.yml)
+[![runtimes](https://github.com/client9/shlib/actions/workflows/runtimes.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/runtimes.yml)
 
 You publish binaries on GitHub Releases and want your users to run one line:
 
@@ -182,7 +182,8 @@ in QEMU VMs, since GitHub provides no runner for any of them.
 | DragonFly 6.4   | `sh`                                                 |
 | Solaris 11.4, OmniOS | `sh`                                             |
 | Windows         | `git bash` `msys2`                                   |
-| `python:3-slim` | `sh` — no curl, wget, fetch or ftp at all            |
+| `python:3-slim` | `sh` — no downloader at all; python3 only            |
+| `node:22-slim`  | `sh` — no downloader at all; node only               |
 
 Several legs also assert something the suite alone cannot:
 
@@ -195,9 +196,10 @@ Several legs also assert something the suite alone cannot:
   that without anything going red.
 - OmniOS builds a real installer from `install/examples/hugo.sh`, runs it, and
   executes the downloaded binary.
-- `python:3-slim` asserts that no downloader is installed at all, then runs
-  the whole suite and a real install through `http_download_python`. Container
-  images routinely ship a language runtime and nothing else.
+- `python:3-slim` and `node:22-slim` assert that curl, wget, fetch and ftp
+  are all absent, then run the whole suite *and* a real install through
+  `http_download_python` / `http_download_node`. Container images routinely
+  ship a language runtime and no downloader at all.
 
 The library **recognises** a wider set than it can practically test: 17
 operating systems and 16 architectures. See

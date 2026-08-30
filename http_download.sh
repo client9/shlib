@@ -186,6 +186,68 @@ except Exception as err:
 ' "$_shlib_local_file" "$_shlib_source_url" "$_shlib_header"
 }
 
+# http_download_node: download a URL to a local file using node
+#
+# The companion to http_download_python, for the container images that have a
+# JavaScript runtime instead.  node:22-slim ships neither curl, wget nor
+# python3 -- only node and a perl that cannot do TLS -- so without this branch
+# it is one of the images where shlib simply cannot fetch anything.
+#
+# Uses the global fetch(), which is node 18 and newer.  That is deliberate:
+# the https module has been there forever but does NOT follow redirects, and
+# every GitHub release download redirects to objects.githubusercontent.com,
+# so an https-based version would need its own redirect loop.  fetch()
+# follows them, verifies certificates, and takes arbitrary headers.  Older
+# node reports that plainly rather than failing in some obscure way.
+#
+# The body is streamed to disk rather than buffered: release artifacts run to
+# hundreds of megabytes and Buffer.from(await r.arrayBuffer()) would hold the
+# whole thing in memory.
+#
+# The program is single-quoted, so it must contain no single quotes of its own.
+http_download_node() {
+  _shlib_local_file=$1
+  _shlib_source_url=$2
+  _shlib_header=${3-}
+
+  # Debian and Ubuntu shipped the interpreter as `nodejs` for years -- the
+  # name `node` belonged to the ax25 package -- while the official images and
+  # most other distributions use `node`.  Accept either.
+  if is_command node; then
+    _shlib_node=node
+  else
+    _shlib_node=nodejs
+  fi
+
+  "$_shlib_node" -e '
+const fs = require("fs");
+const { Readable } = require("stream");
+
+const dest = process.argv[1], url = process.argv[2], hdr = process.argv[3];
+if (typeof fetch !== "function") {
+  process.stderr.write("node: fetch() requires node 18 or newer\n");
+  process.exit(1);
+}
+const opts = {};
+if (hdr) {
+  const i = hdr.indexOf(":");
+  opts.headers = { [hdr.slice(0, i).trim()]: hdr.slice(i + 1).trim() };
+}
+fetch(url, opts).then(function (r) {
+  if (!r.ok) throw new Error("HTTP " + r.status + " " + r.statusText);
+  return new Promise(function (resolve, reject) {
+    const out = fs.createWriteStream(dest);
+    out.on("finish", resolve);
+    out.on("error", reject);
+    Readable.fromWeb(r.body).pipe(out);
+  });
+}).catch(function (e) {
+  process.stderr.write("node: " + url + ": " + e.message + "\n");
+  process.exit(1);
+});
+' "$_shlib_local_file" "$_shlib_source_url" "$_shlib_header"
+}
+
 # http_download: download a URL to a local file, using whichever downloader exists
 #
 # http_download [local-file] [url] [optional extra header]
@@ -212,13 +274,19 @@ http_download() {
     http_download_ftp "$@"
     return
   elif is_command python3; then
-    # Not a base-system tool anywhere, so it goes after every one that is.
-    # This is for container images: python:3.12-slim and friends ship a
-    # runtime and no downloader.
+    # Not a base-system tool anywhere, so the runtimes go after every tool
+    # that is.  These are for container images: python:3.12-slim and
+    # node:22-slim ship a runtime and no downloader at all.
+    #
+    # python3 before node only to make the order stable and documented;
+    # neither is more correct, and an image with both is rare.
     http_download_python "$@"
     return
+  elif is_command node || is_command nodejs; then
+    http_download_node "$@"
+    return
   fi
-  log_crit "http_download unable to find curl, wget, fetch, ftp or python3"
+  log_crit "http_download unable to find curl, wget, fetch, ftp, python3 or node"
   return 1
 }
 

@@ -168,13 +168,34 @@ Two habits that make this file shorter over time:
 
 - **A container image is not a platform, and routinely has no downloader at
   all.** Measured: `debian:stable-slim`, `ubuntu:24.04`, `node:22-slim` and
-  `python:3.12-slim` all ship neither curl nor wget. Every one of them has
-  perl -- and Debian's `perl-base` carries neither `IO::Socket::SSL` nor
-  `LWP`, and the images have no `openssl` binary either, so perl cannot reach
-  an HTTPS URL and is useless as a fallback. `python3`'s `urllib` can, which
-  is why `http_download_python` exists and no perl branch does. `node:22-slim`
-  remains uncoverable: perl is the only interpreter present, and it cannot do
-  TLS.
+  `python:3.12-slim` all ship neither curl nor wget.
+
+  | image | curl/wget | usable interpreter |
+  | ----- | --------- | ------------------ |
+  | `python:3.12-slim` | none | `python3` |
+  | `node:22-slim` | none | `node` |
+  | `debian:stable-slim` | none | none |
+  | `ubuntu:24.04` | none | none |
+
+- **Perl is present on all four and useless on all four.** Debian's
+  `perl-base` carries neither `IO::Socket::SSL` nor `LWP`, and the images ship
+  no `openssl` binary to shell out to, so there is no path to an HTTPS URL.
+  That is why `http_download_python` and `http_download_node` exist and no
+  perl branch does -- perl is available exactly where it cannot help.
+
+- **`node`'s https module does not follow redirects; `fetch()` does.** Every
+  GitHub release download redirects to `objects.githubusercontent.com`, so an
+  https-based branch would need its own redirect loop. `http_download_node`
+  uses the global `fetch()` (node 18+) and streams the body to disk rather
+  than buffering it -- release artifacts run to hundreds of megabytes.
+
+- **Debian and Ubuntu called the interpreter `nodejs` for years**, because
+  `node` belonged to the ax25 package. `http_download_node` accepts either
+  name.
+
+- `debian:stable-slim` and `ubuntu:24.04` remain uncoverable: perl is the only
+  interpreter, and it cannot do TLS. The clear error from `http_download` is
+  the right outcome there.
 
 ## Tools that are not POSIX
 

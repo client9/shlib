@@ -26,6 +26,7 @@ install script and are covered by [INSTALLERS.md](INSTALLERS.md).
 | [`http_download_curl`](../http_download.sh) | download a URL to a local file using curl |
 | [`http_download_fetch`](../http_download.sh) | download a URL to a local file using FreeBSD fetch(1) |
 | [`http_download_ftp`](../http_download.sh) | download a URL to a local file using BSD ftp(1) |
+| [`http_download_node`](../http_download.sh) | download a URL to a local file using node |
 | [`http_download_python`](../http_download.sh) | download a URL to a local file using python3 |
 | [`http_download_wget`](../http_download.sh) | download a URL to a local file using wget |
 | [`http_last_modified`](../http_last_modified.sh) | returns the last modified timestamp from a HTTP URL |
@@ -46,7 +47,7 @@ install script and are covered by [INSTALLERS.md](INSTALLERS.md).
 | [`uname_os_check`](../uname_os_check.sh) | self-check that uname_os produced a recognized OS name |
 | [`untar`](../untar.sh) | unpack $1 into the current directory |
 
-34 functions.
+35 functions.
 
 ## Platforms
 
