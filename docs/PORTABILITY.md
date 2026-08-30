@@ -193,9 +193,59 @@ Two habits that make this file shorter over time:
   `node` belonged to the ax25 package. `http_download_node` accepts either
   name.
 
-- `debian:stable-slim` and `ubuntu:24.04` remain uncoverable: perl is the only
-  interpreter, and it cannot do TLS. The clear error from `http_download` is
-  the right outcome there.
+- **`debian:stable-slim` and `ubuntu:24.04` are not short of networking --
+  they are short of TRUST.** They ship `apt`, and `/usr/lib/apt/apt-helper
+  download-file <url> <dest>` is a perfectly good general-purpose HTTPS client
+  with a full set of transport methods in `/usr/lib/apt/methods/` (including
+  `https`). What they do not ship is a CA store:
+
+  | image | system CA roots | why it still installs packages |
+  | ----- | --------------- | ------------------------------ |
+  | `debian:stable-slim` | **0** | `apt` points at `http://deb.debian.org` and verifies by GPG signature, not TLS |
+  | `ubuntu:24.04` | **0** | same, `http://ports.ubuntu.com` |
+  | `node:22-slim` | **0** | node does not use the system store -- it bundles 145 roots of its own (`tls.rootCertificates`) |
+  | `python:3.12-slim` | 150 | that image installs `ca-certificates` |
+
+  So on the two bare distro images, *nothing* can verify a TLS peer --
+  apt-helper included:
+
+  ```
+  SSL connection failed: error:0A000086:SSL routines::certificate verify failed
+  ```
+
+  Install `ca-certificates` and apt-helper downloads GitHub release assets
+  fine, cross-host redirects and all. The gap is the trust store, not the
+  transport.
+
+- **An `apt-helper` branch was considered and rejected.** It is a real base
+  tool on the one family that has it, which is more than can be said for the
+  runtimes -- but:
+  - On the images where it would be the *only* option it cannot verify
+    certificates, so adding it would turn a clear "no downloader found" into a
+    confusing TLS error that reads like an shlib bug.
+  - Where `ca-certificates` is installed, curl or wget almost always is too.
+  - It cannot send arbitrary request headers -- there is no `Acquire::` config
+    key for them -- so `github_release` could not resolve `latest` through it,
+    the same limitation as `fetch(1)` and `ftp(1)`.
+  - It lives at `/usr/lib/apt/apt-helper`, off `PATH`, and is an apt internal
+    with no stability promise.
+
+  The honest outcome on a bare `debian:stable-slim` is the error
+  `http_download` already prints. The fix is an `apt-get install`, and it is
+  the user's to make.
+
+- **Installing curl on those images is not always enough.** `ca-certificates`
+  is a *Recommends* of curl, not a *Depends*, so the very common Dockerfile
+  idiom leaves you with a downloader and still no trust store:
+
+  ```
+  apt-get install -y --no-install-recommends curl
+  curl: (77) error setting certificate file: /etc/ssl/certs/ca-certificates.crt
+  ```
+
+  Anyone reporting that an installer "fails on Debian" is likely to have hit
+  this rather than anything in shlib. The fix is
+  `apt-get install -y --no-install-recommends ca-certificates curl`.
 
 ## Tools that are not POSIX
 

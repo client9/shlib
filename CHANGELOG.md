@@ -90,9 +90,13 @@ Rename this heading to the release date when cutting a release — see
 
   No perl branch: Debian's `perl-base` has neither `IO::Socket::SSL` nor
   `LWP`, and those images carry no `openssl` binary, so perl cannot reach an
-  HTTPS URL — it is present exactly where it cannot help. `debian:stable-slim`
-  and `ubuntu:24.04`, which have perl and no other interpreter, stay
-  uncovered by design.
+  HTTPS URL — it is present exactly where it cannot help.
+
+  `debian:stable-slim` and `ubuntu:24.04` stay uncovered, but not for lack of
+  networking: they ship `apt-helper`, a working HTTPS client, and **zero CA
+  roots**. Nothing can verify a TLS peer there. `apt` itself is unaffected
+  because Debian and Ubuntu fetch packages over plain http and verify them by
+  GPG signature. See docs/PORTABILITY.md.
 - **`unpack`, a hook for releases that are not archives.** `execute` called
   `untar` unconditionally, and `untar` refuses anything without a recognised
   archive suffix, so a project publishing bare binaries could not be installed
