@@ -159,8 +159,8 @@ Two habits that make this file shorter over time:
 
 ### DragonFly BSD
 
-- **6.4 bundles its own LibreSSL, and its TLS 1.3 path is not reliable against
-  GitHub.** The CI leg has failed with an `EPIPE` raised inside
+- **6.4 bundles its own LibreSSL, and its TLS 1.3 path fails intermittently
+  against GitHub.** The CI leg has failed with an `EPIPE` raised inside
   `libressl/ssl/tls13_legacy.c`, surfaced by `fetch(1)` as the generic
   `Authentication error` -- fetch reports every TLS failure that way, so the
   message cannot distinguish a bad certificate, a flaky network and a
@@ -171,12 +171,19 @@ Two habits that make this file shorter over time:
   OpenSSL, so the server was not at fault. The FreeBSD legs download the same
   URL through the same `http_download_fetch` on a newer TLS stack.
 
+  **It is intermittent.** An unchanged re-push went green, which is the
+  evidence that separates a flaky QEMU network from a real handshake
+  incompatibility -- the two are indistinguishable from fetch's message alone.
+
   The leg retries three times and, on the third failure, prints `uname -a`,
   `openssl version` and an `s_client` probe. That is deliberately in the
   workflow and not in `http_download_fetch`: the library must not grow retry
-  semantics for every consumer because one CI image is unreliable. If the
-  diagnostics ever show it failing consistently, the fix is to bump the
-  DragonFly release in the matrix, not to weaken the assertion.
+  semantics for every consumer because one CI image is unreliable.
+
+  A retried success logs `(succeeded on attempt N)`, so the frequency stays
+  visible rather than being silently absorbed. If the diagnostics ever show it
+  failing all three times consistently, the fix is to bump the DragonFly
+  release in the matrix, not to weaken the assertion.
 
 ### Linux
 
