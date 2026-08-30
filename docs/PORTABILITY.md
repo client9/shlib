@@ -115,6 +115,12 @@ Two habits that make this file shorter over time:
   Cheap to rehearse without a VM: put a wrapper named `head` early on `PATH`
   that rejects `-c` the way SVR4 head does, and run the suite under it.
 
+  `make lint` now refuses `head -c`, `grep -o/-E/-F/-x/-f`, `find -maxdepth`
+  and `sed -i` in anything that runs on Solaris -- the library, the tests and
+  `install/`. It matches the tool in command position and ignores comments, so
+  a note explaining why not to use one does not trip it. `scripts/` is exempt:
+  it is developer tooling and never runs there.
+
 - **SVR4 sed drops a final line with no terminator.** `echo x | tr -s '\n' ' '`
   turns the trailing newline into a space, so sed sees an unterminated line and
   Solaris yields nothing where BSD and GNU yield the answer. This silently

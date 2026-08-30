@@ -69,6 +69,38 @@ if [ -n "$_undefined" ]; then
   rc=1
 fi
 
+# Flags that Solaris and illumos do not have.
+#
+# /usr/bin/grep there is the SVR4 one -- no -o, -E, -F, -x or -f -- POSIX head
+# has only -n so `head -c` does not exist, POSIX find has no -maxdepth or
+# -mindepth, and `sed -i` is a GNU extension.  None of these fail usefully:
+# SVR4 head prints its usage line and exits 2, so a pipeline using it yields
+# the usage text or nothing at all, and the bug shows up only when a Solaris
+# leg runs -- or, for years, not at all.  `http_last_modified` shipped
+# `tail -c 31 | head -c 29` and silently returned nothing there.
+#
+# Only files that actually run on Solaris are checked: the library, the tests
+# and install/.  scripts/ is developer tooling and may use whatever is handy.
+#
+# Whole-line comments are stripped first (via sed, which preserves the line
+# numbering) so that a comment explaining why NOT to use one of these does not
+# trip the check -- the naive `grep head | grep -- -c` matches nothing else
+# right now.  The tool must be in command position, so `--head`, `$_shlib_header`
+# and the word "header" cannot match.
+echo "== solaris-hostile flags =="
+_svr4=$(
+  for f in ./*.sh ./install/*.sh; do
+    sed 's/^[[:space:]]*#.*//' "$f" | grep -nE \
+      '(^|[|;&({])[[:space:]]*(head[[:space:]]+-c|grep[[:space:]]+-[a-zA-Z]*[oEFxf]|find[[:space:]].*-(max|min)depth|sed[[:space:]]+-i)' |
+      sed "s|^|${f}:|"
+  done
+)
+if [ -n "$_svr4" ]; then
+  echo "$_svr4"
+  echo "these flags do not exist on Solaris/illumos - see docs/PORTABILITY.md"
+  rc=1
+fi
+
 echo "== shfmt =="
 if [ -n "$("$SHFMT" -ci -p -i 2 -l ./*.sh ./scripts/*.sh ./install/*.sh)" ]; then
   echo "not formatted - run 'make fmt' to fix:"

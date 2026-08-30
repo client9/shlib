@@ -208,7 +208,7 @@ are split by platform rather than one `ci.yml`.
 
 | workflow | covers |
 | -------- | ------ |
-| `lint` | shellcheck ×4 dialects, `scripts/`, `dist/shlib.sh`, shfmt, **and the `dist` sync job** |
+| `lint` | shellcheck ×4 dialects, `scripts/`, `dist/shlib.sh`, shfmt, a static check for flags Solaris does not have, **and the `dist` sync job** |
 | `linux` | dash, bash, ksh93, mksh, yash, posh, busybox ash |
 | `macos` | sh, bash 3.2, ksh, zsh, dash |
 | `freebsd` | 14.4 + 15.1 via `vmactions/freebsd-vm` (QEMU on a Linux runner; FreeBSD `sh` is a distinct ash) |

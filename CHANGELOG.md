@@ -70,6 +70,13 @@ Rename this heading to the release date when cutting a release — see
 
 ### Added
 
+- **`make lint` now rejects flags Solaris does not have** — `head -c`,
+  `grep -o/-E/-F/-x/-f`, `find -maxdepth`/`-mindepth` and `sed -i` — in the
+  library, the tests and `install/`. None of these fail usefully there: SVR4
+  `head` prints its usage line and exits 2, so a pipeline yields the usage
+  text or nothing, and the bug surfaces only when a Solaris CI leg runs. This
+  is the fourth SVR4 surprise in this repo's history and the first one caught
+  before it shipped. `scripts/` is exempt as developer tooling.
 - **`http_download_node`, the same idea for JavaScript runtimes.**
   `node:22-slim` ships neither curl, wget nor python3 — only node and a perl
   that cannot do TLS — so it was the one measured image shlib could not fetch
