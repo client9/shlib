@@ -90,15 +90,57 @@ jobs:
             . ./is_command.sh; . ./mktmpdir.sh
             . ./http_download.sh; . ./github_release.sh
             d=$(mktmpdir)
+
+            # Retry, and report properly when it still fails.
+            #
+            # DragonFly 6.4 bundles its own LibreSSL, and this leg has failed
+            # inside its TLS 1.3 shim with an EPIPE:
+            #
+            #   error:02FFF020:system library:func(4095):Broken pipe:
+            #     .../libressl/ssl/tls13_legacy.c:80
+            #   fetch: ...: Authentication error
+            #
+            # fetch(1) reports every TLS failure as "Authentication error", so
+            # the message alone cannot tell a flaky QEMU network apart from a
+            # real incompatibility with the server's TLS 1.3.  Retrying
+            # separates the two: a transient passes on attempt 2 or 3, while a
+            # systematic failure still fails and now prints evidence.  The
+            # retry lives HERE and not in http_download_fetch -- the library
+            # must not grow retry semantics for every consumer because one CI
+            # image is unreliable.
+            fetch_retry() {
+              _n=0
+              while :; do
+                _n=$((_n + 1))
+                if http_download_fetch "$@"; then
+                  [ "$_n" -eq 1 ] || echo "(succeeded on attempt $_n)"
+                  return 0
+                fi
+                if [ "$_n" -ge 3 ]; then
+                  echo "--- still failing after $_n attempts; diagnostics ---"
+                  uname -a
+                  command -v openssl >/dev/null 2>&1 && {
+                    openssl version
+                    echo | openssl s_client -connect raw.githubusercontent.com:443 \
+                      -servername raw.githubusercontent.com 2>&1 |
+                      grep -iE "protocol|cipher|verify return code|alert" | head -5
+                  }
+                  return 1
+                fi
+                echo "attempt $_n failed; retrying"
+                sleep 5
+              done
+            }
+
             echo "== http_download_fetch, no header =="
-            http_download_fetch "$d/plain" \
+            fetch_retry "$d/plain" \
               https://raw.githubusercontent.com/client9/shlib/master/fixtures/sample1.txt || {
               echo "::error::http_download_fetch failed on a plain download"
               exit 1
             }
             echo "got: $(cat "$d/plain")"
             echo "== http_download_fetch, Accept header via HTTP_ACCEPT =="
-            http_download_fetch "$d/json" \
+            fetch_retry "$d/json" \
               https://github.com/client9/shlib/releases/latest "Accept:application/json" || {
               echo "::error::http_download_fetch failed with an Accept header"
               exit 1

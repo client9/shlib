@@ -157,6 +157,27 @@ Two habits that make this file shorter over time:
   absent, so a transitive dependency pulling curl in cannot silently stop that
   coverage.
 
+### DragonFly BSD
+
+- **6.4 bundles its own LibreSSL, and its TLS 1.3 path is not reliable against
+  GitHub.** The CI leg has failed with an `EPIPE` raised inside
+  `libressl/ssl/tls13_legacy.c`, surfaced by `fetch(1)` as the generic
+  `Authentication error` -- fetch reports every TLS failure that way, so the
+  message cannot distinguish a bad certificate, a flaky network and a
+  handshake incompatibility.
+
+  Measured at the time: `raw.githubusercontent.com` negotiates TLS 1.3
+  (`TLS_AES_128_GCM_SHA256`) and TLS 1.2, and verifies clean from a current
+  OpenSSL, so the server was not at fault. The FreeBSD legs download the same
+  URL through the same `http_download_fetch` on a newer TLS stack.
+
+  The leg retries three times and, on the third failure, prints `uname -a`,
+  `openssl version` and an `s_client` probe. That is deliberately in the
+  workflow and not in `http_download_fetch`: the library must not grow retry
+  semantics for every consumer because one CI image is unreliable. If the
+  diagnostics ever show it failing consistently, the fix is to bump the
+  DragonFly release in the matrix, not to weaken the assertion.
+
 ### Linux
 
 - **Inode numbers are not a proxy for "was unlinked".** Linux reuses a
