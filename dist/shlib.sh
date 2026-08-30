@@ -1,5 +1,5 @@
 cat /dev/null <<EOF
-shlib 2026.08.28
+shlib 2026.08.30
 https://github.com/client9/shlib
 EOF
 #!/bin/sh
