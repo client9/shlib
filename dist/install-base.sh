@@ -511,6 +511,55 @@ http_download_ftp() {
   return 1
 }
 
+# http_download_python: download a URL to a local file using python3
+#
+# Not a base-system tool on any platform shlib targets -- this is for container
+# images, which routinely ship a language runtime and no downloader at all.
+# Measured: python:3.12-slim, debian:stable-slim, ubuntu:24.04 and node:22-slim
+# all have neither curl nor wget, and installing a tool in any of them failed
+# outright before this branch existed.
+#
+# python3 ONLY, never bare `python`.  That name may be python2, and pythons
+# before 2.7.9 do not verify TLS certificates at all (PEP 476).  Silently
+# downgrading to an unverified transport to fetch a binary is worse than
+# failing, so an old interpreter is simply not used.
+#
+# urllib gives what fetch(1) and ftp(1) cannot: arbitrary request headers.  So
+# this is the only fallback branch on which github_release can resolve
+# "latest", which needs `Accept: application/json`.
+#
+# Redirects are followed, certificates are verified by default, and a 4xx/5xx
+# raises rather than writing the error page into the destination file.
+#
+# The program is single-quoted, so it must contain no single quotes of its own.
+http_download_python() {
+  _shlib_local_file=$1
+  _shlib_source_url=$2
+  _shlib_header=${3-}
+
+  python3 -c '
+import sys, urllib.request
+
+dest, url, hdr = sys.argv[1], sys.argv[2], sys.argv[3]
+req = urllib.request.Request(url)
+if hdr:
+    name, _, value = hdr.partition(":")
+    req.add_header(name.strip(), value.strip())
+try:
+    resp = urllib.request.urlopen(req, timeout=60)
+    out = open(dest, "wb")
+    while True:
+        buf = resp.read(65536)
+        if not buf:
+            break
+        out.write(buf)
+    out.close()
+except Exception as err:
+    sys.stderr.write("python3: %s: %s\n" % (url, err))
+    sys.exit(1)
+' "$_shlib_local_file" "$_shlib_source_url" "$_shlib_header"
+}
+
 # http_download: download a URL to a local file, using whichever downloader exists
 #
 # http_download [local-file] [url] [optional extra header]
@@ -532,12 +581,18 @@ http_download() {
     return
   elif is_command ftp; then
     # OpenBSD and NetBSD base ship neither; their downloader is ftp(1), which
-    # also speaks HTTP.  Last, because a Linux box may carry a legacy ftp
-    # client that cannot fetch a URL at all.
+    # also speaks HTTP.  Last of the base tools, because a Linux box may carry
+    # a legacy ftp client that cannot fetch a URL at all.
     http_download_ftp "$@"
     return
+  elif is_command python3; then
+    # Not a base-system tool anywhere, so it goes after every one that is.
+    # This is for container images: python:3.12-slim and friends ship a
+    # runtime and no downloader.
+    http_download_python "$@"
+    return
   fi
-  log_crit "http_download unable to find curl, wget, fetch or ftp"
+  log_crit "http_download unable to find curl, wget, fetch, ftp or python3"
   return 1
 }
 

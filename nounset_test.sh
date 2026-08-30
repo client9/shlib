@@ -60,6 +60,7 @@ curl() { return 0; }
 wget() { return 0; }
 fetch() { return 0; }
 ftp() { return 0; }
+python3() { return 0; }
 http_copy() { echo '{"tag_name":"v2026.01.01"}'; }
 
 # --- the guard itself -----------------------------------------------------
@@ -103,6 +104,8 @@ test_http_download_without_header() {
     "http_download_fetch: no header argument"
   assertTrue "nounset_ok 'http_download_ftp /dev/null https://example.invalid/x'" \
     "http_download_ftp: no header argument"
+  assertTrue "nounset_ok 'http_download_python /dev/null https://example.invalid/x'" \
+    "http_download_python: no header argument"
   assertTrue "nounset_ok 'http_download /dev/null https://example.invalid/x'" \
     "http_download: no header argument"
 }

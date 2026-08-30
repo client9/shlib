@@ -164,6 +164,18 @@ Two habits that make this file shorter over time:
   An extension-by-extension attributes file missed the fixtures and produced
   exactly that. The windows workflow asserts LF rather than trusting it.
 
+### Container images
+
+- **A container image is not a platform, and routinely has no downloader at
+  all.** Measured: `debian:stable-slim`, `ubuntu:24.04`, `node:22-slim` and
+  `python:3.12-slim` all ship neither curl nor wget. Every one of them has
+  perl -- and Debian's `perl-base` carries neither `IO::Socket::SSL` nor
+  `LWP`, and the images have no `openssl` binary either, so perl cannot reach
+  an HTTPS URL and is useless as a fallback. `python3`'s `urllib` can, which
+  is why `http_download_python` exists and no perl branch does. `node:22-slim`
+  remains uncoverable: perl is the only interpreter present, and it cannot do
+  TLS.
+
 ## Tools that are not POSIX
 
 ### `install(1)`

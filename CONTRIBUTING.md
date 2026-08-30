@@ -202,7 +202,7 @@ on ksh93 and zsh, why a stub cannot be scoped with `( … )` -- are in
 
 ## CI
 
-Ten CI workflows (26 test legs), plus `release.yml` on `v*` tags. Badges are
+Eleven CI workflows (27 test legs), plus `release.yml` on `v*` tags. Badges are
 workflow-scoped — no per-job or per-matrix-leg badge exists — which is why they
 are split by platform rather than one `ci.yml`.
 
@@ -218,6 +218,7 @@ are split by platform rather than one `ci.yml`.
 | `sunos` | Solaris 11.4 and OmniOS via `vmactions/*-vm` — full suite under `sh`, plus an assertion that `SunOS` resolves to `solaris`/`illumos` for real rather than stubbed |
 | `alpine` | busybox ash on musl, via `docker run` (not `container:` — `actions/checkout` needs glibc) |
 | `windows` | git bash + msys2 — full suite, plus an assertion that `MINGW64_NT-*`/`MSYS_NT-*` map to `windows` |
+| `python` | `python:3.12-slim` via `docker run` — asserts curl, wget, fetch and ftp are all absent, then runs the full suite and a real install through `http_download_python` |
 
 Notes below are about how the legs are *built*. What each platform actually
 does differently -- the reason a leg goes red -- is in

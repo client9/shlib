@@ -64,6 +64,24 @@ Rename this heading to the release date when cutting a release — see
 
 ### Added
 
+- **`http_download_python`, a downloader of last resort for container
+  images.** Measured: `python:3.12-slim`, `debian:stable-slim`, `ubuntu:24.04`
+  and `node:22-slim` ship neither curl nor wget, so installing a tool in any
+  of them failed with `unable to find curl, wget, fetch or ftp`. `python3`'s
+  `urllib` closes that gap for the images that have it.
+
+  It is tried **last**, after every base-system tool, and uses `python3` only
+  — never bare `python`, which may be python2, and pythons before 2.7.9 do not
+  verify TLS certificates at all.
+
+  It is also the only fallback branch that can send request headers, so
+  `github_release` can resolve `latest` there — `fetch(1)` and both `ftp(1)`s
+  cannot. Covered by a `python:3.12-slim` CI leg that asserts no downloader is
+  installed, then runs the full suite and a real install through it.
+
+  No perl branch: Debian's `perl-base` has neither `IO::Socket::SSL` nor
+  `LWP`, and those images carry no `openssl` binary, so perl cannot reach an
+  HTTPS URL. `node:22-slim` — perl and nothing else — stays uncovered.
 - **`unpack`, a hook for releases that are not archives.** `execute` called
   `untar` unconditionally, and `untar` refuses anything without a recognised
   archive suffix, so a project publishing bare binaries could not be installed
