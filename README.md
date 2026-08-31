@@ -1,5 +1,5 @@
 # shlib
-portable shell functions for `curl | sh` installers
+`curl | sh` installers with portable shell functions
 
 [![lint](https://github.com/client9/shlib/actions/workflows/lint.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/lint.yml)
 [![linux](https://github.com/client9/shlib/actions/workflows/linux.yml/badge.svg?branch=master)](https://github.com/client9/shlib/actions/workflows/linux.yml)
@@ -20,16 +20,12 @@ curl -sSfL https://raw.githubusercontent.com/OWNER/REPO/master/install.sh | sh -
 ```
 
 **shlib generates that `install.sh`.** It is the replacement for the archived
-[godownloader][gd] — with no Go, no YAML and no template language, because a
-shell function is already a lazily-evaluated template.
-
-[gd]: https://github.com/goreleaser/godownloader
+[godownloader](https://github.com/goreleaser/godownloader)
 
 The generated script detects the platform, resolves `latest` or a pinned tag,
-downloads the right asset, verifies its SHA-256 against your checksums file,
+downloads the right asset, verifies its SHA-256 against its checksums file,
 unpacks it, and installs the binary — on everything in the
-[test matrix](#tested-where-it-actually-has-to-run), down to Solaris, the BSDs
-and git bash.
+[test matrix](#tested-where-it-actually-has-to-run).
 
 ## Build an installer
 
@@ -40,9 +36,8 @@ config.sh              yours, ~12 lines
 dist/install-base.sh   ours: the shlib functions + the installer flow
 ```
 
-Your config only *describes* your release naming. This is
-[`install/examples/gosec.sh`](install/examples/gosec.sh) with its comments
-trimmed — the values are exact, and nothing else is needed:
+The config only *describes* the release naming. This is
+[`install/examples/gosec.sh`](install/examples/gosec.sh):
 
 ```sh
 OWNER=securego
@@ -51,8 +46,7 @@ BINARY=gosec
 FORMAT=tar.gz
 BINDIR=${BINDIR:-./bin}
 
-# your build matrix -- you already know it.  Declaring it lets the installer
-# say "no binary for windows/arm64" instead of failing with a bare 404.
+# declare the build matrix
 PLATFORMS="darwin/amd64 darwin/arm64
            linux/amd64 linux/arm64 linux/ppc64le linux/s390x
            windows/amd64 windows/arm64"
@@ -77,14 +71,9 @@ sh install.sh -b /usr/local/bin
 sh install.sh -b ./bin v2.22.0   # a specific tag
 ```
 
-Your config comes first because it only *defines* things; the flow runs at the
-very end of `install-base.sh`, so a `curl | sh` truncated mid-transfer either
-does nothing or fails to parse — it cannot half-install.
-
 ### If your filenames are unusual
 
-Everything is an ordinary shell function, so anything a template language could
-express you can just write:
+Everything is an ordinary shell function, which can be over-ridden.
 
 ```sh
 adjust_format() { case ${OS} in windows) FORMAT=zip ;; esac; }
@@ -94,10 +83,9 @@ binary_path()   { echo "${NAME}/$1"; }   # binary nested inside the archive
 unpack()        { :; }                   # the asset IS the binary, no archive
 ```
 
-### Worked examples
+### Real Examples
 
-Seven real projects, each with a different naming scheme, each tested against
-that project's actual published asset names:
+Some sample `curl|sh` installers for live projects:
 
 | example | what it shows |
 | ------- | ------------- |
@@ -109,7 +97,7 @@ that project's actual published asset names:
 | [`shellcheck.sh`](install/examples/shellcheck.sh) | not a Go project — raw `x86_64`/`aarch64` names |
 | [`hadolint.sh`](install/examples/hadolint.sh) | no archive at all — the asset is the binary |
 
-Full guide: **[docs/INSTALLERS.md](docs/INSTALLERS.md)**.
+See the full guide **[docs/INSTALLERS.md](docs/INSTALLERS.md)** for details.
 
 ## The building blocks
 
@@ -159,17 +147,9 @@ cat \
   license_end.sh > vendor/shlib.sh
 ```
 
-Nothing is stripped or minified, here or in `dist/`. shlib used to publish a
-comment-stripped bundle; it saved about 10 KB gzipped and once shipped a
-release with valid checksums and missing code, so it is gone. Comments also
-make a `curl | sh` script something a cautious user can actually read.
-
 ## Tested where it actually has to run
 
-Every push runs the whole suite — not a subset — against each shell below. A
-GitHub Actions badge covers a whole workflow, so the badges above are grouped
-by platform; per-shell results are in the Actions tab. The BSDs and Solaris run
-in QEMU VMs, since GitHub provides no runner for any of them.
+Every push runs the whole suite against each shell below.
 
 | platform        | shells tested                                        |
 | --------------- | ---------------------------------------------------- |
