@@ -36,7 +36,7 @@ config.sh              yours, ~12 lines
 dist/install-base.sh   ours: the shlib functions + the installer flow
 ```
 
-The config only *describes* the release naming. This is
+The config describes the release naming. This is
 [`install/examples/gosec.sh`](install/examples/gosec.sh):
 
 ```sh
@@ -55,7 +55,8 @@ archive_name()  { echo "${BINARY}_${VERSION}_${OS}_${ARCH}"; }
 checksum_name() { echo "${BINARY}_${VERSION}_checksums.txt"; }
 ```
 
-Build it — `cat` is the generator:
+
+`cat` the config with the lastest `install-base.sh` **PUT THIS YOUR RELEASE PROCESS** so you always get the latest version.
 
 ```sh
 curl -sSfL -o /tmp/base.sh \
@@ -63,7 +64,7 @@ curl -sSfL -o /tmp/base.sh \
 cat config.sh /tmp/base.sh > install.sh
 ```
 
-Commit `install.sh`, and your users get:
+Commit `install.sh`:
 
 ```sh
 sh install.sh                 # latest release, into ./bin
@@ -71,6 +72,7 @@ sh install.sh -b /usr/local/bin
 sh install.sh -b ./bin v2.22.0   # a specific tag
 ```
 
+**
 ### If your filenames are unusual
 
 Everything is an ordinary shell function, which can be over-ridden.
