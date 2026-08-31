@@ -89,7 +89,7 @@ unpack()        { :; }                   # the asset IS the binary, no archive
 Some sample `curl|sh` installers for live projects:
 
 | Repo | Example | Variations |
-| ------- | ------------- |
+|------|---------|------------|
 | [securego/gosec](https://github.com/securego/gosec) | [`gosec.sh`](install/examples/gosec.sh) | the simple case — no hooks at all |
 | [ory/hydra](https://github.com/ory/hydra)           | [`hydra.sh`](install/examples/hydra.sh) | renamed OS and arch, `.zip` on windows |
 | [go-task/task]](https://github.com/go-task/task)    | [`task.sh`](install/examples/task.sh) | no version in the archive name |
