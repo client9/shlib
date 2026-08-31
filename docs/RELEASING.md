@@ -1,12 +1,34 @@
 # Releasing shlib
 
-A release publishes the two concatenated bundles and their checksums, so that
-install-script authors can pull a current copy instead of hand-vendoring one
-that goes stale.
+## TL;DR
 
-Versions are **CalVer** — `2026.08.27`, the date of the release. The API shape
-does not really change, so SemVer's compatibility signal would buy nothing,
-while a date makes a stale embedded copy obvious on sight.
+```sh
+# make sure actions is green
+
+# set new VERSION, use suffix ".1", ".2" if needed
+date -u +%Y.%m.%d > VERSION
+
+# update CHANGELOG
+
+# make release artifacts
+make dist
+git add VERSION dist/ CHANGELOG.md
+git commit -m "release $(cat VERSION)"
+git push
+
+# wait for green
+
+# tag and push
+git tag "v$(cat VERSION)"
+git push --tags
+```
+
+## Background
+
+A release publishes the two concatenated bundles and their checksums, so that
+install-script authors can pull a current copy.
+
+Versions are **CalVer** — `2026.08.27`, the date of the release.
 
 Tags are the version with a `v` prefix: `v2026.08.27`.
 
@@ -25,31 +47,9 @@ Tags are the version with a `v` prefix: `v2026.08.27`.
 
 ## Step 1 — check that `master` is green
 
-All ten CI workflows must be passing on the commit you intend to tag:
-
-| workflow | covers |
-| -------- | ------ |
-| `lint` | shellcheck (sh, bash, dash, ksh), `scripts/`, `dist/`, shfmt — **and the `dist` sync job** |
-| `linux` | dash, bash, ksh93, mksh, yash, posh, busybox ash |
-| `macos` | sh, bash 3.2, ksh, zsh, dash |
-| `alpine` | busybox ash on musl |
-| `freebsd` | FreeBSD 14.4 and 15.1 under QEMU |
-| `openbsd` | OpenBSD 7.9 and 7.8 under QEMU |
-| `netbsd` | NetBSD 11.0 and 10.1 under QEMU |
-| `dragonflybsd` | DragonFly 6.4.2 under QEMU |
-| `sunos` | Solaris 11.4 and OmniOS under QEMU |
-| `windows` | git bash and msys2 |
-
 ```sh
 gh run list --branch master --limit 15
 ```
-
-Do not tag on top of a red build. The release workflow re-runs `make test`, but
-only on Linux — it will not catch a break that only shows up on a BSD, Solaris,
-Windows or macOS.
-
-The QEMU legs are the slow ones; give them time before concluding master is
-green.
 
 ## Step 2 — bump `VERSION`
 
@@ -57,27 +57,12 @@ green.
 date -u +%Y.%m.%d > VERSION
 ```
 
-The version is a plain file, bumped by hand. It is deliberately **not** derived
-from `git log` or `date` at build time:
-
-- `date -u` would change daily, so `dist/` would show a diff every day and the
-  `dist` sync job would fail for no reason.
-- `git log` counts only *committed* history, but `make dist` bundles the working
-  tree — so editing a library file leaves the version behind, then the version
-  jumps the moment you commit, making the just-committed `dist/` instantly stale.
-
-A file is stable, needs no git, and works in shallow clones and source tarballs.
-
 If you cut two releases on the same day, add a suffix: `2026.08.27.1`.
 
 ## Step 2b — move the CHANGELOG heading
 
 Rename `## Unreleased` in [CHANGELOG.md](../CHANGELOG.md) to the version you
 just put in `VERSION`, and start a fresh `## Unreleased` above it.
-
-This is deliberately manual: the entries are written by hand as changes land,
-so there is nothing to generate. But an unreleased heading shipped under a
-version number is worse than no changelog, so do not skip it.
 
 ## Step 3 — rebuild `dist/`
 
@@ -113,9 +98,7 @@ git commit -m "release $(cat VERSION)"
 git push
 ```
 
-Wait for CI to go green again on this commit before tagging. The `dist` job is
-the one that matters here: it re-runs `make dist` and fails if what you committed
-does not match the sources.
+Wait for Actions to return green.
 
 ## Step 6 — tag and push
 
@@ -126,16 +109,12 @@ git push --tags
 
 Pushing the tag triggers `.github/workflows/release.yml`, which:
 
-1. checks the tag matches `VERSION` (`v2026.08.27` vs `2026.08.27`) and fails
-   loudly if they disagree;
+1. checks the tag matches `VERSION` (`v2026.08.27` vs `2026.08.27`)
 2. installs the test dependencies (openssl, bzip2, xz, zstd, zip, unzip);
 3. re-runs `make dist` and fails if `dist/` is not in sync;
 4. runs `make test`;
 5. publishes the release with `gh release create --generate-notes`, attaching
    `shlib.sh`, `install-base.sh`, and `checksums.txt`.
-
-It uses the preinstalled `gh` CLI rather than a third-party release action, to
-keep the supply chain short.
 
 ## Step 7 — confirm
 
@@ -153,8 +132,6 @@ curl -sSfL https://raw.githubusercontent.com/client9/shlib/master/dist/shlib.sh 
   | sed -n 's/^shlib \(.*\)/\1/p'
 ```
 
-Worth doing once per release, since a published artifact cannot be rewritten:
-confirm the assets match their own `checksums.txt`, and match the tagged tree.
 
 ```sh
 tmp=$(mktemp -d) && cd "$tmp"
@@ -162,14 +139,6 @@ for f in shlib.sh install-base.sh checksums.txt; do
   curl -sSfL -O "https://github.com/client9/shlib/releases/download/v$(cat VERSION)/$f"
 done
 sha256sum -c checksums.txt        # or: shasum -a 256 -c checksums.txt
-```
-
-A functional check is stronger than a checksum, and cheap -- v2026.08.27
-shipped a bundle whose checksums were perfectly valid and whose `uname_os` was
-broken:
-
-```sh
-sh -c 'uname() { echo Windows_NT; }; . ./shlib.sh; uname_os'   # -> windows
 ```
 
 ---
@@ -223,7 +192,3 @@ use `workflow_dispatch`. Deleting and re-pushing the tag also works.
 Consumers who fetch the raw URL at build time pick it up automatically — no
 action needed. See [EMBEDDING.md](EMBEDDING.md) for the pattern shlib recommends
 to install-script authors.
-
-There is no mechanism to notify the ~900 already-vendored copies in the wild.
-That is the problem the version marker exists to make visible: the next bug report
-from a stale copy will name its own vintage.
