@@ -92,13 +92,13 @@ Some sample `curl|sh` installers for live projects:
 |------|---------|------------|
 | [securego/gosec](https://github.com/securego/gosec) | [`gosec.sh`](install/examples/gosec.sh) | the simple case — no hooks at all |
 | [ory/hydra](https://github.com/ory/hydra)           | [`hydra.sh`](install/examples/hydra.sh) | renamed OS and arch, `.zip` on windows |
-| [go-task/task]](https://github.com/go-task/task)    | [`task.sh`](install/examples/task.sh) | no version in the archive name |
+| [go-task/task](https://github.com/go-task/task)    | [`task.sh`](install/examples/task.sh) | no version in the archive name |
 | [golangci/golangci-lint](https://github.com/golangci/golangci-lint) | [`golangci-lint.sh`](install/examples/golangci-lint.sh) | 27 platforms, binary nested in a versioned directory |
 | [gohugoio/hugo](https://github.com/gohugoio/hugo) | [`hugo.sh`](install/examples/hugo.sh) | BSDs, Solaris, illumos, and build variants |
 | [koalaman/shellcheck](https://github.com/koalaman/shellcheck) | [`shellcheck.sh`](install/examples/shellcheck.sh) | not a Go project — raw `x86_64`/`aarch64` names |
 | [hadolint/hadolint](https://github.com/hadolint/hadolint) | [`hadolint.sh`](install/examples/hadolint.sh) | no archive at all — the asset is the binary |
 
-See the full guide **[docs/INSTALLERS.md](docs/INSTALLERS.md)** for details.
+See **[docs/INSTALLERS.md](docs/INSTALLERS.md)** for details.
 
 ## The building blocks
 
