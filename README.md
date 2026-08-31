@@ -55,8 +55,8 @@ archive_name()  { echo "${BINARY}_${VERSION}_${OS}_${ARCH}"; }
 checksum_name() { echo "${BINARY}_${VERSION}_checksums.txt"; }
 ```
 
-
-`cat` the config with the lastest `install-base.sh` **PUT THIS YOUR RELEASE PROCESS** so you always get the latest version.
+To make the `install.sh`, do this **in your release process**.  `cat`
+the config with the latest `install-base.sh`:
 
 ```sh
 curl -sSfL -o /tmp/base.sh \
@@ -72,7 +72,6 @@ sh install.sh -b /usr/local/bin
 sh install.sh -b ./bin v2.22.0   # a specific tag
 ```
 
-**
 ### If your filenames are unusual
 
 Everything is an ordinary shell function, which can be over-ridden.
@@ -89,15 +88,15 @@ unpack()        { :; }                   # the asset IS the binary, no archive
 
 Some sample `curl|sh` installers for live projects:
 
-| example | what it shows |
+| Repo | Example | Variations |
 | ------- | ------------- |
-| [`gosec.sh`](install/examples/gosec.sh) | the simple case — no hooks at all |
-| [`hydra.sh`](install/examples/hydra.sh) | renamed OS and arch, `.zip` on windows |
-| [`task.sh`](install/examples/task.sh) | no version in the archive name |
-| [`golangci-lint.sh`](install/examples/golangci-lint.sh) | 27 platforms, binary nested in a versioned directory |
-| [`hugo.sh`](install/examples/hugo.sh) | BSDs, Solaris, illumos, and build variants |
-| [`shellcheck.sh`](install/examples/shellcheck.sh) | not a Go project — raw `x86_64`/`aarch64` names |
-| [`hadolint.sh`](install/examples/hadolint.sh) | no archive at all — the asset is the binary |
+| [securego/gosec](https://github.com/securego/gosec) | [`gosec.sh`](install/examples/gosec.sh) | the simple case — no hooks at all |
+| [ory/hydra](https://github.com/ory/hydra)           | [`hydra.sh`](install/examples/hydra.sh) | renamed OS and arch, `.zip` on windows |
+| [go-task/task]](https://github.com/go-task/task)    | [`task.sh`](install/examples/task.sh) | no version in the archive name |
+| [golangci/golangci-lint](https://github.com/golangci/golangci-lint) | [`golangci-lint.sh`](install/examples/golangci-lint.sh) | 27 platforms, binary nested in a versioned directory |
+| [gohugoio/hugo](https://github.com/gohugoio/hugo) | [`hugo.sh`](install/examples/hugo.sh) | BSDs, Solaris, illumos, and build variants |
+| [koalaman/shellcheck](https://github.com/koalaman/shellcheck) | [`shellcheck.sh`](install/examples/shellcheck.sh) | not a Go project — raw `x86_64`/`aarch64` names |
+| [hadolint/hadolint](https://github.com/hadolint/hadolint) | [`hadolint.sh`](install/examples/hadolint.sh) | no archive at all — the asset is the binary |
 
 See the full guide **[docs/INSTALLERS.md](docs/INSTALLERS.md)** for details.
 
